@@ -1,0 +1,1106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//
+// ============================================================
+// ENUMS
+// ============================================================
+//
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+  DELETED
+}
+
+enum TontineStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum MembershipStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  LEFT
+  REMOVED
+}
+
+enum ContributionStatus {
+  DUE
+  PENDING
+  PAID
+  PARTIAL
+  LATE
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  EXPIRED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum CommissionStatus {
+  PENDING
+  AVAILABLE
+  CANCELLED
+  REVERSED
+}
+
+enum WalletStatus {
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+enum WalletTransactionType {
+  COMMISSION
+  WITHDRAWAL
+  REVERSAL
+  ADJUSTMENT
+}
+
+enum WithdrawalStatus {
+  REQUESTED
+  VALIDATING
+  APPROVED
+  PROCESSING
+  SUCCESS
+  FAILED
+  CANCELLED
+  REVERSED
+}
+
+enum LedgerEntryType {
+  CONTRIBUTION
+  COMMISSION_MANAGER
+  PLATFORM_FEE
+  PAYMENT_FEE
+  LOAN_DISBURSEMENT
+  LOAN_REPAYMENT
+  PENALTY
+  EXPENSE
+  REFUND
+  WITHDRAWAL
+  ADJUSTMENT
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  SUSPENDED
+  CANCELLED
+}
+
+enum PeriodicityType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  CUSTOM
+}
+
+enum LoanStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  DISBURSED
+  PARTIALLY_REPAID
+  REPAID
+  DEFAULTED
+  CANCELLED
+}
+
+enum InstallmentStatus {
+  DUE
+  PARTIAL
+  PAID
+  LATE
+  CANCELLED
+}
+
+enum NotificationChannel {
+  IN_APP
+  SMS
+  EMAIL
+  WHATSAPP
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum ExpenseStatus {
+  DRAFT
+  VALIDATED
+  CANCELLED
+}
+
+//
+// ============================================================
+// USERS / RBAC
+// ============================================================
+//
+
+model User {
+  id                 String     @id @default(uuid()) @db.Uuid
+  phone              String     @unique @db.VarChar(30)
+  email              String?    @unique @db.Citext
+  passwordHash       String?    @map("password_hash")
+  firstName          String     @map("first_name") @db.VarChar(100)
+  lastName           String     @map("last_name") @db.VarChar(100)
+  status             UserStatus @default(PENDING_VERIFICATION)
+
+  phoneVerifiedAt    DateTime?  @map("phone_verified_at") @db.Timestamptz(6)
+  emailVerifiedAt    DateTime?  @map("email_verified_at") @db.Timestamptz(6)
+  lastLoginAt        DateTime?  @map("last_login_at") @db.Timestamptz(6)
+
+  locale             String     @default("fr") @db.VarChar(10)
+  timezone           String     @default("Africa/Ouagadougou") @db.VarChar(64)
+
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime?  @map("deleted_at") @db.Timestamptz(6)
+
+  roles              UserRole[]
+  manager            Manager?
+  tontineMemberships TontineMember[]
+
+  payments           Payment[]
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+  supportTickets     SupportTicket[]
+
+  createdLedgerTransactions LedgerTransaction[] @relation("LedgerCreatedBy")
+  createdExpenses           TontineExpense[]    @relation("ExpenseCreatedBy")
+  validatedExpenses         TontineExpense[]    @relation("ExpenseValidatedBy")
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model Role {
+  id          Int    @id @default(autoincrement())
+  name        String @unique @db.VarChar(50)
+  description String?
+
+  users       UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          Int    @id @default(autoincrement())
+  code        String @unique @db.VarChar(100)
+  description String?
+
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+model UserRole {
+  userId String @map("user_id") @db.Uuid
+  roleId Int    @map("role_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  roleId       Int @map("role_id")
+  permissionId Int @map("permission_id")
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Restrict)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+//
+// ============================================================
+// MANAGERS
+// ============================================================
+//
+
+model Manager {
+  id                String   @id @default(uuid()) @db.Uuid
+  userId            String   @unique @map("user_id") @db.Uuid
+  businessName      String?  @map("business_name") @db.VarChar(200)
+  commissionEnabled Boolean  @default(false) @map("commission_enabled")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  tontines      Tontine[]
+  subscriptions Subscription[]
+  commissions   ManagerCommission[]
+  wallet        Wallet?
+  withdrawals   Withdrawal[]
+  invoices      SubscriptionInvoice[]
+
+  @@map("managers")
+}
+
+//
+// ============================================================
+// ABONNEMENTS
+// ============================================================
+//
+
+model SubscriptionPlan {
+  id                  Int      @id @default(autoincrement())
+  code                String   @unique @db.VarChar(30)
+  name                String   @db.VarChar(100)
+
+  monthlyPrice        BigInt   @default(0) @map("monthly_price")
+
+  maxTontines         Int?     @map("max_tontines")
+  maxMembers          Int?     @map("max_members")
+
+  commissionEnabled   Boolean  @default(false) @map("commission_enabled")
+
+  // Taux de commission max par plan:
+  // FREE: 0.0150 (1,5%)
+  // STARTER: 0.0250 (2,5%)
+  // PREMIUM: 0.0300 (3,0%)
+  // BUSINESS: 0.0350 (3,5%)
+  maxCommissionRate   Decimal  @default(0) @map("max_commission_rate") @db.Decimal(5, 4)
+
+  active              Boolean  @default(true)
+
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  subscriptions       Subscription[]
+  commissionRules     CommissionRule[]
+
+  @@index([active])
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id         String             @id @default(uuid()) @db.Uuid
+  managerId  String             @map("manager_id") @db.Uuid
+  planId     Int                @map("plan_id")
+
+  status     SubscriptionStatus @default(TRIAL)
+
+  startAt    DateTime           @map("start_at") @db.Timestamptz(6)
+  endAt      DateTime?          @map("end_at") @db.Timestamptz(6)
+
+  autoRenew  Boolean            @default(true) @map("auto_renew")
+
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  manager    Manager            @relation(fields: [managerId], references: [id], onDelete: Restrict)
+  plan       SubscriptionPlan   @relation(fields: [planId], references: [id], onDelete: Restrict)
+  invoices   SubscriptionInvoice[]
+
+  @@index([managerId, status])
+  @@index([planId])
+  @@map("subscriptions")
+}
+
+model SubscriptionInvoice {
+  id               String        @id @default(uuid()) @db.Uuid
+  subscriptionId   String        @map("subscription_id") @db.Uuid
+  managerId        String        @map("manager_id") @db.Uuid
+
+  invoiceNumber    String        @unique @map("invoice_number") @db.VarChar(80)
+
+  amount           BigInt
+  currency         String        @default("XOF") @db.Char(3)
+
+  periodStart      DateTime      @map("period_start") @db.Date
+  periodEnd        DateTime      @map("period_end") @db.Date
+
+  status           InvoiceStatus @default(PENDING)
+
+  paymentReference String?       @map("payment_reference") @db.VarChar(150)
+
+  issuedAt         DateTime      @default(now()) @map("issued_at") @db.Timestamptz(6)
+  paidAt           DateTime?     @map("paid_at") @db.Timestamptz(6)
+
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  manager      Manager      @relation(fields: [managerId], references: [id], onDelete: Restrict)
+
+  @@index([managerId, status])
+  @@index([subscriptionId])
+  @@map("subscription_invoices")
+}
+
+//
+// ============================================================
+// TONTINES
+// ============================================================
+//
+
+model Tontine {
+  id                    String          @id @default(uuid()) @db.Uuid
+  managerId             String          @map("manager_id") @db.Uuid
+
+  name                  String          @db.VarChar(200)
+  description           String?
+
+  currency              String          @default("XOF") @db.Char(3)
+
+  contributionAmount    BigInt          @map("contribution_amount")
+  periodicity           PeriodicityType
+
+  customPeriodDays      Int?            @map("custom_period_days")
+
+  startDate             DateTime        @map("start_date") @db.Date
+  endDate               DateTime?       @map("end_date") @db.Date
+
+  maxMembers            Int?            @map("max_members")
+
+  defaultCommissionRate Decimal         @default(0) @map("default_commission_rate") @db.Decimal(5, 4)
+
+  penaltyEnabled        Boolean         @default(false) @map("penalty_enabled")
+  loanEnabled           Boolean         @default(false) @map("loan_enabled")
+
+  status                TontineStatus   @default(DRAFT)
+
+  createdAt             DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  manager               Manager         @relation(fields: [managerId], references: [id], onDelete: Restrict)
+
+  members               TontineMember[]
+  schedules             ContributionSchedule[]
+  contributions         Contribution[]
+  payments              Payment[]
+  commissionRules       CommissionRule[]
+  commissions           ManagerCommission[]
+  penalties             Penalty[]
+  expenses              TontineExpense[]
+  loans                 Loan[]
+
+  @@index([managerId, status])
+  @@index([status])
+  @@map("tontines")
+}
+
+model TontineMember {
+  id               String           @id @default(uuid()) @db.Uuid
+  tontineId        String           @map("tontine_id") @db.Uuid
+  userId           String           @map("user_id") @db.Uuid
+
+  membershipStatus MembershipStatus @default(PENDING) @map("membership_status")
+
+  joinedAt         DateTime         @default(now()) @map("joined_at") @db.Timestamptz(6)
+  leftAt           DateTime?        @map("left_at") @db.Timestamptz(6)
+
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  tontine          Tontine          @relation(fields: [tontineId], references: [id], onDelete: Restrict)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  contributions    Contribution[]
+  penalties        Penalty[]
+  loans            Loan[]
+
+  @@unique([tontineId, userId])
+  @@unique([id, tontineId])
+  @@index([userId])
+  @@index([tontineId, membershipStatus])
+  @@map("tontine_members")
+}
+
+model ContributionSchedule {
+  id             String   @id @default(uuid()) @db.Uuid
+  tontineId      String   @map("tontine_id")
+
+  periodNumber   Int      @map("period_number")
+  dueDate        DateTime @map("due_date") @db.Date
+  expectedAmount BigInt   @map("expected_amount")
+
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  tontine        Tontine @relation(fields: [tontineId], references: [id], onDelete: Restrict)
+
+  contributions  Contribution[]
+
+  @@unique([tontineId, periodNumber])
+  @@unique([id, tontineId])
+  @@index([tontineId, dueDate])
+  @@map("contribution_schedules")
+}
+
+model Contribution {
+  id             String             @id @default(uuid()) @db.Uuid
+  tontineId      String             @map("tontine_id") @db.Uuid
+
+  memberId       String             @map("member_id") @db.Uuid
+  scheduleId     String             @map("schedule_id") @db.Uuid
+
+  expectedAmount BigInt             @map("expected_amount")
+  paidAmount     BigInt             @default(0) @map("paid_amount")
+
+  dueDate        DateTime           @map("due_date") @db.Date
+  status         ContributionStatus @default(DUE)
+
+  paidAt         DateTime?          @map("paid_at") @db.Timestamptz(6)
+
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tontine        Tontine             @relation(fields: [tontineId], references: [id], onDelete: Restrict)
+
+  member         TontineMember       @relation(
+    fields: [memberId, tontineId],
+    references: [id, tontineId],
+    onDelete: Restrict
+  )
+
+  schedule       ContributionSchedule @relation(
+    fields: [scheduleId, tontineId],
+    references: [id, tontineId],
+    onDelete: Restrict
+  )
+
+  payments       Payment[]
+  penalties      Penalty[]
+
+  @@unique([memberId, scheduleId])
+  @@index([tontineId, status, dueDate])
+  @@index([memberId, status, dueDate])
+  @@map("contributions")
+}
+
+//
+// ============================================================
+// PAIEMENTS
+// ============================================================
+//
+
+model PaymentProvider {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique @db.VarChar(50)
+  name      String   @db.VarChar(100)
+  country   String   @default("BF") @db.Char(2)
+  active    Boolean  @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  payments  Payment[]
+  events    PaymentEvent[]
+  withdrawals Withdrawal[]
+
+  @@map("payment_providers")
+}
+
+model Payment {
+  id                     String        @id @default(uuid()) @db.Uuid
+
+  userId                 String        @map("user_id") @db.Uuid
+  tontineId              String        @map("tontine_id") @db.Uuid
+  contributionId         String?       @map("contribution_id") @db.Uuid
+  providerId             Int           @map("provider_id")
+
+  providerTransactionId  String?       @map("provider_transaction_id") @db.VarChar(200)
+  merchantReference      String        @unique @map("merchant_reference") @db.VarChar(150)
+  idempotencyKey         String        @unique @map("idempotency_key") @db.VarChar(150)
+
+  payerPhone             String?       @map("payer_phone") @db.VarChar(30)
+
+  amount                 BigInt
+  currency               String        @default("XOF") @db.Char(3)
+
+  paymentFee             BigInt        @default(0) @map("payment_fee")
+  platformFee            BigInt        @default(0) @map("platform_fee")
+  managerCommission      BigInt        @default(0) @map("manager_commission")
+  netAmount              BigInt        @map("net_amount")
+
+  status                 PaymentStatus @default(CREATED)
+
+  rawProviderReference   String?       @map("raw_provider_reference") @db.VarChar(200)
+
+  createdAt              DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  completedAt            DateTime?     @map("completed_at") @db.Timestamptz(6)
+
+  user                   User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  tontine                Tontine           @relation(fields: [tontineId], references: [id], onDelete: Restrict)
+  contribution           Contribution?     @relation(fields: [contributionId], references: [id], onDelete: Restrict)
+  provider               PaymentProvider   @relation(fields: [providerId], references: [id], onDelete: Restrict)
+
+  events                 PaymentEvent[]
+  managerCommission      ManagerCommission?
+  loanRepayments         LoanRepayment[]
+
+  @@index([userId, createdAt])
+  @@index([tontineId, status, createdAt])
+  @@index([providerId, status])
+  @@map("payments")
+}
+
+model PaymentEvent {
+  id                String   @id @default(uuid()) @db.Uuid
+  paymentId         String?  @map("payment_id") @db.Uuid
+  providerId        Int      @map("provider_id")
+
+  eventId           String   @map("event_id") @db.VarChar(200)
+  eventType         String   @map("event_type") @db.VarChar(100)
+
+  payloadHash       String   @map("payload_hash") @db.VarChar(128)
+  payloadEncrypted  String?  @map("payload_encrypted")
+
+  processingStatus  String   @default("RECEIVED") @map("processing_status") @db.VarChar(30)
+
+  receivedAt        DateTime @default(now()) @map("received_at") @db.Timestamptz(6)
+  processedAt       DateTime? @map("processed_at") @db.Timestamptz(6)
+
+  payment           Payment?        @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  provider          PaymentProvider @relation(fields: [providerId], references: [id], onDelete: Restrict)
+
+  @@unique([providerId, eventId])
+  @@unique([providerId, payloadHash])
+  @@index([paymentId, receivedAt])
+  @@map("payment_events")
+}
+
+//
+// ============================================================
+// COMMISSIONS
+// ============================================================
+//
+
+model CommissionRule {
+  id                  String   @id @default(uuid()) @db.Uuid
+
+  subscriptionPlanId  Int?     @map("subscription_plan_id")
+  tontineId           String?  @map("tontine_id") @db.Uuid
+
+  rate                Decimal  @default(0) @db.Decimal(5, 4)
+  fixedAmount         BigInt   @default(0) @map("fixed_amount")
+
+  minAmount           BigInt?  @map("min_amount")
+  maxAmount           BigInt?  @map("max_amount")
+
+  validFrom           DateTime @default(now()) @map("valid_from") @db.Timestamptz(6)
+  validUntil          DateTime? @map("valid_until") @db.Timestamptz(6)
+
+  active              Boolean  @default(true)
+
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  subscriptionPlan    SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id], onDelete: Restrict)
+  tontine             Tontine?          @relation(fields: [tontineId], references: [id], onDelete: Restrict)
+
+  managerCommissions  ManagerCommission[]
+
+  @@index([subscriptionPlanId, active, validFrom])
+  @@index([tontineId, active, validFrom])
+  @@map("commission_rules")
+}
+
+model ManagerCommission {
+  id                 String           @id @default(uuid()) @db.Uuid
+
+  managerId          String           @map("manager_id") @db.Uuid
+  tontineId          String           @map("tontine_id") @db.Uuid
+  paymentId          String           @unique @map("payment_id") @db.Uuid
+  commissionRuleId   String?          @map("commission_rule_id") @db.Uuid
+
+  baseAmount         BigInt           @map("base_amount")
+  rate               Decimal          @db.Decimal(5, 4)
+  fixedAmount        BigInt           @default(0) @map("fixed_amount")
+  commissionAmount   BigInt           @map("commission_amount")
+
+  status             CommissionStatus @default(PENDING)
+
+  earnedAt           DateTime         @default(now()) @map("earned_at") @db.Timestamptz(6)
+  availableAt       DateTime?        @map("available_at") @db.Timestamptz(6)
+
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  manager            Manager          @relation(fields: [managerId], references: [id], onDelete: Restrict)
+  tontine            Tontine          @relation(fields: [tontineId], references: [id], onDelete: Restrict)
+  payment            Payment          @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  commissionRule     CommissionRule?  @relation(fields: [commissionRuleId], references: [id], onDelete: Restrict)
+
+  @@index([managerId, status, earnedAt])
+  @@index([tontineId, earnedAt])
+  @@map("manager_commissions")
+}
+
+//
+// ============================================================
+// GRAND LIVRE COMPTABLE
+// ============================================================
+//
+
+model LedgerAccount {
+  id          String   @id @default(uuid()) @db.Uuid
+  accountCode String   @unique @map("account_code") @db.VarChar(80)
+  name        String   @db.VarChar(150)
+
+  currency    String   @default("XOF") @db.Char(3)
+  ownerType   String   @default("SYSTEM") @map("owner_type") @db.VarChar(30)
+  ownerId     String?  @map("owner_id") @db.Uuid
+
+  active      Boolean  @default(true)
+
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  entries     LedgerEntry[]
+
+  @@index([ownerType, ownerId])
+  @@map("ledger_accounts")
+}
+
+model LedgerTransaction {
+  id              String   @id @default(uuid()) @db.Uuid
+
+  transactionType String   @map("transaction_type") @db.VarChar(50)
+
+  referenceType   String?  @map("reference_type") @db.VarChar(50)
+  referenceId     String?  @map("reference_id") @db.Uuid
+
+  description     String?
+
+  createdBy       String?  @map("created_by") @db.Uuid
+
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  postedAt        DateTime? @map("posted_at") @db.Timestamptz(6)
+  posted          Boolean  @default(false)
+
+  creator         User?    @relation("LedgerCreatedBy", fields: [createdBy], references: [id], onDelete: Restrict)
+
+  entries         LedgerEntry[]
+
+  @@index([referenceType, referenceId])
+  @@index([posted, createdAt])
+  @@map("ledger_transactions")
+}
+
+model LedgerEntry {
+  id                   String          @id @default(uuid()) @db.Uuid
+
+  ledgerTransactionId  String          @map("ledger_transaction_id") @db.Uuid
+  accountId            String          @map("account_id") @db.Uuid
+
+  entryType            LedgerEntryType @map("entry_type")
+
+  amount               BigInt
+  currency             String          @default("XOF") @db.Char(3)
+
+  referenceType        String?         @map("reference_type") @db.VarChar(50)
+  referenceId          String?         @map("reference_id") @db.Uuid
+
+  description          String?
+
+  reversedEntryId      String?         @map("reversed_entry_id") @db.Uuid
+
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  transaction          LedgerTransaction @relation(fields: [ledgerTransactionId], references: [id], onDelete: Restrict)
+  account             LedgerAccount     @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  reversedEntry       LedgerEntry?      @relation("LedgerReversal", fields: [reversedEntryId], references: [id], onDelete: Restrict)
+  reversalEntries     LedgerEntry[]     @relation("LedgerReversal")
+
+  @@index([accountId, createdAt])
+  @@index([ledgerTransactionId])
+  @@index([referenceType, referenceId])
+  @@map("ledger_entries")
+}
+
+//
+// ============================================================
+// WALLET MANAGER
+// ============================================================
+//
+
+model Wallet {
+  id             String       @id @default(uuid()) @db.Uuid
+  managerId      String       @unique @map("manager_id") @db.Uuid
+
+  currency       String       @default("XOF") @db.Char(3)
+  currentBalance BigInt       @default(0) @map("current_balance")
+
+  status         WalletStatus @default(ACTIVE)
+
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  manager        Manager      @relation(fields: [managerId], references: [id], onDelete: Restrict)
+
+  transactions   WalletTransaction[]
+  withdrawals    Withdrawal[]
+
+  @@unique([id, managerId])
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id              String                @id @default(uuid()) @db.Uuid
+
+  walletId        String                @map("wallet_id") @db.Uuid
+  managerId       String                @map("manager_id") @db.Uuid
+
+  transactionType WalletTransactionType @map("transaction_type")
+
+  amount          BigInt
+
+  balanceBefore   BigInt                @map("balance_before")
+  balanceAfter    BigInt                @map("balance_after")
+
+  referenceType   String?               @map("reference_type") @db.VarChar(50)
+  referenceId     String?               @map("reference_id") @db.Uuid
+
+  status          String                @default("POSTED") @db.VarChar(30)
+
+  description     String?
+
+  createdAt       DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  wallet          Wallet                @relation(fields: [walletId, managerId], references: [id, managerId], onDelete: Restrict)
+
+  @@index([walletId, createdAt])
+  @@index([managerId, createdAt])
+  @@index([referenceType, referenceId])
+  @@map("wallet_transactions")
+}
+
+//
+// ============================================================
+// RETRAITS
+// ============================================================
+//
+
+model Withdrawal {
+  id                       String           @id @default(uuid()) @db.Uuid
+
+  managerId                String           @map("manager_id") @db.Uuid
+  walletId                 String           @map("wallet_id") @db.Uuid
+  providerId               Int              @map("provider_id")
+
+  amount                   BigInt
+  fee                      BigInt           @default(0)
+  netAmount                BigInt           @map("net_amount")
+
+  destinationType          String           @map("destination_type") @db.VarChar(30)
+  destinationReference     String           @map("destination_reference") @db.VarChar(50)
+
+  providerTransactionId    String?          @map("provider_transaction_id") @db.VarChar(200)
+
+  status                   WithdrawalStatus @default(REQUESTED)
+
+  requestedAt              DateTime         @default(now()) @map("requested_at") @db.Timestamptz(6)
+  processedAt              DateTime?        @map("processed_at") @db.Timestamptz(6)
+  completedAt              DateTime?        @map("completed_at") @db.Timestamptz(6)
+
+  createdAt                DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  manager                  Manager          @relation(fields: [managerId], references: [id], onDelete: Restrict)
+  wallet                   Wallet           @relation(fields: [walletId, managerId], references: [id, managerId], onDelete: Restrict)
+  provider                 PaymentProvider  @relation(fields: [providerId], references: [id], onDelete: Restrict)
+
+  @@index([managerId, status, requestedAt])
+  @@index([providerId, status])
+  @@map("withdrawals")
+}
+
+//
+// ============================================================
+// PÉNALITÉS
+// ============================================================
+//
+
+model Penalty {
+  id             String   @id @default(uuid()) @db.Uuid
+
+  tontineId      String   @map("tontine_id") @db.Uuid
+  memberId       String   @map("member_id") @db.Uuid
+
+  contributionId String?  @map("contribution_id") @db.Uuid
+
+  amount         BigInt
+  reason         String?
+
+  appliedAt      DateTime @default(now()) @map("applied_at") @db.Timestamptz(6)
+  paid           Boolean  @default(false)
+
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  tontine        Tontine      @relation(fields: [tontineId], references: [id], onDelete: Restrict)
+
+  member         TontineMember @relation(
+    fields: [memberId, tontineId],
+    references: [id, tontineId],
+    onDelete: Restrict
+  )
+
+  contribution   Contribution? @relation(fields: [contributionId], references: [id], onDelete: Restrict)
+
+  @@index([tontineId, appliedAt])
+  @@index([memberId])
+  @@map("penalties")
+}
+
+//
+// ============================================================
+// DÉPENSES
+// ============================================================
+//
+
+model TontineExpense {
+  id           String        @id @default(uuid()) @db.Uuid
+
+  tontineId    String        @map("tontine_id") @db.Uuid
+
+  amount       BigInt
+  category     String        @db.VarChar(100)
+  description  String?
+
+  status       ExpenseStatus @default(DRAFT)
+
+  expenseDate  DateTime      @default(now()) @map("expense_date") @db.Date
+
+  createdBy    String?       @map("created_by") @db.Uuid
+  validatedBy  String?       @map("validated_by") @db.Uuid
+
+  validatedAt  DateTime?     @map("validated_at") @db.Timestamptz(6)
+
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  tontine      Tontine       @relation(fields: [tontineId], references: [id], onDelete: Restrict)
+
+  creator      User?         @relation("ExpenseCreatedBy", fields: [createdBy], references: [id], onDelete: Restrict)
+  validator    User?         @relation("ExpenseValidatedBy", fields: [validatedBy], references: [id], onDelete: Restrict)
+
+  @@index([tontineId, status, expenseDate])
+  @@map("tontine_expenses")
+}
+
+//
+// ============================================================
+// PRÊTS
+// ============================================================
+//
+
+model Loan {
+  id             String     @id @default(uuid()) @db.Uuid
+
+  tontineId      String     @map("tontine_id") @db.Uuid
+  memberId       String     @map("member_id") @db.Uuid
+
+  principal      BigInt
+
+  interestRate   Decimal    @default(0) @map("interest_rate") @db.Decimal(5, 4)
+
+  durationMonths Int        @map("duration_months")
+
+  totalDue       BigInt     @map("total_due")
+  totalRepaid    BigInt     @default(0) @map("total_repaid")
+
+  status         LoanStatus @default(REQUESTED)
+
+  requestedAt    DateTime   @default(now()) @map("requested_at") @db.Timestamptz(6)
+  approvedAt     DateTime?  @map("approved_at") @db.Timestamptz(6)
+  disbursedAt    DateTime?  @map("disbursed_at") @db.Timestamptz(6)
+  completedAt    DateTime?  @map("completed_at") @db.Timestamptz(6)
+
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  tontine        Tontine       @relation(fields: [tontineId], references: [id], onDelete: Restrict)
+
+  member         TontineMember @relation(
+    fields: [memberId, tontineId],
+    references: [id, tontineId],
+    onDelete: Restrict
+  )
+
+  installments   LoanInstallment[]
+  repayments     LoanRepayment[]
+
+  @@index([tontineId, status])
+  @@index([memberId, status])
+  @@map("loans")
+}
+
+model LoanInstallment {
+  id                String             @id @default(uuid()) @db.Uuid
+
+  loanId            String             @map("loan_id")
+  installmentNumber Int                @map("installment_number")
+
+  dueDate           DateTime           @map("due_date") @db.Date
+
+  expectedAmount    BigInt             @map("expected_amount")
+  paidAmount        BigInt             @default(0) @map("paid_amount")
+
+  status            InstallmentStatus  @default(DUE)
+
+  paidAt            DateTime?          @map("paid_at") @db.Timestamptz(6)
+
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  loan              Loan               @relation(fields: [loanId], references: [id], onDelete: Restrict)
+
+  repayments        LoanRepayment[]
+
+  @@unique([loanId, installmentNumber])
+  @@index([loanId, dueDate])
+  @@map("loan_installments")
+}
+
+model LoanRepayment {
+  id            String   @id @default(uuid()) @db.Uuid
+
+  loanId        String   @map("loan_id")
+  installmentId String?  @map("installment_id")
+  paymentId     String?  @map("payment_id")
+
+  amount        BigInt
+
+  paidAt        DateTime @default(now()) @map("paid_at") @db.Timestamptz(6)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  loan          Loan             @relation(fields: [loanId], references: [id], onDelete: Restrict)
+  installment   LoanInstallment? @relation(fields: [installmentId], references: [id], onDelete: Restrict)
+  payment       Payment?         @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+
+  @@index([loanId, paidAt])
+  @@index([paymentId])
+  @@map("loan_repayments")
+}
+
+//
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+//
+
+model Notification {
+  id        String              @id @default(uuid()) @db.Uuid
+  userId    String              @map("user_id") @db.Uuid
+
+  type      String              @db.VarChar(80)
+  title     String              @db.VarChar(200)
+  message   String
+
+  channel   NotificationChannel @default(IN_APP)
+
+  readAt    DateTime?           @map("read_at") @db.Timestamptz(6)
+  sentAt    DateTime?           @map("sent_at") @db.Timestamptz(6)
+
+  createdAt DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user      User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
+}
+
+//
+// ============================================================
+// AUDIT
+// ============================================================
+//
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+
+  userId     String?  @map("user_id") @db.Uuid
+
+  action     String   @db.VarChar(100)
+
+  entityType String?  @map("entity_type") @db.VarChar(100)
+  entityId   String?  @map("entity_id") @db.Uuid
+
+  oldData    Json?    @map("old_data")
+  newData    Json?    @map("new_data")
+
+  ipAddress  String?  @map("ip_address") @db.Inet
+  userAgent  String?  @map("user_agent")
+
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([userId, createdAt])
+  @@map("audit_logs")
+}
+
+//
+// ============================================================
+// SUPPORT
+// ============================================================
+//
+
+model SupportTicket {
+  id          String         @id @default(uuid()) @db.Uuid
+
+  userId      String         @map("user_id") @db.Uuid
+
+  subject     String         @db.VarChar(200)
+  description String
+
+  status      TicketStatus   @default(OPEN)
+  priority    TicketPriority @default(NORMAL)
+
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  resolvedAt  DateTime?      @map("resolved_at") @db.Timestamptz(6)
+
+  user        User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status])
+  @@index([status, priority])
+  @@map("support_tickets")
+}
