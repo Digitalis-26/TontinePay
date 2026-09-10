@@ -73,8 +73,12 @@ export function ManagerDashboard({
   const [newPeriodicity, setNewPeriodicity] = useState<'MONTHLY' | 'WEEKLY'>('MONTHLY');
   const [newCommissionRate, setNewCommissionRate] = useState(effectiveMaxRate);
 
-  // Filter manager's tontines
-  const myTontines = tontines.filter((t) => t.managerId === manager.id);
+  // Filter manager's tontines: created vs joined
+  const myManagedTontines = tontines.filter((t) => t.managerId === manager.id);
+  const myJoinedTontines = tontines.filter(
+    (t) => t.managerId !== manager.id && t.members.some((m) => m.userId === manager.id)
+  );
+  const myTontines = myManagedTontines;
   const myWalletTransactions = walletTransactions.filter((tx) => tx.managerId === manager.id);
 
   // Computed metrics
@@ -572,6 +576,61 @@ export function ManagerDashboard({
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Tontines where this manager is a participant (joined) */}
+        {myJoinedTontines.length > 0 && (
+          <div className="pt-6 border-t border-stone-200/80 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-stone-900">
+                  Tontines où vous cotisez comme membre ({myJoinedTontines.length})
+                </h3>
+                <p className="text-xs text-stone-500">
+                  Tontines créées par d'autres gestionnaires auxquelles vous avez adhéré.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {myJoinedTontines.map((tontine) => {
+                const myPart = tontine.members.find((m) => m.userId === manager.id);
+                const isTurnBeneficiary = myPart?.turnNumber === tontine.currentRound;
+                return (
+                  <div
+                    key={tontine.id}
+                    className="p-4 rounded-xl border border-stone-200 bg-stone-50/60 space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h4 className="font-bold text-stone-900 text-sm">{tontine.name}</h4>
+                        <p className="text-xs text-stone-500">
+                          Gérée par {tontine.managerName} • Code : <span className="font-mono font-bold text-stone-700">{tontine.code}</span>
+                        </p>
+                      </div>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-stone-200 text-stone-700 font-mono">
+                        Tour {tontine.currentRound}/{tontine.totalRounds}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs pt-2 border-t border-stone-200/60">
+                      <span className="text-stone-600">Cotisation : <strong>{formatXOF(tontine.contributionAmount)}</strong></span>
+                      <span className="text-stone-600">Votre tour : <strong>#{myPart?.turnNumber}</strong></span>
+                      {myPart?.hasPaidCurrentRound ? (
+                        <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full text-[10px]">
+                          Cotisation à jour
+                        </span>
+                      ) : (
+                        <span className="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-full text-[10px]">
+                          À régler
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

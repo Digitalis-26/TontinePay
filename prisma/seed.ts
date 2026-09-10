@@ -20,7 +20,7 @@ export const SUBSCRIPTION_PLANS_SEED = [
   {
     code: 'STARTER',
     name: 'Plan Starter',
-    monthlyPrice: 5000n, // 5 000 XOF
+    monthlyPrice: 2500n, // 2 500 XOF
     maxTontines: 5,
     maxMembers: 50,
     commissionEnabled: true,
@@ -30,7 +30,7 @@ export const SUBSCRIPTION_PLANS_SEED = [
   {
     code: 'PREMIUM',
     name: 'Plan Premium',
-    monthlyPrice: 10000n, // 10 000 XOF
+    monthlyPrice: 5000n, // 5 000 XOF
     maxTontines: 20,
     maxMembers: 200,
     commissionEnabled: true,
@@ -40,7 +40,7 @@ export const SUBSCRIPTION_PLANS_SEED = [
   {
     code: 'BUSINESS',
     name: 'Plan Business',
-    monthlyPrice: 15000n, // 15 000 XOF
+    monthlyPrice: 10000n, // 10 000 XOF
     maxTontines: null, // Illimité
     maxMembers: null, // Illimité
     commissionEnabled: true,

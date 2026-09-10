@@ -16,6 +16,11 @@ import {
   ChevronDown,
   ArrowRightLeft,
   Sparkles,
+  ShieldCheck,
+  Lock,
+  LogOut,
+  EyeOff,
+  UserCheck,
 } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -23,6 +28,7 @@ interface DashboardViewProps {
   connectedUser: RegisteredUser | null;
   onSelectConnectedUser: (user: RegisteredUser) => void;
   tontines: TontineRecord[];
+  allTontinesCount?: number;
   payments: MemberContributionPayment[];
   walletTransactions: ManagerWalletTransaction[];
   currentRates: Record<PlanConfig['code'], number>;
@@ -41,6 +47,7 @@ export function DashboardView({
   connectedUser,
   onSelectConnectedUser,
   tontines,
+  allTontinesCount,
   payments,
   walletTransactions,
   currentRates,
@@ -60,22 +67,22 @@ export function DashboardView({
     return (
       <div className="bg-white rounded-3xl border border-stone-200 p-8 sm:p-12 text-center max-w-xl mx-auto space-y-5 shadow-sm">
         <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600 mx-auto">
-          <User className="w-8 h-8" />
+          <Lock className="w-8 h-8" />
         </div>
         <div className="space-y-2">
           <h2 className="text-xl font-bold text-stone-900">
-            Session déconnectée
+            Accès Sécurisé & Données Protégées
           </h2>
           <p className="text-xs sm:text-sm text-stone-500 max-w-md mx-auto leading-relaxed">
-            Veuillez vous connecter avec vos identifiants ou sélectionner un compte de test
-            pour accéder à votre tableau de bord de tontine personnalisé.
+            Seul le gestionnaire ou membre connecté a accès exclusivement à ses propres tontines
+            (créées ou rejointes). Veuillez vous connecter pour accéder à votre espace sécurisé.
           </p>
         </div>
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
           {onNavigateToLogin && (
             <button
               onClick={onNavigateToLogin}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-stone-950 transition-colors shadow-xs"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-stone-950 transition-colors shadow-sm"
             >
               Aller à la page de Connexion
             </button>
@@ -85,7 +92,7 @@ export function DashboardView({
               onClick={() => onSelectConnectedUser(managers[0])}
               className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold bg-stone-900 hover:bg-stone-800 text-amber-400 border border-stone-800 transition-colors"
             >
-              Connexion rapide (Awa Diop)
+              Tester avec Awa Diop (Gestionnaire)
             </button>
           )}
         </div>
@@ -95,97 +102,143 @@ export function DashboardView({
 
   const isManager = connectedUser.role === 'MANAGER';
 
-  const handleRoleToggle = (targetRole: 'MANAGER' | 'MEMBER') => {
-    if (connectedUser.role === targetRole) return;
-    if (targetRole === 'MANAGER' && managers.length > 0) {
-      onSelectConnectedUser(managers[0]);
-    } else if (targetRole === 'MEMBER' && members.length > 0) {
-      onSelectConnectedUser(members[0]);
-    }
-  };
+  // Isolation stricte : Un utilisateur n'a accès qu'aux tontines créées OU rejointes par son compte
+  const accessibleTontines = tontines.filter(
+    (t) => t.managerId === connectedUser.id || t.members.some((m) => m.userId === connectedUser.id)
+  );
+
+  const createdCount = accessibleTontines.filter((t) => t.managerId === connectedUser.id).length;
+  const joinedCount = accessibleTontines.filter(
+    (t) => t.managerId !== connectedUser.id && t.members.some((m) => m.userId === connectedUser.id)
+  ).length;
+
+  const totalSystemTontines = allTontinesCount ?? tontines.length;
+  const hiddenTontinesCount = Math.max(0, totalSystemTontines - accessibleTontines.length);
 
   return (
     <div className="space-y-6">
-      {/* Universal Connected User Switcher Bar */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Left: Role Switcher buttons */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold text-stone-500 shrink-0">
-            Session active :
-          </span>
-          <div className="inline-flex p-1 bg-stone-100 rounded-xl border border-stone-200 text-xs">
-            <button
-              onClick={() => handleRoleToggle('MANAGER')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold transition-all ${
-                isManager
-                  ? 'bg-stone-900 text-amber-400 shadow-xs'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              <Briefcase className="w-3.5 h-3.5" />
-              Espace Gestionnaire
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-stone-800 text-amber-300 font-mono">
-                {managers.length}
+      {/* Session Header with Strict Security & Isolation Notice */}
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+        {/* Security badge top bar */}
+        <div className="px-5 py-2 bg-stone-900 text-white flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span className="font-bold text-stone-100">Confidentialité & Accès Cloisonné</span>
+            <span className="hidden sm:inline text-stone-400">•</span>
+            <span className="text-stone-300 text-[11px] hidden sm:inline">
+              Accès strictement limité aux tontines créées ou rejointes par ce compte
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 text-[11px] font-mono">
+            <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              {accessibleTontines.length} tontine(s) visible(s)
+            </span>
+            {hiddenTontinesCount > 0 && (
+              <span className="px-2 py-0.5 rounded bg-stone-800 text-stone-400 border border-stone-700 flex items-center gap-1">
+                <EyeOff className="w-3 h-3 text-stone-500" />
+                {hiddenTontinesCount} autre(s) tontine(s) masquée(s)
               </span>
-            </button>
-            <button
-              onClick={() => handleRoleToggle('MEMBER')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold transition-all ${
-                !isManager
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              <User className="w-3.5 h-3.5" />
-              Espace Membre Cotisant
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-800 text-white font-mono">
-                {members.length}
-              </span>
-            </button>
+            )}
           </div>
         </div>
 
-        {/* Right: Quick User Switcher Dropdown */}
-        <div className="flex items-center gap-3">
-          <label className="text-xs font-medium text-stone-500 whitespace-nowrap">
-            Changer d'utilisateur :
-          </label>
-          <div className="relative flex-1 sm:w-72">
-            <select
-              value={connectedUser.id}
-              onChange={(e) => {
-                const target = users.find((u) => u.id === e.target.value);
-                if (target) onSelectConnectedUser(target);
-              }}
-              className="w-full pl-3 pr-8 py-2 rounded-xl border border-stone-300 bg-white text-xs font-semibold text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 truncate"
+        {/* User Identity & Switcher bar */}
+        <div className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* User profile details */}
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 shadow-xs ${
+                isManager
+                  ? 'bg-amber-500 text-stone-950 border border-amber-600'
+                  : 'bg-emerald-600 text-white border border-emerald-700'
+              }`}
             >
-              {isManager ? (
-                <optgroup label="Gestionnaires (Managers)">
-                  {managers.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.firstName} {m.lastName} • {m.managerDetails?.businessName || 'Gérant'} (
-                      {m.managerDetails?.planCode})
-                    </option>
-                  ))}
-                </optgroup>
-              ) : (
-                <optgroup label="Membres Cotisants">
-                  {members.map((mbr) => (
-                    <option key={mbr.id} value={mbr.id}>
-                      {mbr.firstName} {mbr.lastName} • {mbr.city} ({mbr.memberDetails?.paymentMethod})
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-            </select>
+              {connectedUser.firstName.charAt(0)}
+              {connectedUser.lastName.charAt(0)}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm sm:text-base font-bold text-stone-900">
+                  {connectedUser.firstName} {connectedUser.lastName}
+                </h2>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    isManager
+                      ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                      : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                  }`}
+                >
+                  {isManager ? 'Gestionnaire' : 'Membre Cotisant'}
+                </span>
+                {isManager && connectedUser.managerDetails?.planCode && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-stone-100 text-stone-700">
+                    Plan {connectedUser.managerDetails.planCode}
+                  </span>
+                )}
+              </div>
+
+              <div className="text-xs text-stone-500 flex flex-wrap items-center gap-2 mt-0.5">
+                <span>{connectedUser.countryName} ({connectedUser.city})</span>
+                <span>•</span>
+                <span className="font-mono">{connectedUser.phone}</span>
+                <span>•</span>
+                <span className="text-stone-700 font-medium">
+                  {createdCount > 0 && `${createdCount} créée(s)`}
+                  {createdCount > 0 && joinedCount > 0 && ' • '}
+                  {joinedCount > 0 && `${joinedCount} rejointe(s)`}
+                  {createdCount === 0 && joinedCount === 0 && '0 tontine active'}
+                </span>
+              </div>
+            </div>
           </div>
 
-          <button
-            onClick={onNavigateToRegister}
-            className="text-xs font-semibold text-stone-600 hover:text-stone-900 hover:underline shrink-0 hidden lg:inline-block"
-          >
-            + Inscrire un autre
-          </button>
+          {/* Test switch or disconnect */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-stone-500 whitespace-nowrap hidden sm:inline">
+                Changer de profil (Test) :
+              </label>
+              <div className="relative w-full sm:w-64">
+                <select
+                  value={connectedUser.id}
+                  onChange={(e) => {
+                    const target = users.find((u) => u.id === e.target.value);
+                    if (target) onSelectConnectedUser(target);
+                  }}
+                  className="w-full pl-3 pr-8 py-2 rounded-xl border border-stone-300 bg-white text-xs font-semibold text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 truncate"
+                  title="Changer de compte pour vérifier que chaque utilisateur n'a accès qu'à ses propres tontines"
+                >
+                  <optgroup label="Gestionnaires (Accès exclusif à leurs tontines)">
+                    {managers.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.firstName} {m.lastName} • {m.managerDetails?.businessName || 'Gérant'} ({m.managerDetails?.planCode})
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Membres Cotisants (Accès exclusif à leurs adhésions)">
+                    {members.map((mbr) => (
+                      <option key={mbr.id} value={mbr.id}>
+                        {mbr.firstName} {mbr.lastName} • {mbr.city} ({mbr.memberDetails?.paymentMethod})
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+
+            {onNavigateToLogin && (
+              <button
+                onClick={onNavigateToLogin}
+                className="px-3 py-2 rounded-xl border border-stone-300 hover:border-red-300 hover:bg-red-50 text-stone-600 hover:text-red-700 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                title="Se déconnecter de ce compte"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Déconnexion</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -193,7 +246,7 @@ export function DashboardView({
       {isManager ? (
         <ManagerDashboard
           manager={connectedUser}
-          tontines={tontines}
+          tontines={accessibleTontines}
           walletTransactions={walletTransactions}
           currentRates={currentRates}
           onWithdraw={onWithdraw}
@@ -204,7 +257,7 @@ export function DashboardView({
       ) : (
         <MemberDashboard
           member={connectedUser}
-          tontines={tontines}
+          tontines={accessibleTontines}
           payments={payments}
           onPayContribution={onPayContribution}
           onJoinTontineWithCode={onJoinTontineWithCode}
@@ -213,3 +266,4 @@ export function DashboardView({
     </div>
   );
 }
+

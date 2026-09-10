@@ -60,9 +60,9 @@ export function MemberDashboard({
   // Prisma Inspector
   const [showPrismaQuery, setShowPrismaQuery] = useState(false);
 
-  // Filter tontines where this member participates
+  // Filter tontines where this member participates OR created
   const myParticipations = tontines.filter((t) =>
-    t.members.some((m) => m.userId === member.id)
+    t.members.some((m) => m.userId === member.id) || t.managerId === member.id
   );
 
   // Member's payment history

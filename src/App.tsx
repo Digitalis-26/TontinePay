@@ -14,6 +14,8 @@ import {
   INITIAL_TONTINES,
   INITIAL_CONTRIBUTION_PAYMENTS,
   INITIAL_WALLET_TRANSACTIONS,
+  getUserAccessibleTontines,
+  canUserAccessTontine,
 } from './data/tontines';
 import {
   PlanConfig,
@@ -208,8 +210,20 @@ export default function App() {
 
   // Manager: Payout round to beneficiary and collect commission
   const handlePayoutBeneficiary = (tontineId: string, roundNumber: number) => {
+    if (!connectedUser) {
+      showToast('Veuillez vous connecter pour verser une cagnotte.');
+      setActiveTab('login');
+      return;
+    }
+
     const tontine = tontines.find((t) => t.id === tontineId);
     if (!tontine) return;
+
+    // Strict access check: only the manager of this tontine can payout
+    if (tontine.managerId !== connectedUser.id) {
+      showToast('Accès refusé : Seul le gestionnaire créateur de cette tontine peut verser la cagnotte.');
+      return;
+    }
 
     const potAmount = tontine.contributionAmount * tontine.members.length;
     const commission = Math.round(potAmount * tontine.commissionRate);
@@ -284,6 +298,14 @@ export default function App() {
 
     const tontine = tontines.find((t) => t.id === tontineId);
     if (!tontine) return;
+
+    // Strict access check: only a participant or creator can contribute
+    const isAuthorized =
+      tontine.members.some((m) => m.userId === connectedUser.id) || tontine.managerId === connectedUser.id;
+    if (!isAuthorized) {
+      showToast("Accès refusé : Vous ne faites pas partie de cette tontine.");
+      return;
+    }
 
     const roundNumber = tontine.currentRound;
     const validMethod = (['WAVE', 'ORANGE_MONEY', 'MTN_MOMO', 'MOOV_MONEY', 'CASH'].includes(paymentMethod)
@@ -635,7 +657,8 @@ export default function App() {
             users={users}
             connectedUser={connectedUser}
             onSelectConnectedUser={(u) => setConnectedUser(u)}
-            tontines={tontines}
+            tontines={connectedUser ? getUserAccessibleTontines(tontines, connectedUser.id) : []}
+            allTontinesCount={tontines.length}
             payments={payments}
             walletTransactions={walletTransactions}
             currentRates={rates}

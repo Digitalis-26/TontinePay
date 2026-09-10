@@ -12,7 +12,7 @@ export function SchemaViewer() {
         { name: 'id', type: 'Int', desc: 'Identifiant auto-incrémenté' },
         { name: 'code', type: 'String @unique', desc: 'FREE, STARTER, PREMIUM, BUSINESS' },
         { name: 'name', type: 'String', desc: 'Intitulé affiché du plan' },
-        { name: 'monthlyPrice', type: 'BigInt', desc: 'Prix mensuel en XOF (0, 5000, 10000, 15000)' },
+        { name: 'monthlyPrice', type: 'BigInt', desc: 'Prix mensuel en XOF (0, 2500, 5000, 10000)' },
         { name: 'maxCommissionRate', type: 'Decimal(5, 4)', desc: 'Taux max : 0.0150 (1,5%), 0.0250 (2,5%), 0.0300 (3,0%), 0.0350 (3,5%)' },
         { name: 'commissionEnabled', type: 'Boolean', desc: 'Défini à true pour autoriser les commissions' },
         { name: 'maxTontines', type: 'Int?', desc: '1, 5, 20 ou null (illimité)' },

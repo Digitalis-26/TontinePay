@@ -606,3 +606,22 @@ export const INITIAL_MANAGER_WALLET_TRANSACTIONS: ManagerWalletTransaction[] = [
 ];
 
 export const INITIAL_WALLET_TRANSACTIONS = INITIAL_MANAGER_WALLET_TRANSACTIONS;
+
+/**
+ * Filtre sécurisé : un utilisateur (gestionnaire ou membre) a EXCLUSIVEMENT accès
+ * aux tontines qu'il a créées (managerId === userId) OU auxquelles il a adhéré (members.userId === userId).
+ */
+export function getUserAccessibleTontines(tontines: TontineRecord[], userId: string): TontineRecord[] {
+  if (!userId) return [];
+  return tontines.filter(
+    (t) => t.managerId === userId || t.members.some((m) => m.userId === userId)
+  );
+}
+
+/**
+ * Vérifie si un utilisateur a le droit d'accéder à une tontine spécifique.
+ */
+export function canUserAccessTontine(tontine: TontineRecord, userId: string): boolean {
+  if (!userId || !tontine) return false;
+  return tontine.managerId === userId || tontine.members.some((m) => m.userId === userId);
+}
