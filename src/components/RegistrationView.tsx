@@ -937,6 +937,10 @@ const newMember = await prisma.$transaction(async (tx) => {
                           <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
                           <span>Interdiction formelle de spéculation ou d'utilisation personnelle des fonds. Enregistrement systématique au Grand Livre d'audit.</span>
                         </li>
+                        <li className="flex items-start gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                          <span><strong>Liberté de participation</strong> : vous n'êtes pas tenu de cotiser ni de participer aux cagnottes pour créer et administrer vos cercles.</span>
+                        </li>
                       </>
                     ) : (
                       <>

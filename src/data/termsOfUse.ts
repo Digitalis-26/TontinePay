@@ -72,6 +72,16 @@ export const TERMS_SECTIONS: TermsSection[] = [
         title: 'Vérification et Modération des Membres',
         content: "Le Gestionnaire est tenu d'exercer une diligence raisonnable en vérifiant l'identité et les coordonnées des participants qu'il admet dans son groupe, veillant à ce que chaque membre dispose d'un moyen de paiement actif et vérifié.",
       },
+      {
+        num: 'Article 2.5',
+        title: 'Faculté de Non-Participation du Gestionnaire aux Cagnottes et Cotisations',
+        content: "Le Gestionnaire n'est pas tenu de participer à la tontine en tant que cotisant. Il a la faculté absolue de créer, configurer et administrer la tontine à titre de superviseur indépendant sans être tenu de cotiser ni de percevoir de cagnotte. Son rôle consiste alors à garantir la ponctualité des tours, ordonner le versement net aux membres bénéficiaires et percevoir sa commission réglementée. S'il choisit volontairement de participer en qualité de membre cotisant, il est assujetti aux mêmes devoirs de paiement régulier que tout autre participant.",
+        bulletPoints: [
+          "Le Gestionnaire peut administrer une ou plusieurs tontines sans aucune obligation d'y cotiser.",
+          "Les cagnottes sont réservées aux membres cotisants du groupe.",
+          "La commission du Gestionnaire est automatiquement calculée et prélevée sur le total collecté lors de chaque tour, que le gestionnaire participe ou non comme cotisant.",
+        ],
+      },
     ],
   },
   {

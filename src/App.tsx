@@ -264,6 +264,12 @@ export default function App() {
       return;
     }
 
+    const currentBeneficiary = tontine.members.find((m) => m.turnNumber === roundNumber);
+    if (!currentBeneficiary) {
+      showToast(`Aucun membre cotisant n'est encore assigné au Tour #${roundNumber}. Le gestionnaire n'intervient pas dans les cagnottes : seul un membre cotisant participant peut la percevoir.`);
+      return;
+    }
+
     const potAmount = tontine.contributionAmount * tontine.members.length;
     const commission = Math.round(potAmount * tontine.commissionRate);
     const netPayout = potAmount - commission;
@@ -335,10 +341,13 @@ export default function App() {
     const tontine = tontines.find((t) => t.id === tontineId);
     if (!tontine) return;
 
-    const isAuthorized =
-      tontine.members.some((m) => m.userId === connectedUser.id) || tontine.managerId === connectedUser.id;
-    if (!isAuthorized) {
-      showToast("Accès refusé : Vous ne faites pas partie de cette tontine.");
+    const isEnrolledMember = tontine.members.some((m) => m.userId === connectedUser.id);
+    if (!isEnrolledMember) {
+      if (tontine.managerId === connectedUser.id) {
+        showToast("En tant que gestionnaire non-participant de cette tontine, vous n'êtes pas tenu de cotiser. Seuls les membres cotisants enregistrés effectuent des versements.");
+        return;
+      }
+      showToast("Accès refusé : Vous ne faites pas partie des cotisants de cette tontine.");
       return;
     }
 

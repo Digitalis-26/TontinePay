@@ -26,6 +26,7 @@ import {
   Filter,
   Code2,
   Gift,
+  Info,
 } from 'lucide-react';
 
 interface ManagerDashboardProps {
@@ -78,6 +79,11 @@ export function ManagerDashboard({
   const [newPeriodicity, setNewPeriodicity] = useState<'MONTHLY' | 'WEEKLY'>('MONTHLY');
   const [newCommissionRate, setNewCommissionRate] = useState(effectiveMaxRate);
 
+  // Le manager n'est pas tenu de participer aux cagnottes (défaut : false)
+  const [managerParticipates, setManagerParticipates] = useState(false);
+  const [managerPreferredTurn, setManagerPreferredTurn] = useState(1);
+  const [seedDemoMembers, setSeedDemoMembers] = useState(true);
+
   // Filter manager's tontines: created vs joined
   const myManagedTontines = tontines.filter((t) => t.managerId === manager.id);
   const myJoinedTontines = tontines.filter(
@@ -123,6 +129,52 @@ export function ManagerDashboard({
     if (!newTontineName.trim()) return;
 
     const code = `TNT-${newTontineName.slice(0, 3).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const initialMembers: TontineRecord['members'] = [];
+
+    // Le manager n'est PAS tenu de participer à la tontine.
+    // Il participe UNIQUEMENT s'il coche explicitement l'option "Participer également en tant que membre cotisant".
+    if (managerParticipates) {
+      initialMembers.push({
+        id: `tm-mgr-${Date.now()}`,
+        userId: manager.id,
+        name: `${manager.firstName} ${manager.lastName}`,
+        phone: manager.phone,
+        turnNumber: managerPreferredTurn || 1,
+        hasPaidCurrentRound: true,
+        isCurrentBeneficiary: (managerPreferredTurn || 1) === 1,
+        paymentMethod: managerDetails?.payoutProvider || 'WAVE',
+      });
+    }
+
+    // Amorçage optionnel avec membres de test de la communauté pour animer la rotation
+    if (seedDemoMembers) {
+      const communityMembers = [
+        { name: 'Kadiatou Diallo', phone: '+221 78 456 78 90', method: 'ORANGE_MONEY' },
+        { name: 'Ousmane Fall', phone: '+221 77 123 45 67', method: 'WAVE' },
+        { name: 'Aminata Sanogo', phone: '+223 76 54 32 10', method: 'MTN_MOMO' },
+      ];
+
+      communityMembers.forEach((cand, idx) => {
+        let turn = idx + 1;
+        if (managerParticipates && turn === managerPreferredTurn) {
+          turn = idx + 2;
+        }
+        if (turn <= newTotalRounds) {
+          initialMembers.push({
+            id: `tm-demo-${Date.now()}-${idx}`,
+            userId: `usr-demo-${idx + 10}`,
+            name: cand.name,
+            phone: cand.phone,
+            turnNumber: turn,
+            hasPaidCurrentRound: true,
+            isCurrentBeneficiary: turn === 1 && (!managerParticipates || managerPreferredTurn !== 1),
+            paymentMethod: cand.method,
+          });
+        }
+      });
+    }
+
     const newTontine: Omit<TontineRecord, 'id'> = {
       code,
       name: newTontineName.trim(),
@@ -136,23 +188,14 @@ export function ManagerDashboard({
       status: 'ACTIVE',
       startDate: new Date().toISOString().split('T')[0],
       nextDueDate: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().split('T')[0],
-      members: [
-        {
-          id: `tm-lead-${Date.now()}`,
-          userId: manager.id,
-          name: `${manager.firstName} ${manager.lastName}`,
-          phone: manager.phone,
-          turnNumber: 1,
-          hasPaidCurrentRound: true,
-          isCurrentBeneficiary: true,
-          paymentMethod: managerDetails?.payoutProvider || 'WAVE',
-        },
-      ],
+      managerParticipatesAsMember: managerParticipates,
+      members: initialMembers,
     };
 
     onCreateTontine(newTontine);
     setShowCreateModal(false);
     setNewTontineName('');
+    setManagerParticipates(false);
   };
 
   return (
@@ -360,6 +403,8 @@ export function ManagerDashboard({
           <div className="space-y-4">
             {myTontines.map((tontine) => {
               const isExpanded = expandedTontineId === tontine.id;
+              const isManagerParticipating = tontine.members.some((m) => m.userId === manager.id);
+              const managerTurn = tontine.members.find((m) => m.userId === manager.id)?.turnNumber;
               const grossTurnAmount = tontine.contributionAmount * tontine.members.length;
               const commissionTurnAmount = grossTurnAmount * tontine.commissionRate;
               const netBeneficiaryPayout = grossTurnAmount - commissionTurnAmount;
@@ -379,6 +424,20 @@ export function ManagerDashboard({
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           {tontine.status}
                         </span>
+
+                        {/* Rôle du Manager dans cette Tontine */}
+                        {isManagerParticipating ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            Gestionnaire & Cotisant (Tour #{managerTurn})
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1" title="Le manager est superviseur et perçoit sa commission sans obligation de cotiser">
+                            <ShieldCheck className="w-3 h-3 text-amber-600" />
+                            Superviseur uniquement (Non-cotisant)
+                          </span>
+                        )}
+
                         <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-stone-100 text-stone-700 text-[11px] font-mono">
                           <span>Code : {tontine.code}</span>
                           <button
@@ -473,21 +532,49 @@ export function ManagerDashboard({
                           Bénéficiaire du Tour {tontine.currentRound}
                         </span>
                         <span className="text-xs font-bold text-stone-900">
-                          {currentBeneficiary ? currentBeneficiary.name : 'Attribué'}
+                          {currentBeneficiary ? (
+                            <span className="text-emerald-800 flex items-center gap-1 justify-end">
+                              <span>{currentBeneficiary.name}</span>
+                              {currentBeneficiary.userId === manager.id ? (
+                                <span className="text-[10px] px-1.5 py-0.2 bg-purple-100 text-purple-700 rounded-md font-semibold">
+                                  (Vous)
+                                </span>
+                              ) : (
+                                <span className="text-[10px] px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded-md font-semibold">
+                                  (Membre)
+                                </span>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="text-stone-400 italic text-[11px]">
+                              Tour libre (en attente d'adhésion)
+                            </span>
+                          )}
                         </span>
                       </div>
 
-                      <button
-                        onClick={() => onPayoutBeneficiary(tontine.id, tontine.currentRound)}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-sm"
-                      >
-                        <Send className="w-3 h-3" />
-                        Verser la cagnotte ({formatXOF(netBeneficiaryPayout)})
-                      </button>
+                      {currentBeneficiary ? (
+                        <button
+                          onClick={() => onPayoutBeneficiary(tontine.id, tontine.currentRound)}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                        >
+                          <Send className="w-3 h-3" />
+                          Verser la cagnotte ({formatXOF(netBeneficiaryPayout)})
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          className="px-3 py-1.5 rounded-lg bg-stone-200 text-stone-400 font-bold text-xs flex items-center gap-1.5 cursor-not-allowed opacity-80"
+                          title="Le gestionnaire ne perçoit pas la cagnotte. Un membre cotisant doit occuper ce tour."
+                        >
+                          <Clock className="w-3 h-3" />
+                          En attente de bénéficiaire
+                        </button>
+                      )}
 
                       <button
                         onClick={() => setExpandedTontineId(isExpanded ? null : tontine.id)}
-                        className="p-1.5 rounded-lg text-stone-500 hover:text-stone-900 hover:bg-stone-200/60 transition-colors"
+                        className="p-1.5 rounded-lg text-stone-500 hover:text-stone-900 hover:bg-stone-200/60 transition-colors cursor-pointer"
                       >
                         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </button>
@@ -497,6 +584,15 @@ export function ManagerDashboard({
                   {/* Expandable Member List */}
                   {isExpanded && (
                     <div className="p-5 sm:p-6 bg-white space-y-4">
+                      {!isManagerParticipating && (
+                        <div className="p-3.5 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs flex items-start gap-2.5 text-amber-950">
+                          <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                          <div className="leading-relaxed">
+                            <strong className="font-bold text-stone-900">Régime de Gestionnaire Non-Cotisant :</strong> En tant que manager, vous n'êtes <strong>pas tenu de participer aux cagnottes</strong>. Vous supervisez la discipline financière, approuvez les versements des membres listés ci-dessous et prélevez automatiquement votre commission réglementée de {formatPercent(tontine.commissionRate)} à chaque tour versé.
+                          </div>
+                        </div>
+                      )}
+
                       <div className="space-y-2">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2">
                           <div className="font-bold text-stone-800 flex items-center gap-2">
@@ -580,7 +676,14 @@ export function ManagerDashboard({
                                     </button>
                                   </td>
                                   <td className="py-2.5 px-3">
-                                    <span className="font-semibold text-stone-900">{member.name}</span>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-semibold text-stone-900">{member.name}</span>
+                                      {member.userId === manager.id && (
+                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                                          Vous (Cotisant)
+                                        </span>
+                                      )}
+                                    </div>
                                   </td>
                                   <td className="py-2.5 px-3 font-mono text-stone-600">{member.phone}</td>
                                   <td className="py-2.5 px-3">
@@ -1000,6 +1103,111 @@ export function ManagerDashboard({
                 </div>
               </div>
 
+              {/* Choix du rôle du Gestionnaire dans la Tontine */}
+              <div className="space-y-2.5 p-3.5 rounded-xl bg-stone-50 border border-stone-200">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-amber-600" />
+                    Participation du Gestionnaire aux cagnottes
+                  </label>
+                  <span className="text-[10px] text-stone-500 font-medium">Optionnel</span>
+                </div>
+                <p className="text-[11px] text-stone-600 leading-snug">
+                  Le manager n'est <strong>pas tenu de participer</strong> à la tontine. Vous pouvez la créer et la piloter comme superviseur indépendant sans cotiser.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                  {/* Option A: Superviseur uniquement (défaut) */}
+                  <button
+                    type="button"
+                    onClick={() => setManagerParticipates(false)}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      !managerParticipates
+                        ? 'border-amber-500 bg-amber-50/80 ring-2 ring-amber-500/20'
+                        : 'border-stone-200 bg-white hover:bg-stone-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-stone-900 flex items-center gap-1">
+                        <Briefcase className="w-3.5 h-3.5 text-amber-700" />
+                        Superviseur uniquement
+                      </span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
+                        Recommandé
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-stone-600 mt-1 leading-snug">
+                      Vous ne cotisez pas et ne recevez pas de cagnotte. Vous prélevez votre commission de {formatPercent(newCommissionRate)} à chaque tour.
+                    </p>
+                  </button>
+
+                  {/* Option B: Participant cotisant */}
+                  <button
+                    type="button"
+                    onClick={() => setManagerParticipates(true)}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      managerParticipates
+                        ? 'border-amber-500 bg-amber-50/80 ring-2 ring-amber-500/20'
+                        : 'border-stone-200 bg-white hover:bg-stone-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-stone-900 flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5 text-purple-700" />
+                        Participer aussi
+                      </span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 font-medium">
+                        Double rôle
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-stone-600 mt-1 leading-snug">
+                      Vous cotisez à chaque tour et choisissez un numéro de tour pour percevoir vous-même une cagnotte nette.
+                    </p>
+                  </button>
+                </div>
+
+                {/* Si le manager participe : sélection du tour souhaité */}
+                {managerParticipates && (
+                  <div className="p-2.5 rounded-lg bg-white border border-stone-200 space-y-1.5 mt-2">
+                    <label className="text-[11px] font-semibold text-stone-700 flex items-center justify-between">
+                      <span>Votre tour de cagnotte souhaité :</span>
+                      <span className="font-mono text-xs font-bold text-amber-700">
+                        Tour #{managerPreferredTurn} sur {newTotalRounds}
+                      </span>
+                    </label>
+                    <select
+                      value={managerPreferredTurn}
+                      onChange={(e) => setManagerPreferredTurn(Number(e.target.value))}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    >
+                      {Array.from({ length: newTotalRounds }, (_, i) => i + 1).map((n) => (
+                        <option key={n} value={n}>
+                          Tour #{n} {n === 1 ? '(Bénéficiaire du 1er tour)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Option d'amorçage avec membres communautaires */}
+                <label className="flex items-start gap-2.5 pt-2 border-t border-stone-200/60 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={seedDemoMembers}
+                    onChange={(e) => setSeedDemoMembers(e.target.checked)}
+                    className="mt-0.5 rounded border-stone-300 text-amber-600 focus:ring-amber-500"
+                  />
+                  <div className="text-[11px]">
+                    <span className="font-semibold text-stone-800 block">
+                      Pré-inscrire 3 membres cotisants invités (Kadiatou, Ousmane, Aminata)
+                    </span>
+                    <span className="text-stone-500 block">
+                      Permet d'expérimenter immédiatement la rotation et les paiements sans attendre des inscriptions manuelles.
+                    </span>
+                  </div>
+                </label>
+              </div>
+
               {/* Live Preview of Economics */}
               <div className="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200/80 text-xs space-y-2">
                 <div className="font-bold text-amber-950">Aperçu financier par tour :</div>
@@ -1017,7 +1225,7 @@ export function ManagerDashboard({
                     </span>
                   </div>
                   <div>
-                    <span className="text-stone-500 block">Cagnotte Nette :</span>
+                    <span className="text-stone-500 block">Cagnotte Nette Bénéficiaire :</span>
                     <span className="font-bold text-emerald-800 font-mono">
                       {formatXOF(
                         newContributionAmount * newTotalRounds * (1 - newCommissionRate)

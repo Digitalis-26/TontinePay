@@ -129,6 +129,7 @@ export interface TontineRecord {
   status: 'ACTIVE' | 'DRAFT' | 'COMPLETED' | 'CANCELLED';
   startDate: string;
   nextDueDate: string;
+  managerParticipatesAsMember?: boolean;
   members: TontineMemberParticipation[];
 }
 
