@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { RegisteredUser, TontineRecord, MemberContributionPayment } from '../types';
 import { formatPercent, formatXOF } from '../data/plans';
+import { TurnSelectionModal } from './TurnSelectionModal';
 import {
   User,
   Wallet,
@@ -28,7 +29,8 @@ interface MemberDashboardProps {
   tontines: TontineRecord[];
   payments: MemberContributionPayment[];
   onPayContribution: (tontineId: string, amount: number, paymentMethod: string) => void;
-  onJoinTontineWithCode: (code: string) => boolean;
+  onJoinTontineWithCode: (code: string, preferredTurn?: number) => boolean;
+  onUpdateMemberTurn?: (tontineId: string, memberUserId: string, newTurnNumber: number) => void;
 }
 
 export function MemberDashboard({
@@ -37,12 +39,14 @@ export function MemberDashboard({
   payments,
   onPayContribution,
   onJoinTontineWithCode,
+  onUpdateMemberTurn,
 }: MemberDashboardProps) {
   const memberDetails = member.memberDetails;
   const defaultMethod = memberDetails?.paymentMethod || 'WAVE';
 
   // Modals
   const [selectedTontineToPay, setSelectedTontineToPay] = useState<TontineRecord | null>(null);
+  const [selectingTurnTontine, setSelectingTurnTontine] = useState<TontineRecord | null>(null);
   const [paymentProvider, setPaymentProvider] = useState(defaultMethod);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentReceipt, setPaymentReceipt] = useState<{
@@ -55,7 +59,13 @@ export function MemberDashboard({
   // Join Tontine by code
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [invitationCodeInput, setInvitationCodeInput] = useState('');
+  const [selectedTurnToJoin, setSelectedTurnToJoin] = useState<number | null>(null);
   const [joinFeedback, setJoinFeedback] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Preview matching tontine in real time
+  const matchedTontineForJoin = invitationCodeInput.trim()
+    ? tontines.find((t) => t.code.toUpperCase() === invitationCodeInput.trim().toUpperCase())
+    : null;
 
   // Prisma Inspector
   const [showPrismaQuery, setShowPrismaQuery] = useState(false);
@@ -113,7 +123,7 @@ export function MemberDashboard({
     const cleanCode = invitationCodeInput.trim().toUpperCase();
     if (!cleanCode) return;
 
-    const success = onJoinTontineWithCode(cleanCode);
+    const success = onJoinTontineWithCode(cleanCode, selectedTurnToJoin || undefined);
     if (success) {
       setJoinFeedback({
         success: true,
@@ -123,6 +133,7 @@ export function MemberDashboard({
         setShowJoinModal(false);
         setJoinFeedback(null);
         setInvitationCodeInput('');
+        setSelectedTurnToJoin(null);
       }, 1500);
     } else {
       setJoinFeedback({
@@ -383,7 +394,7 @@ export function MemberDashboard({
                       </div>
                       <div>
                         <span className="text-[10px] text-stone-500 block">Votre Tour</span>
-                        <span className="font-bold text-stone-900 font-mono">
+                        <span className="font-bold text-emerald-700 font-mono">
                           Tour #{myPart?.turnNumber}
                         </span>
                       </div>
@@ -393,6 +404,34 @@ export function MemberDashboard({
                           {tontine.currentRound} / {tontine.totalRounds}
                         </span>
                       </div>
+                    </div>
+
+                    {/* Interactive Pot Turn Selector Block */}
+                    <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-50/70 to-slate-50 border border-emerald-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-2xs">
+                          #{myPart?.turnNumber}
+                        </div>
+                        <div>
+                          <div className="text-[11px] text-emerald-900 font-semibold flex items-center gap-1">
+                            <Gift className="w-3.5 h-3.5 text-emerald-600" />
+                            Tour de cagnotte sélectionné
+                          </div>
+                          <div className="text-xs font-bold text-slate-900 mt-0.5">
+                            Tour #{myPart?.turnNumber} • <span className="text-emerald-700 font-mono">{formatXOF(netPayout)}</span> net
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setSelectingTurnTontine(tontine)}
+                        className="px-3.5 py-2 rounded-xl bg-white hover:bg-emerald-600 hover:text-white border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-2xs group"
+                        title="Choisir ou changer le tour auquel vous recevrez la totalité de la cagnotte"
+                      >
+                        <Calendar className="w-3.5 h-3.5 text-emerald-600 group-hover:text-white transition-colors" />
+                        <span>Choisir mon tour de cagnotte</span>
+                      </button>
                     </div>
 
                     {/* Progress Bar */}
@@ -807,27 +846,67 @@ export function MemberDashboard({
                   type="text"
                   required
                   value={invitationCodeInput}
-                  onChange={(e) => setInvitationCodeInput(e.target.value)}
+                  onChange={(e) => {
+                    setInvitationCodeInput(e.target.value);
+                    setSelectedTurnToJoin(null);
+                  }}
                   placeholder="Ex: TERANGA-2025, ADJAME-VIP, FASO-PROG-01..."
                   className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                 />
               </div>
 
-              <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 text-[11px] text-stone-600 space-y-1">
-                <p className="font-semibold text-stone-800">Codes disponibles pour essai direct :</p>
-                <div className="flex flex-wrap gap-1.5 font-mono">
-                  {['TERANGA-2025', 'ADJAME-VIP', 'FASO-PROG-01', 'COTONOU-FREE-01'].map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setInvitationCodeInput(c)}
-                      className="px-2 py-0.5 rounded bg-white hover:bg-emerald-50 border border-stone-200 text-[10px] text-stone-800"
-                    >
-                      {c}
-                    </button>
-                  ))}
+              {/* Real-time Tontine Preview & Pot Turn Selection */}
+              {matchedTontineForJoin && (
+                <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-2.5">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-emerald-950">{matchedTontineForJoin.name}</h4>
+                      <p className="text-[11px] text-emerald-800">
+                        Cotisation : <strong>{formatXOF(matchedTontineForJoin.contributionAmount)}</strong> • {matchedTontineForJoin.totalRounds} tours
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white font-mono shrink-0">
+                      Tontine trouvée
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 pt-1 border-t border-emerald-200/60">
+                    <label className="text-[11px] font-bold text-slate-800 flex items-center justify-between">
+                      <span>Choisir votre tour de cagnotte :</span>
+                      {selectedTurnToJoin && (
+                        <span className="text-emerald-700 font-mono font-bold">Tour #{selectedTurnToJoin} sélectionné</span>
+                      )}
+                    </label>
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 max-h-32 overflow-y-auto p-1">
+                      {Array.from({ length: matchedTontineForJoin.totalRounds }, (_, i) => i + 1).map((rn) => {
+                        const isTaken = matchedTontineForJoin.members.some((m) => m.turnNumber === rn);
+                        const isSelected = selectedTurnToJoin === rn;
+                        return (
+                          <button
+                            key={rn}
+                            type="button"
+                            disabled={isTaken}
+                            onClick={() => setSelectedTurnToJoin(rn)}
+                            className={`py-1 px-1.5 rounded-lg text-[10px] font-mono font-bold text-center border transition-all ${
+                              isSelected
+                                ? 'bg-emerald-600 text-white border-emerald-600 ring-2 ring-emerald-500/30 shadow-2xs'
+                                : isTaken
+                                ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                                : 'bg-white text-slate-800 border-slate-300 hover:border-emerald-400 hover:bg-emerald-50'
+                            }`}
+                            title={isTaken ? 'Tour déjà réservé' : `Tour #${rn} libre - Cliquez pour réserver`}
+                          >
+                            #{rn}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[10px] text-slate-500">
+                      Sélectionnez le tour auquel vous souhaitez encaisser la cagnotte.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="pt-2 flex items-center justify-end gap-3">
                 <button
@@ -848,6 +927,21 @@ export function MemberDashboard({
             </form>
           </div>
         </div>
+      )}
+
+      {/* MODAL: CHOIX DU TOUR DE CAGNOTTE */}
+      {selectingTurnTontine && (
+        <TurnSelectionModal
+          isOpen={Boolean(selectingTurnTontine)}
+          onClose={() => setSelectingTurnTontine(null)}
+          tontine={selectingTurnTontine}
+          currentUserId={member.id}
+          onConfirmTurn={(tontineId, newTurn) => {
+            if (onUpdateMemberTurn) {
+              onUpdateMemberTurn(tontineId, member.id, newTurn);
+            }
+          }}
+        />
       )}
     </div>
   );
