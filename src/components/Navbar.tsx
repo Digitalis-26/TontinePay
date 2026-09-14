@@ -34,7 +34,7 @@ export function Navbar({ activeTab, setActiveTab, registeredCount, connectedUser
             </button>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold tracking-tight text-white text-base">TontinePay</span>
+                <span className="font-bold tracking-tight text-white text-base">TONTINE</span>
                 <span className="text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   Épargne & Commissions
                 </span>

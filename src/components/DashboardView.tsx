@@ -83,18 +83,20 @@ export function DashboardView({
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
           {onNavigateToLogin && (
             <button
+              type="button"
               onClick={onNavigateToLogin}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-stone-950 transition-colors shadow-sm"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-stone-950 transition-colors shadow-sm cursor-pointer"
             >
-              Aller à la page de Connexion
+              Se connecter
             </button>
           )}
-          {managers[0] && (
+          {onNavigateToRegister && (
             <button
-              onClick={() => onSelectConnectedUser(managers[0])}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold bg-stone-900 hover:bg-stone-800 text-amber-400 border border-stone-800 transition-colors"
+              type="button"
+              onClick={onNavigateToRegister}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-semibold bg-stone-900 hover:bg-stone-800 text-white border border-stone-800 transition-colors cursor-pointer"
             >
-              Tester avec Awa Diop (Gestionnaire)
+              Créer un compte
             </button>
           )}
         </div>
@@ -196,48 +198,41 @@ export function DashboardView({
             </div>
           </div>
 
-          {/* Test switch or disconnect */}
+          {/* Session Switcher or Logout */}
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold text-stone-500 whitespace-nowrap hidden sm:inline">
-                Changer de profil (Test) :
-              </label>
-              <div className="relative w-full sm:w-64">
-                <select
-                  value={connectedUser.id}
-                  onChange={(e) => {
-                    const target = users.find((u) => u.id === e.target.value);
-                    if (target) onSelectConnectedUser(target);
-                  }}
-                  className="w-full pl-3 pr-8 py-2 rounded-xl border border-stone-300 bg-white text-xs font-semibold text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 truncate"
-                  title="Changer de compte pour vérifier que chaque utilisateur n'a accès qu'à ses propres tontines"
-                >
-                  <optgroup label="Gestionnaires (Accès exclusif à leurs tontines)">
-                    {managers.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.firstName} {m.lastName} • {m.managerDetails?.businessName || 'Gérant'} ({m.managerDetails?.planCode})
+            {users.length > 1 && (
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-semibold text-stone-500 whitespace-nowrap hidden sm:inline">
+                  Changer de compte :
+                </label>
+                <div className="relative w-full sm:w-56">
+                  <select
+                    value={connectedUser.id}
+                    onChange={(e) => {
+                      const target = users.find((u) => u.id === e.target.value);
+                      if (target) onSelectConnectedUser(target);
+                    }}
+                    className="w-full pl-3 pr-8 py-2 rounded-xl border border-stone-300 bg-white text-xs font-semibold text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 truncate cursor-pointer"
+                  >
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.firstName} {u.lastName} ({u.role === 'MANAGER' ? 'Manager' : 'Membre'})
                       </option>
                     ))}
-                  </optgroup>
-                  <optgroup label="Membres Cotisants (Accès exclusif à leurs adhésions)">
-                    {members.map((mbr) => (
-                      <option key={mbr.id} value={mbr.id}>
-                        {mbr.firstName} {mbr.lastName} • {mbr.city} ({mbr.memberDetails?.paymentMethod})
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
+                  </select>
+                </div>
               </div>
-            </div>
+            )}
 
             {onNavigateToLogin && (
               <button
+                type="button"
                 onClick={onNavigateToLogin}
-                className="px-3 py-2 rounded-xl border border-stone-300 hover:border-red-300 hover:bg-red-50 text-stone-600 hover:text-red-700 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                className="px-3 py-2 rounded-xl border border-stone-300 hover:border-red-300 hover:bg-red-50 text-stone-600 hover:text-red-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                 title="Se déconnecter de ce compte"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Déconnexion</span>
+                <span>Déconnexion</span>
               </button>
             )}
           </div>

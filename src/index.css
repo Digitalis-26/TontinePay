@@ -1,1 +1,19 @@
 @import "tailwindcss";
+
+@keyframes greenGradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-green-gradient {
+  background: linear-gradient(-45deg, #064e3b, #047857, #0f766e, #059669, #022c22, #065f46);
+  background-size: 300% 300%;
+  animation: greenGradientShift 10s ease infinite;
+}

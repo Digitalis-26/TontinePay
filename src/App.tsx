@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Navbar } from './components/Navbar';
 import { PlanCard } from './components/PlanCard';
 import { CommissionSimulator } from './components/CommissionSimulator';
 import { RegistrationView } from './components/RegistrationView';
@@ -25,15 +24,10 @@ import {
 import {
   Sparkles,
   ArrowRight,
-  ShieldCheck,
-  UserPlus,
   LayoutDashboard,
-  LogIn,
   Coins,
   PlusCircle,
-  Wallet,
   CheckCircle2,
-  Lock,
   ArrowUpRight,
   Users,
   CreditCard,
@@ -41,13 +35,48 @@ import {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'plans' | 'registration' | 'login'>('dashboard');
-  const [users, setUsers] = useState<RegisteredUser[]>(INITIAL_USERS);
-  const [connectedUser, setConnectedUser] = useState<RegisteredUser | null>(INITIAL_USERS[0]);
+  const [users, setUsers] = useState<RegisteredUser[]>(() => {
+    try {
+      const saved = localStorage.getItem('tontine_users');
+      return saved ? JSON.parse(saved) : INITIAL_USERS;
+    } catch {
+      return INITIAL_USERS;
+    }
+  });
+  const [connectedUser, setConnectedUser] = useState<RegisteredUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('tontine_connected_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [tontines, setTontines] = useState<TontineRecord[]>(INITIAL_TONTINES);
   const [payments, setPayments] = useState<MemberContributionPayment[]>(INITIAL_CONTRIBUTION_PAYMENTS);
   const [walletTransactions, setWalletTransactions] = useState<ManagerWalletTransaction[]>(
     INITIAL_WALLET_TRANSACTIONS
   );
+
+  // Synchronize users and connectedUser to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('tontine_users', JSON.stringify(users));
+    } catch (e) {
+      console.error('Failed to save users in localStorage', e);
+    }
+  }, [users]);
+
+  useEffect(() => {
+    try {
+      if (connectedUser) {
+        localStorage.setItem('tontine_connected_user', JSON.stringify(connectedUser));
+      } else {
+        localStorage.removeItem('tontine_connected_user');
+      }
+    } catch (e) {
+      console.error('Failed to sync session in localStorage', e);
+    }
+  }, [connectedUser]);
 
   // Official fixed rates:
   // Free: 1.5%
@@ -75,8 +104,9 @@ export default function App() {
   };
 
   const handleAddUser = (newUser: RegisteredUser) => {
-    setUsers((prev) => [newUser, ...prev]);
+    setUsers((prev) => [newUser, ...prev.filter((u) => u.id !== newUser.id)]);
     setConnectedUser(newUser);
+    setActiveTab('dashboard');
     showToast(
       newUser.role === 'MANAGER'
         ? `Nouveau gestionnaire "${newUser.firstName} ${newUser.lastName}" enregistré et connecté !`
@@ -97,6 +127,9 @@ export default function App() {
   const handleLogout = () => {
     const prevUser = connectedUser;
     setConnectedUser(null);
+    try {
+      localStorage.removeItem('tontine_connected_user');
+    } catch {}
     setActiveTab('login');
     showToast(
       prevUser
@@ -456,249 +489,208 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-emerald-100 selection:text-emerald-900">
-      {/* Top Navigation */}
-      <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        registeredCount={users.length}
-        connectedUser={connectedUser}
-        onLogout={handleLogout}
-      />
-
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* =========================================================================
-            HEADLINE CARD - Left-Anchored, Airy, High-Contrast & Animated
+            HEADLINE CARD - Left-Anchored, Airy, Animated Green Gradient Background
             ========================================================================= */}
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-gradient-to-br from-white via-slate-50 to-emerald-50/40 p-6 sm:p-10 shadow-xs">
-          {/* Subtle decorative glow */}
-          <div className="pointer-events-none absolute -top-24 -right-24 w-96 h-96 bg-emerald-100/40 rounded-full blur-3xl" />
+        <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 animated-green-gradient p-6 sm:p-10 shadow-lg text-white">
+          {/* Animated subtle floating glow shapes */}
+          <motion.div
+            animate={{
+              x: [0, 25, 0],
+              y: [0, -20, 0],
+              scale: [1, 1.15, 1],
+              opacity: [0.35, 0.6, 0.35],
+            }}
+            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+            className="pointer-events-none absolute -top-24 -right-24 w-96 h-96 bg-emerald-400/25 rounded-full blur-3xl"
+          />
+          <motion.div
+            animate={{
+              x: [0, -30, 0],
+              y: [0, 25, 0],
+              scale: [1, 1.2, 1],
+              opacity: [0.25, 0.5, 0.25],
+            }}
+            transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+            className="pointer-events-none absolute -bottom-24 -left-20 w-80 h-80 bg-teal-300/20 rounded-full blur-3xl"
+          />
+          <motion.div
+            animate={{
+              opacity: [0.15, 0.35, 0.15],
+              scale: [1, 1.1, 1],
+            }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+            className="pointer-events-none absolute top-1/2 left-1/3 w-64 h-64 bg-emerald-200/15 rounded-full blur-2xl"
+          />
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
-            {/* LEFT COLUMN: Clean, Left-Aligned Headline & Tâches Fortes */}
+            {/* LEFT COLUMN: Clean Headline with TONTINE in grand characters */}
             <motion.div
               initial={{ opacity: 0, x: -25 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, ease: 'easeOut' }}
-              className="lg:col-span-7 space-y-4 text-left"
+              className={connectedUser ? "lg:col-span-7 space-y-4 text-left" : "lg:col-span-12 space-y-4 text-left"}
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100/70 text-emerald-800 border border-emerald-300/60 text-xs font-bold">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-950/40 backdrop-blur-md text-emerald-200 border border-emerald-400/30 text-xs font-bold shadow-xs">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
                 <span>Plateforme Tontine Digitale & Commissions</span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 leading-tight">
-                Gérez vos tontines et commissions en toute simplicité.
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-tight text-white leading-none">
+                TONTINE
               </h1>
 
-              <p className="text-sm sm:text-base text-slate-600 max-w-xl leading-relaxed">
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-emerald-100/95 tracking-tight leading-snug">
+                Gérez vos tontines et commissions en toute simplicité.
+              </p>
+
+              <p className="text-sm sm:text-base text-emerald-100/80 max-w-2xl leading-relaxed">
                 Suivi transparent des tours, versements instantanés Mobile Money (Wave, Orange Money, MTN) et rétribution automatique des gestionnaires.
               </p>
 
-              {/* Tâches Fortes (Primary High-Impact Actions) */}
-              <div className="pt-2 flex flex-wrap items-center gap-3">
-                {connectedUser ? (
-                  <>
+              {/* Connected user quick shortcuts */}
+              {connectedUser && (
+                <div className="pt-2 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('dashboard')}
+                    className="px-5 py-3 rounded-xl text-xs sm:text-sm font-bold bg-white hover:bg-emerald-50 text-emerald-950 transition-all shadow-md hover:shadow-lg flex items-center gap-2 active:scale-95 cursor-pointer"
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-emerald-700" />
+                    <span>Ouvrir mon tableau de bord</span>
+                    <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                  </button>
+
+                  {isManager ? (
                     <button
+                      type="button"
                       onClick={() => setActiveTab('dashboard')}
-                      className="px-5 py-3 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-sm flex items-center gap-2 active:scale-95"
+                      className="px-4 py-3 rounded-xl text-xs sm:text-sm font-bold bg-emerald-950/50 hover:bg-emerald-900/60 text-white transition-colors border border-emerald-400/30 shadow-xs flex items-center gap-2 backdrop-blur-xs cursor-pointer"
                     >
-                      <LayoutDashboard className="w-4 h-4" />
-                      <span>Ouvrir mon tableau de bord</span>
-                      <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                      <PlusCircle className="w-4 h-4 text-emerald-300" />
+                      <span>Créer une tontine</span>
                     </button>
-
-                    {isManager ? (
-                      <button
-                        onClick={() => setActiveTab('dashboard')}
-                        className="px-4 py-3 rounded-xl text-xs sm:text-sm font-bold bg-white hover:bg-slate-100 text-slate-800 transition-colors border border-slate-200 shadow-xs flex items-center gap-2"
-                      >
-                        <PlusCircle className="w-4 h-4 text-emerald-600" />
-                        <span>Créer une tontine</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setActiveTab('dashboard')}
-                        className="px-4 py-3 rounded-xl text-xs sm:text-sm font-bold bg-white hover:bg-slate-100 text-slate-800 transition-colors border border-slate-200 shadow-xs flex items-center gap-2"
-                      >
-                        <CreditCard className="w-4 h-4 text-emerald-600" />
-                        <span>Payer ma cotisation</span>
-                      </button>
-                    )}
-
+                  ) : (
                     <button
-                      onClick={() => setActiveTab('plans')}
-                      className="px-3.5 py-3 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
+                      type="button"
+                      onClick={() => setActiveTab('dashboard')}
+                      className="px-4 py-3 rounded-xl text-xs sm:text-sm font-bold bg-emerald-950/50 hover:bg-emerald-900/60 text-white transition-colors border border-emerald-400/30 shadow-xs flex items-center gap-2 backdrop-blur-xs cursor-pointer"
                     >
-                      Voir les forfaits
+                      <CreditCard className="w-4 h-4 text-emerald-300" />
+                      <span>Payer ma cotisation</span>
                     </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => setActiveTab('login')}
-                      className="px-5 py-3 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-sm flex items-center gap-2 active:scale-95"
-                    >
-                      <LogIn className="w-4 h-4" />
-                      <span>Se connecter</span>
-                      <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                    </button>
+                  )}
 
-                    <button
-                      onClick={() => setActiveTab('registration')}
-                      className="px-4 py-3 rounded-xl text-xs sm:text-sm font-bold bg-white hover:bg-slate-100 text-slate-800 transition-colors border border-slate-200 shadow-xs flex items-center gap-2"
-                    >
-                      <UserPlus className="w-4 h-4 text-emerald-600" />
-                      <span>Créer un compte</span>
-                    </button>
-
-                    <button
-                      onClick={() => setActiveTab('plans')}
-                      className="px-4 py-3 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
-                    >
-                      Tarifs dès 2 500 F
-                    </button>
-                  </>
-                )}
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('plans')}
+                    className="px-3.5 py-3 rounded-xl text-xs font-semibold text-emerald-100 hover:text-white hover:bg-emerald-900/40 transition-colors cursor-pointer"
+                  >
+                    Voir les forfaits
+                  </button>
+                </div>
+              )}
             </motion.div>
 
-            {/* RIGHT COLUMN: Interactive Status & Key Highlights Card */}
-            <motion.div
-              initial={{ opacity: 0, x: 25 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.15, ease: 'easeOut' }}
-              className="lg:col-span-5"
-            >
-              <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4">
-                {connectedUser ? (
-                  <>
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
-                            isManager
-                              ? 'bg-amber-100 text-amber-900 border border-amber-200'
-                              : 'bg-emerald-100 text-emerald-900 border border-emerald-200'
-                          }`}
+            {/* RIGHT COLUMN: Active Session Quick Highlight (only when connectedUser is active) */}
+            {connectedUser && (
+              <motion.div
+                initial={{ opacity: 0, x: 25 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.15, ease: 'easeOut' }}
+                className="lg:col-span-5"
+              >
+                <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-emerald-400/20 p-5 sm:p-6 shadow-xl space-y-4 text-slate-900">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
+                          isManager
+                            ? 'bg-amber-100 text-amber-900 border border-amber-200'
+                            : 'bg-emerald-100 text-emerald-900 border border-emerald-200'
+                        }`}
+                      >
+                        {connectedUser.firstName.charAt(0)}
+                        {connectedUser.lastName.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-slate-900">
+                          {connectedUser.firstName} {connectedUser.lastName}
+                        </div>
+                        <div className="text-[11px] text-slate-500 flex items-center gap-1.5 font-medium">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              isManager ? 'bg-amber-500' : 'bg-emerald-500'
+                            }`}
+                          />
+                          {isManager
+                            ? `Gestionnaire (Plan ${connectedUser.managerDetails?.planCode || 'STARTER'})`
+                            : `Membre Cotisant (${connectedUser.memberDetails?.paymentMethod || 'WAVE'})`}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('login')}
+                      className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                      title="Changer de profil"
+                    >
+                      Changer
+                    </button>
+                  </div>
+
+                  {/* Quick Metric highlight */}
+                  {isManager ? (
+                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                      <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                        <span>Solde Portefeuille Commissions</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                          Disponible
+                        </span>
+                      </div>
+                      <div className="text-2xl font-black text-slate-900 mt-1 font-mono">
+                        {formatXOF(connectedUser.managerDetails?.walletBalance || 0)}
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+                        <span>Tontines gérées : {myAccessibleTontines.length}</span>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('dashboard')}
+                          className="text-emerald-700 font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
                         >
-                          {connectedUser.firstName.charAt(0)}
-                          {connectedUser.lastName.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="text-sm font-bold text-slate-900">
-                            {connectedUser.firstName} {connectedUser.lastName}
-                          </div>
-                          <div className="text-[11px] text-slate-500 flex items-center gap-1.5 font-medium">
-                            <span
-                              className={`w-2 h-2 rounded-full ${
-                                isManager ? 'bg-amber-500' : 'bg-emerald-500'
-                              }`}
-                            />
-                            {isManager
-                              ? `Gestionnaire (Plan ${connectedUser.managerDetails?.planCode || 'STARTER'})`
-                              : `Membre Cotisant (${connectedUser.memberDetails?.paymentMethod || 'WAVE'})`}
-                          </div>
-                        </div>
+                          Retirer <ArrowUpRight className="w-3 h-3" />
+                        </button>
                       </div>
-
-                      <button
-                        onClick={() => setActiveTab('login')}
-                        className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
-                        title="Changer de profil"
-                      >
-                        Changer
-                      </button>
                     </div>
-
-                    {/* Quick Metric highlight */}
-                    {isManager ? (
-                      <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                        <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                          <span>Solde Portefeuille Commissions</span>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
-                            Disponible
-                          </span>
-                        </div>
-                        <div className="text-2xl font-black text-slate-900 mt-1 font-mono">
-                          {formatXOF(connectedUser.managerDetails?.walletBalance || 0)}
-                        </div>
-                        <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-                          <span>Tontines gérées : {myAccessibleTontines.length}</span>
-                          <button
-                            onClick={() => setActiveTab('dashboard')}
-                            className="text-emerald-700 font-bold hover:underline flex items-center gap-0.5"
-                          >
-                            Retirer <ArrowUpRight className="w-3 h-3" />
-                          </button>
-                        </div>
+                  ) : (
+                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                      <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                        <span>Mes Tontines Actives</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                          {myAccessibleTontines.length} groupe(s)
+                        </span>
                       </div>
-                    ) : (
-                      <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                        <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                          <span>Mes Tontines Actives</span>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
-                            {myAccessibleTontines.length} groupe(s)
-                          </span>
-                        </div>
-                        <div className="text-xl font-bold text-slate-900 mt-1">
-                          {myAccessibleTontines[0]?.name || 'Prêt pour une tontine'}
-                        </div>
-                        <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-                          <span>Mode : {connectedUser.memberDetails?.paymentMethod || 'Mobile Money'}</span>
-                          <button
-                            onClick={() => setActiveTab('dashboard')}
-                            className="text-emerald-700 font-bold hover:underline flex items-center gap-0.5"
-                          >
-                            Payer mon tour <ArrowRight className="w-3 h-3" />
-                          </button>
-                        </div>
+                      <div className="text-xl font-bold text-slate-900 mt-1">
+                        {myAccessibleTontines[0]?.name || 'Prêt pour une tontine'}
                       </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      Garanties de la plateforme
+                      <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+                        <span>Mode : {connectedUser.memberDetails?.paymentMethod || 'Mobile Money'}</span>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('dashboard')}
+                          className="text-emerald-700 font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
+                        >
+                          Payer mon tour <ArrowRight className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
-                    <ul className="space-y-3 text-xs text-slate-700">
-                      <li className="flex items-center gap-2.5">
-                        <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                          <Lock className="w-3.5 h-3.5" />
-                        </div>
-                        <span>
-                          <strong className="text-slate-900">Cloisonnement strict</strong> : chaque tontine est 100% isolée et protégée.
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-2.5">
-                        <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
-                          <Wallet className="w-3.5 h-3.5" />
-                        </div>
-                        <span>
-                          <strong className="text-slate-900">Mobile Money</strong> : Wave, Orange Money, MTN MoMo intégrés.
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-2.5">
-                        <div className="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
-                          <Coins className="w-3.5 h-3.5" />
-                        </div>
-                        <span>
-                          <strong className="text-slate-900">Tarifs clairs</strong> : Starter 2 500 F • Premium 5 000 F • Business 10 000 F.
-                        </span>
-                      </li>
-                    </ul>
-
-                    <button
-                      onClick={() => setActiveTab('login')}
-                      className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-xs"
-                    >
-                      <LogIn className="w-3.5 h-3.5" />
-                      Se connecter en 1 clic
-                    </button>
-                  </>
-                )}
-              </div>
-            </motion.div>
+                  )}
+                </div>
+              </motion.div>
+            )}
           </div>
         </div>
 
@@ -711,11 +703,56 @@ export default function App() {
           transition={{ duration: 0.45, delay: 0.25 }}
           className="grid grid-cols-1 sm:grid-cols-3 gap-4"
         >
-          {isManager ? (
+          {!connectedUser ? (
             <>
               <button
+                type="button"
+                onClick={() => setActiveTab('registration')}
+                className="p-4 rounded-2xl bg-white hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 transition-all text-left shadow-xs group cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
+                  <PlusCircle className="w-5 h-5" />
+                </div>
+                <div className="text-sm font-bold text-slate-900">Créer un Compte Gestionnaire</div>
+                <div className="text-xs text-slate-500 mt-0.5">
+                  Lancez votre propre tontine et encaissez vos commissions de gestion.
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('registration')}
+                className="p-4 rounded-2xl bg-white hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 transition-all text-left shadow-xs group cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div className="text-sm font-bold text-slate-900">Rejoindre en tant que Membre</div>
+                <div className="text-xs text-slate-500 mt-0.5">
+                  Intégrez une tontine avec votre code d'invitation et cotisez via Mobile Money.
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('plans')}
+                className="p-4 rounded-2xl bg-white hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 transition-all text-left shadow-xs group cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div className="text-sm font-bold text-slate-900">Simuler la Rentabilité</div>
+                <div className="text-xs text-slate-500 mt-0.5">
+                  Calculer les montants collectés et commissions potentielles selon votre formule.
+                </div>
+              </button>
+            </>
+          ) : isManager ? (
+            <>
+              <button
+                type="button"
                 onClick={() => setActiveTab('dashboard')}
-                className="p-4 rounded-2xl bg-white hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 transition-all text-left shadow-xs group"
+                className="p-4 rounded-2xl bg-white hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 transition-all text-left shadow-xs group cursor-pointer"
               >
                 <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
                   <PlusCircle className="w-5 h-5" />
@@ -727,8 +764,9 @@ export default function App() {
               </button>
 
               <button
+                type="button"
                 onClick={() => setActiveTab('dashboard')}
-                className="p-4 rounded-2xl bg-white hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 transition-all text-left shadow-xs group"
+                className="p-4 rounded-2xl bg-white hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 transition-all text-left shadow-xs group cursor-pointer"
               >
                 <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
                   <Coins className="w-5 h-5" />
@@ -740,8 +778,9 @@ export default function App() {
               </button>
 
               <button
+                type="button"
                 onClick={() => setActiveTab('dashboard')}
-                className="p-4 rounded-2xl bg-white hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 transition-all text-left shadow-xs group"
+                className="p-4 rounded-2xl bg-white hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 transition-all text-left shadow-xs group cursor-pointer"
               >
                 <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
                   <ArrowUpRight className="w-5 h-5" />
@@ -755,21 +794,23 @@ export default function App() {
           ) : (
             <>
               <button
+                type="button"
                 onClick={() => setActiveTab('dashboard')}
-                className="p-4 rounded-2xl bg-white hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 transition-all text-left shadow-xs group"
+                className="p-4 rounded-2xl bg-white hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 transition-all text-left shadow-xs group cursor-pointer"
               >
                 <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
                   <CreditCard className="w-5 h-5" />
                 </div>
                 <div className="text-sm font-bold text-slate-900">Payer ma Cotisation</div>
                 <div className="text-xs text-slate-500 mt-0.5">
-                  Régler le tour en cours en 1 clic via Mobile Money sécurisé.
+                  Régler le tour en cours via Mobile Money sécurisé.
                 </div>
               </button>
 
               <button
+                type="button"
                 onClick={() => setActiveTab('dashboard')}
-                className="p-4 rounded-2xl bg-white hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 transition-all text-left shadow-xs group"
+                className="p-4 rounded-2xl bg-white hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 transition-all text-left shadow-xs group cursor-pointer"
               >
                 <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
                   <Users className="w-5 h-5" />
@@ -781,8 +822,9 @@ export default function App() {
               </button>
 
               <button
+                type="button"
                 onClick={() => setActiveTab('plans')}
-                className="p-4 rounded-2xl bg-white hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 transition-all text-left shadow-xs group"
+                className="p-4 rounded-2xl bg-white hover:bg-emerald-50/40 border border-slate-200 hover:border-emerald-300 transition-all text-left shadow-xs group cursor-pointer"
               >
                 <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
                   <Sparkles className="w-5 h-5" />
@@ -911,7 +953,7 @@ export default function App() {
       <footer className="border-t border-slate-200 bg-white py-6 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <div>
-            <span className="font-bold text-slate-700">TontinePay</span> — Plateforme d'épargne rotative et commissions transparentes.
+            <span className="font-bold text-slate-700">TONTINE</span> — Plateforme d'épargne rotative et commissions transparentes.
           </div>
           <div className="flex items-center gap-3 font-medium">
             <span>Starter 2 500 F</span>

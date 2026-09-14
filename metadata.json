@@ -1,6 +1,6 @@
 {
-  "name": "Gestion des Commissions Tontine",
-  "description": "Configuration des taux de commissions par plan (Free 1.5%, Starter 2.5%, Premium 3%, Business 3.5%), inscriptions et tableaux de bord connectés pour membres et managers.",
+  "name": "TONTINE",
+  "description": "Plateforme d'épargne rotative et de gestion des commissions tontine (Starter, Premium, Business), inscriptions et tableaux de bord connectés.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
