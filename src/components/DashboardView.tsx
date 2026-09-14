@@ -41,6 +41,7 @@ interface DashboardViewProps {
   onNavigateToSimulate: (planCode: PlanConfig['code']) => void;
   onNavigateToRegister: () => void;
   onNavigateToLogin?: () => void;
+  onNavigateToProfile?: () => void;
 }
 
 export function DashboardView({
@@ -61,6 +62,7 @@ export function DashboardView({
   onNavigateToSimulate,
   onNavigateToRegister,
   onNavigateToLogin,
+  onNavigateToProfile,
 }: DashboardViewProps) {
   const managers = users.filter((u) => u.role === 'MANAGER');
   const members = users.filter((u) => u.role === 'MEMBER');
@@ -181,6 +183,30 @@ export function DashboardView({
                     Plan {connectedUser.managerDetails.planCode}
                   </span>
                 )}
+                {/* Live KYC status badge */}
+                {onNavigateToProfile && (
+                  <button
+                    type="button"
+                    onClick={onNavigateToProfile}
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                      connectedUser.kyc?.status === 'VERIFIED'
+                        ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-300'
+                        : connectedUser.kyc?.status === 'PENDING'
+                        ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300'
+                        : 'bg-orange-100 text-orange-800 hover:bg-orange-200 border border-orange-300'
+                    }`}
+                    title="Gérer mon profil et ma vérification KYC"
+                  >
+                    <ShieldCheck className="w-3 h-3 shrink-0" />
+                    <span>
+                      {connectedUser.kyc?.status === 'VERIFIED'
+                        ? `KYC Vérifié (Niv. ${connectedUser.kyc.level})`
+                        : connectedUser.kyc?.status === 'PENDING'
+                        ? 'KYC en cours'
+                        : 'KYC requis'}
+                    </span>
+                  </button>
+                )}
               </div>
 
               <div className="text-xs text-stone-500 flex flex-wrap items-center gap-2 mt-0.5">
@@ -198,8 +224,19 @@ export function DashboardView({
             </div>
           </div>
 
-          {/* Session Switcher or Logout */}
+          {/* Session Switcher, Profile CTA or Logout */}
           <div className="flex flex-wrap items-center gap-3">
+            {onNavigateToProfile && (
+              <button
+                type="button"
+                onClick={onNavigateToProfile}
+                className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+              >
+                <User className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Mon Profil & KYC</span>
+              </button>
+            )}
+
             {users.length > 1 && (
               <div className="flex items-center gap-2">
                 <label className="text-xs font-semibold text-stone-500 whitespace-nowrap hidden sm:inline">
@@ -237,6 +274,25 @@ export function DashboardView({
             )}
           </div>
         </div>
+
+        {/* KYC Incomplete Warning Banner */}
+        {connectedUser.kyc?.status !== 'VERIFIED' && onNavigateToProfile && (
+          <div className="px-5 py-3 bg-amber-50 border-t border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-950">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>
+                <strong>Vérification KYC recommandée :</strong> Validez votre pièce d'identité officielle (CNI / CEDEAO ou Passeport) pour déplafonner vos retraits et cotisations.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={onNavigateToProfile}
+              className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs whitespace-nowrap transition-colors self-start sm:self-auto cursor-pointer"
+            >
+              Compléter mon KYC
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Conditional Rendering based on active role */}

@@ -5,6 +5,8 @@ import { CommissionSimulator } from './components/CommissionSimulator';
 import { RegistrationView } from './components/RegistrationView';
 import { DashboardView } from './components/DashboardView';
 import { LoginView } from './components/LoginView';
+import { ProfileView } from './components/ProfileView';
+import { TermsModal } from './components/TermsModal';
 import { DEFAULT_PLANS, formatPercent, formatXOF } from './data/plans';
 import { INITIAL_USERS } from './data/users';
 import {
@@ -31,10 +33,15 @@ import {
   ArrowUpRight,
   Users,
   CreditCard,
+  ShieldCheck,
+  User,
+  LogIn,
+  UserPlus,
 } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'plans' | 'registration' | 'login'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'plans' | 'registration' | 'login' | 'profile'>('dashboard');
+  const [showFooterTermsModal, setShowFooterTermsModal] = useState(false);
   const [users, setUsers] = useState<RegisteredUser[]>(() => {
     try {
       const saved = localStorage.getItem('tontine_users');
@@ -136,6 +143,14 @@ export default function App() {
         ? `Déconnexion réussie (${prevUser.firstName} ${prevUser.lastName})`
         : 'Session déconnectée.'
     );
+  };
+
+  const handleUpdateUser = (updatedUser: RegisteredUser) => {
+    setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+    if (connectedUser && connectedUser.id === updatedUser.id) {
+      setConnectedUser(updatedUser);
+    }
+    showToast('Profil et vérification KYC mis à jour avec succès !');
   };
 
   // Manager: Withdraw from wallet
@@ -632,14 +647,30 @@ export default function App() {
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('login')}
-                      className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
-                      title="Changer de profil"
-                    >
-                      Changer
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('profile')}
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 cursor-pointer ${
+                          connectedUser.kyc?.status === 'VERIFIED'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                            : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100 animate-pulse'
+                        }`}
+                        title="Gérer mon profil et ma vérification KYC"
+                      >
+                        <ShieldCheck className="w-3 h-3" />
+                        <span>{connectedUser.kyc?.status === 'VERIFIED' ? 'KYC Vérifié' : 'Vérifier KYC'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('login')}
+                        className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                        title="Changer de profil"
+                      >
+                        Changer
+                      </button>
+                    </div>
                   </div>
 
                   {/* Quick Metric highlight */}
@@ -839,6 +870,91 @@ export default function App() {
         </motion.div>
 
         {/* =========================================================================
+            CLEAN NAVIGATION TABS BAR
+            ========================================================================= */}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2 sm:p-2.5 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              id="nav-tab-dashboard"
+              onClick={() => setActiveTab('dashboard')}
+              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'dashboard'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              <span>Tableau de Bord</span>
+            </button>
+
+            <button
+              id="nav-tab-plans"
+              onClick={() => setActiveTab('plans')}
+              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'plans'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Forfaits & Simulateur</span>
+            </button>
+
+            <button
+              id="nav-tab-profile"
+              onClick={() => setActiveTab('profile')}
+              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'profile'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Mon Profil & KYC</span>
+              {connectedUser && (
+                <span
+                  className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold uppercase ${
+                    connectedUser.kyc?.status === 'VERIFIED'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-amber-100 text-amber-800 animate-pulse'
+                  }`}
+                >
+                  {connectedUser.kyc?.status === 'VERIFIED' ? 'Niv. 2' : 'À vérifier'}
+                </span>
+              )}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              id="nav-tab-registration"
+              onClick={() => setActiveTab('registration')}
+              className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'registration'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Inscription</span>
+            </button>
+
+            <button
+              id="nav-tab-login"
+              onClick={() => setActiveTab('login')}
+              className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'login'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Connexion</span>
+            </button>
+          </div>
+        </div>
+
+        {/* =========================================================================
             TAB 1: DASHBOARD
             ========================================================================= */}
         {activeTab === 'dashboard' && (
@@ -860,6 +976,7 @@ export default function App() {
             onNavigateToSimulate={handleSelectForSimulation}
             onNavigateToRegister={() => setActiveTab('registration')}
             onNavigateToLogin={() => setActiveTab('login')}
+            onNavigateToProfile={() => setActiveTab('profile')}
           />
         )}
 
@@ -939,6 +1056,19 @@ export default function App() {
             onNavigateToDashboard={() => setActiveTab('dashboard')}
           />
         )}
+
+        {/* =========================================================================
+            TAB 5: PROFILE & KYC
+            ========================================================================= */}
+        {activeTab === 'profile' && (
+          <ProfileView
+            user={connectedUser}
+            onUpdateUser={handleUpdateUser}
+            onNavigateToDashboard={() => setActiveTab('dashboard')}
+            onNavigateToLogin={() => setActiveTab('login')}
+            onNavigateToRegister={() => setActiveTab('registration')}
+          />
+        )}
       </main>
 
       {/* Toast feedback */}
@@ -952,8 +1082,17 @@ export default function App() {
       {/* Modern, Clean Footer */}
       <footer className="border-t border-slate-200 bg-white py-6 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <div>
-            <span className="font-bold text-slate-700">TONTINE</span> — Plateforme d'épargne rotative et commissions transparentes.
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="font-bold text-slate-700">TONTINE</span>
+            <span>—</span>
+            <span>Plateforme d'épargne rotative et commissions transparentes.</span>
+            <button
+              type="button"
+              onClick={() => setShowFooterTermsModal(true)}
+              className="text-emerald-700 hover:text-emerald-800 font-bold hover:underline cursor-pointer"
+            >
+              Politique d'Utilisation
+            </button>
           </div>
           <div className="flex items-center gap-3 font-medium">
             <span>Starter 2 500 F</span>
@@ -964,6 +1103,14 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Global Terms of Use Modal */}
+      <TermsModal
+        isOpen={showFooterTermsModal}
+        onClose={() => setShowFooterTermsModal(false)}
+        highlightRole={connectedUser?.role}
+        alreadyAccepted={!!connectedUser?.acceptedTerms}
+      />
     </div>
   );
 }

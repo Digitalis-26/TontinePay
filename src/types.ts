@@ -46,6 +46,25 @@ export interface LedgerPreviewEntry {
   description: string;
 }
 
+export type KycStatus = 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
+export type KycDocumentType = 'NATIONAL_ID' | 'PASSPORT' | 'DRIVING_LICENSE' | 'RESIDENCE_PERMIT';
+
+export interface KycVerificationData {
+  status: KycStatus;
+  level: 1 | 2 | 3;
+  documentType?: KycDocumentType;
+  documentNumber?: string;
+  documentExpiryDate?: string;
+  frontDocumentFileName?: string;
+  backDocumentFileName?: string;
+  selfieFileName?: string;
+  submittedAt?: string;
+  verifiedAt?: string;
+  rejectionReason?: string;
+  addressProofFileName?: string;
+  fullNameMatched?: boolean;
+}
+
 export type UserRoleType = 'MEMBER' | 'MANAGER';
 
 export interface RegisteredUser {
@@ -60,8 +79,11 @@ export interface RegisteredUser {
   countryName: string;
   status: 'ACTIVE' | 'PENDING_VERIFICATION' | 'SUSPENDED';
   createdAt: string;
+  acceptedTerms?: boolean;
+  acceptedTermsAt?: string;
   pinCode?: string;
   password?: string;
+  kyc?: KycVerificationData;
   // Specific to member
   memberDetails?: {
     paymentMethod: 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'MOOV_MONEY' | 'CASH';

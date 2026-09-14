@@ -6,11 +6,13 @@ import {
   LogIn,
   LogOut,
   Sparkles,
+  ShieldCheck,
+  User,
 } from 'lucide-react';
 import { RegisteredUser } from '../types';
 
 interface NavbarProps {
-  activeTab: 'dashboard' | 'plans' | 'simulator' | 'ledger' | 'registration' | 'export' | 'schema' | 'login';
+  activeTab: 'dashboard' | 'plans' | 'simulator' | 'ledger' | 'registration' | 'export' | 'schema' | 'login' | 'profile';
   setActiveTab: (tab: any) => void;
   registeredCount?: number;
   connectedUser?: RegisteredUser | null;
@@ -110,6 +112,26 @@ export function Navbar({ activeTab, setActiveTab, registeredCount, connectedUser
               )}
             </button>
 
+            {connectedUser && (
+              <button
+                id="tab-profile"
+                onClick={() => setActiveTab('profile')}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === 'profile'
+                    ? 'bg-emerald-500 text-slate-950 font-bold shadow-xs'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Profil & KYC</span>
+                {connectedUser.kyc?.status === 'VERIFIED' ? (
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" title="Vérifié" />
+                ) : (
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" title="À vérifier" />
+                )}
+              </button>
+            )}
+
             <button
               id="tab-login"
               onClick={() => setActiveTab('login')}
@@ -129,13 +151,13 @@ export function Navbar({ activeTab, setActiveTab, registeredCount, connectedUser
             {connectedUser ? (
               <div className="flex items-center gap-1.5">
                 <button
-                  onClick={() => setActiveTab('dashboard')}
+                  onClick={() => setActiveTab('profile')}
                   className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all ${
-                    activeTab === 'dashboard'
-                      ? 'bg-slate-800 border-emerald-500/60 text-white'
+                    activeTab === 'profile'
+                      ? 'bg-slate-800 border-emerald-500/60 text-white shadow-xs'
                       : 'bg-slate-950/80 border-slate-800 hover:border-slate-700 text-slate-200'
                   }`}
-                  title="Accéder à mon espace"
+                  title="Accéder à mon Profil et Vérification KYC"
                 >
                   <div
                     className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
@@ -148,8 +170,13 @@ export function Navbar({ activeTab, setActiveTab, registeredCount, connectedUser
                     {connectedUser.lastName.charAt(0)}
                   </div>
                   <div className="text-left hidden sm:block">
-                    <div className="text-xs font-bold leading-tight">
-                      {connectedUser.firstName} {connectedUser.lastName}
+                    <div className="text-xs font-bold leading-tight flex items-center gap-1">
+                      <span>{connectedUser.firstName} {connectedUser.lastName}</span>
+                      {connectedUser.kyc?.status === 'VERIFIED' ? (
+                        <span className="w-2 h-2 rounded-full bg-emerald-400" title="KYC Vérifié" />
+                      ) : (
+                        <span className="w-2 h-2 rounded-full bg-amber-400" title="KYC requis" />
+                      )}
                     </div>
                     <div className="text-[10px] text-slate-400 flex items-center gap-1">
                       {isManager ? (
@@ -164,7 +191,7 @@ export function Navbar({ activeTab, setActiveTab, registeredCount, connectedUser
                 {onLogout && (
                   <button
                     onClick={onLogout}
-                    className="p-2 rounded-xl bg-slate-950/80 hover:bg-red-500/10 text-slate-400 hover:text-red-400 border border-slate-800 hover:border-red-500/30 transition-colors"
+                    className="p-2 rounded-xl bg-slate-950/80 hover:bg-red-500/10 text-slate-400 hover:text-red-400 border border-slate-800 hover:border-red-500/30 transition-colors cursor-pointer"
                     title="Se déconnecter"
                   >
                     <LogOut className="w-3.5 h-3.5" />
@@ -183,11 +210,11 @@ export function Navbar({ activeTab, setActiveTab, registeredCount, connectedUser
           </div>
         </div>
 
-        {/* Mobile Tab Bar - Only 4 Essential Options */}
+        {/* Mobile Tab Bar */}
         <div className="md:hidden flex items-center justify-between py-2.5 border-t border-slate-800 gap-1.5 overflow-x-auto">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex-1 px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 text-center whitespace-nowrap ${
+            className={`flex-1 px-2 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 text-center whitespace-nowrap ${
               activeTab === 'dashboard' ? 'bg-emerald-500 text-slate-950' : 'text-slate-300'
             }`}
           >
@@ -196,25 +223,37 @@ export function Navbar({ activeTab, setActiveTab, registeredCount, connectedUser
           </button>
           <button
             onClick={() => setActiveTab('plans')}
-            className={`flex-1 px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 text-center whitespace-nowrap ${
+            className={`flex-1 px-2 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 text-center whitespace-nowrap ${
               activeTab === 'plans' || activeTab === 'simulator' ? 'bg-emerald-500 text-slate-950' : 'text-slate-300'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
             Forfaits
           </button>
-          <button
-            onClick={() => setActiveTab('registration')}
-            className={`flex-1 px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 text-center whitespace-nowrap ${
-              activeTab === 'registration' ? 'bg-emerald-500 text-slate-950' : 'text-slate-300'
-            }`}
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            Inscription
-          </button>
+          {connectedUser ? (
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`flex-1 px-2 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 text-center whitespace-nowrap ${
+                activeTab === 'profile' ? 'bg-emerald-500 text-slate-950' : 'text-slate-300'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Profil KYC
+            </button>
+          ) : (
+            <button
+              onClick={() => setActiveTab('registration')}
+              className={`flex-1 px-2 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 text-center whitespace-nowrap ${
+                activeTab === 'registration' ? 'bg-emerald-500 text-slate-950' : 'text-slate-300'
+              }`}
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              Inscription
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('login')}
-            className={`flex-1 px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 text-center whitespace-nowrap ${
+            className={`flex-1 px-2 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 text-center whitespace-nowrap ${
               activeTab === 'login' ? 'bg-emerald-500 text-slate-950' : 'text-slate-300'
             }`}
           >

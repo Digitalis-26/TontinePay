@@ -26,7 +26,10 @@ import {
   AlertCircle,
   HelpCircle,
   LayoutDashboard,
+  Scale,
+  ExternalLink,
 } from 'lucide-react';
+import { TermsModal } from './TermsModal';
 
 interface RegistrationViewProps {
   plans: PlanConfig[];
@@ -83,6 +86,8 @@ export function RegistrationView({
   const [roleFilter, setRoleFilter] = useState<'ALL' | 'MANAGER' | 'MEMBER'>('ALL');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const selectedCountry = SUPPORTED_COUNTRIES.find((c) => c.code === selectedCountryCode) || SUPPORTED_COUNTRIES[0];
 
@@ -116,6 +121,10 @@ export function RegistrationView({
       errors.confirmPassword = 'Les mots de passe ne correspondent pas';
     }
 
+    if (!termsAccepted) {
+      errors.terms = "Vous devez accepter la Politique d'Utilisation et la Charte de Confiance pour continuer.";
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -147,6 +156,8 @@ export function RegistrationView({
       countryName: selectedCountry.name,
       status: 'ACTIVE',
       createdAt: new Date().toISOString(),
+      acceptedTerms: true,
+      acceptedTermsAt: new Date().toISOString(),
       ...(selectedRole === 'MANAGER'
         ? {
             managerDetails: {
@@ -189,6 +200,7 @@ export function RegistrationView({
     setPayoutAccount('');
     setIdentityNumber('');
     setTontineInvitationCode('');
+    setTermsAccepted(false);
     setFormErrors({});
 
     // Switch to directory after short delay to show result
@@ -874,6 +886,125 @@ const newMember = await prisma.$transaction(async (tx) => {
                 </div>
               </div>
 
+              {/* Terms of Use & Platform Trust Policy Acceptance */}
+              <div className="pt-4 border-t border-stone-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-stone-900 flex items-center gap-1.5">
+                    <Scale className="w-4 h-4 text-emerald-600" />
+                    {selectedRole === 'MANAGER' ? '6. Politique d\'Utilisation & Charte de Gestion' : '5. Politique d\'Utilisation & Engagement'}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowTermsModal(true)}
+                    className="text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Lire le document intégral</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                </div>
+
+                {/* Key commitments summary box based on selected role */}
+                <div className={`p-4 rounded-2xl border text-xs space-y-2.5 ${
+                  selectedRole === 'MANAGER'
+                    ? 'bg-amber-50/60 border-amber-200/90 text-amber-950'
+                    : 'bg-emerald-50/60 border-emerald-200/90 text-emerald-950'
+                }`}>
+                  <div className="font-bold flex items-center gap-1.5 text-xs">
+                    {selectedRole === 'MANAGER' ? (
+                      <Briefcase className="w-3.5 h-3.5 text-amber-700" />
+                    ) : (
+                      <Users className="w-3.5 h-3.5 text-emerald-700" />
+                    )}
+                    <span>
+                      {selectedRole === 'MANAGER'
+                        ? 'Vos engagements contractuels en tant que Gestionnaire de Tontine :'
+                        : 'Vos engagements contractuels en tant que Membre Cotisant :'}
+                    </span>
+                  </div>
+
+                  <ul className="space-y-1 text-[11px] leading-relaxed">
+                    {selectedRole === 'MANAGER' ? (
+                      <>
+                        <li className="flex items-start gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                          <span>Plafond de commission strict : maximum <strong>{formatPercent(currentRates[selectedPlanCode])}</strong> (Plan {selectedPlanCode}). Aucune retenue occulte.</span>
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                          <span>Reversement sous <strong>24h ouvrées</strong> de la cagnotte intégrale au membre bénéficiaire dès réception des cotisations.</span>
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                          <span>Interdiction formelle de spéculation ou d'utilisation personnelle des fonds. Enregistrement systématique au Grand Livre d'audit.</span>
+                        </li>
+                      </>
+                    ) : (
+                      <>
+                        <li className="flex items-start gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                          <span><strong>Engagement irrévocable de paiement ponctuel</strong> à chaque échéance jusqu'au terme de la rotation, y compris après avoir reçu ma cagnotte.</span>
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                          <span>Maintien d'un solde Mobile Money ({memberPaymentMethod}) suffisant et actif aux dates prévues de prélèvement.</span>
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                          <span>Conformité avec la vérification d'identité (KYC) selon les plafonds réglementaires BCEAO / UEMOA.</span>
+                        </li>
+                      </>
+                    )}
+                  </ul>
+                </div>
+
+                {/* Checkbox */}
+                <div className="pt-1">
+                  <label className="flex items-start gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      id="accept-terms-checkbox"
+                      checked={termsAccepted}
+                      onChange={(e) => {
+                        setTermsAccepted(e.target.checked);
+                        if (e.target.checked && formErrors.terms) {
+                          setFormErrors((prev) => {
+                            const copy = { ...prev };
+                            delete copy.terms;
+                            return copy;
+                          });
+                        }
+                      }}
+                      className="w-4 h-4 mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 border-stone-300"
+                    />
+                    <div className="text-xs text-stone-700 leading-normal">
+                      <span>
+                        J'ai lu et j'accepte expressément la{' '}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowTermsModal(true);
+                          }}
+                          className="font-bold text-emerald-700 underline hover:text-emerald-800"
+                        >
+                          Politique d'Utilisation & Charte de Confiance TONTINE
+                        </button>
+                        {selectedRole === 'MANAGER'
+                          ? ' en tant que Gestionnaire (responsabilité fiduciaire, plafonds et reversement rapide).'
+                          : ' en tant que Membre (solidarité financière et obligation de cotisation jusqu\'au terme du cycle).'}
+                      </span>
+                    </div>
+                  </label>
+                  {formErrors.terms && (
+                    <p className="text-[11px] text-red-600 font-semibold mt-1.5 ml-7 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{formErrors.terms}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+
               {/* Submit Buttons */}
               <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <button
@@ -1250,6 +1381,22 @@ const newMember = await prisma.$transaction(async (tx) => {
           )}
         </div>
       )}
+
+      {/* Interactive Terms & Policy Modal */}
+      <TermsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        onAccept={() => {
+          setTermsAccepted(true);
+          setFormErrors((prev) => {
+            const copy = { ...prev };
+            delete copy.terms;
+            return copy;
+          });
+        }}
+        highlightRole={selectedRole}
+        alreadyAccepted={termsAccepted}
+      />
     </div>
   );
 }
