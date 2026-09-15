@@ -27,6 +27,8 @@ import {
   Code2,
   Gift,
   Info,
+  Pencil,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 interface ManagerDashboardProps {
@@ -37,6 +39,7 @@ interface ManagerDashboardProps {
   onWithdraw: (amount: number, provider: string, account: string) => void;
   onCreateTontine: (tontine: Omit<TontineRecord, 'id'>) => void;
   onPayoutBeneficiary: (tontineId: string, roundNumber: number) => void;
+  onUpdateTontineAmount?: (tontineId: string, newAmount: number) => void;
   onUpdateMemberTurn?: (tontineId: string, memberUserId: string, newTurnNumber: number) => void;
   onNavigateToSimulate?: (planCode: PlanConfig['code']) => void;
 }
@@ -49,6 +52,7 @@ export function ManagerDashboard({
   onWithdraw,
   onCreateTontine,
   onPayoutBeneficiary,
+  onUpdateTontineAmount,
   onUpdateMemberTurn,
   onNavigateToSimulate,
 }: ManagerDashboardProps) {
@@ -59,6 +63,8 @@ export function ManagerDashboard({
   // Modals & UI States
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingAmountTontine, setEditingAmountTontine] = useState<TontineRecord | null>(null);
+  const [editAmountValue, setEditAmountValue] = useState<number>(50000);
   const [managingTurnData, setManagingTurnData] = useState<{ tontine: TontineRecord; memberUserId: string } | null>(null);
   const [expandedTontineId, setExpandedTontineId] = useState<string | null>(tontines[0]?.id || null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -474,9 +480,28 @@ export function ManagerDashboard({
                     {/* Financial Summary Badges */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-stone-50 p-3 rounded-xl border border-stone-200/80 text-xs">
                       <div>
-                        <span className="text-[10px] text-stone-500 block">Cotisation unitaire</span>
-                        <span className="font-bold text-stone-900 font-mono">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-stone-500 block">Cotisation unitaire</span>
+                          {tontine.managerId === manager.id && onUpdateTontineAmount && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingAmountTontine(tontine);
+                                setEditAmountValue(tontine.contributionAmount);
+                              }}
+                              className="text-[10px] font-bold text-amber-700 hover:text-amber-900 flex items-center gap-1 hover:underline cursor-pointer"
+                              title="Fixer ou modifier le montant de la cotisation"
+                            >
+                              <Pencil className="w-2.5 h-2.5" />
+                              <span>Fixer</span>
+                            </button>
+                          )}
+                        </div>
+                        <span className="font-bold text-stone-900 font-mono block mt-0.5">
                           {formatXOF(tontine.contributionAmount)}
+                        </span>
+                        <span className="text-[9px] text-emerald-700 font-medium">
+                          Fixé par le Manager
                         </span>
                       </div>
                       <div>
@@ -1048,29 +1073,72 @@ export function ManagerDashboard({
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-stone-700">Cotisation par membre *</label>
-                  <input
-                    type="number"
-                    min={5000}
-                    step={5000}
-                    value={newContributionAmount}
-                    onChange={(e) => setNewContributionAmount(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-                  />
+              <div className="space-y-2 p-3.5 rounded-xl bg-amber-50/40 border border-amber-200/60">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
+                    <Coins className="w-3.5 h-3.5 text-amber-600" />
+                    Montant de la cotisation (Fixé par le Manager) *
+                  </label>
+                  <span className="text-xs font-bold font-mono text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                    {formatXOF(newContributionAmount)} / tour
+                  </span>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-stone-700">Nombre de participants *</label>
-                  <input
-                    type="number"
-                    min={3}
-                    max={50}
-                    value={newTotalRounds}
-                    onChange={(e) => setNewTotalRounds(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-                  />
+                {/* Quick amount presets for manager */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <span className="text-[10px] font-semibold text-stone-500 mr-1">Paliers rapides :</span>
+                  {[5000, 10000, 25000, 50000, 100000, 200000, 500000].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setNewContributionAmount(preset)}
+                      className={`px-2 py-1 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
+                        newContributionAmount === preset
+                          ? 'bg-amber-600 text-white shadow-xs ring-1 ring-amber-600'
+                          : 'bg-white border border-stone-200 text-stone-700 hover:bg-stone-50'
+                      }`}
+                    >
+                      {preset >= 1000 ? `${preset / 1000}k` : preset} F
+                    </button>
+                  ))}
+                </div>
+
+                {/* Direct custom amount input */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                  <div className="space-y-1">
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min={500}
+                        step={500}
+                        required
+                        value={newContributionAmount}
+                        onChange={(e) => setNewContributionAmount(Math.max(0, Number(e.target.value)))}
+                        placeholder="Montant libre..."
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 pr-16"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-stone-500 font-mono pointer-events-none">
+                        FCFA
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-stone-500 block">
+                      Saisissez n'importe quel montant personnalisé (min. 500 F CFA).
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <input
+                      type="number"
+                      min={3}
+                      max={50}
+                      value={newTotalRounds}
+                      onChange={(e) => setNewTotalRounds(Number(e.target.value))}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    />
+                    <span className="text-[10px] text-stone-500 block">
+                      Nombre de participants cotisants (3 à 50 membres).
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -1252,6 +1320,151 @@ export function ManagerDashboard({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: FIXER / MODIFIER LE MONTANT DE LA COTISATION */}
+      {editingAmountTontine && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-stone-200 space-y-5 animate-scale-up">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-700">
+                  <Coins className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-stone-900">
+                    Fixer le Montant de la Cotisation
+                  </h3>
+                  <p className="text-[11px] text-stone-500">
+                    {editingAmountTontine.name} • {editingAmountTontine.code}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingAmountTontine(null)}
+                className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3.5">
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-600">
+                <span className="block text-[11px] text-stone-500">Montant actuel enregistré :</span>
+                <span className="font-bold text-stone-900 font-mono text-sm">
+                  {formatXOF(editingAmountTontine.contributionAmount)} / membre
+                </span>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-stone-700 block mb-1.5">
+                  Nouveau montant de la cotisation unitaire (Fixé par vous) :
+                </label>
+
+                {/* Quick presets */}
+                <div className="flex flex-wrap gap-1.5 mb-2.5">
+                  {[5000, 10000, 25000, 50000, 100000, 200000, 500000].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setEditAmountValue(preset)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                        editAmountValue === preset
+                          ? 'bg-amber-600 text-white shadow-xs ring-1 ring-amber-600'
+                          : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                      }`}
+                    >
+                      {formatXOF(preset)}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="number"
+                    min={500}
+                    step={500}
+                    value={editAmountValue}
+                    onChange={(e) => setEditAmountValue(Math.max(0, Number(e.target.value)))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 pr-16"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400 font-mono pointer-events-none">
+                    FCFA
+                  </span>
+                </div>
+              </div>
+
+              {/* Simulation recalculée */}
+              <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-xs space-y-2">
+                <div className="font-bold text-amber-950 flex items-center justify-between">
+                  <span>Impact financier par tour :</span>
+                  <span className="text-[10px] font-normal text-stone-600">
+                    {editingAmountTontine.members.length} participants
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-1 border-t border-amber-200/60 text-[11px]">
+                  <div>
+                    <span className="text-stone-500 block">Cagnotte Brute :</span>
+                    <span className="font-bold text-stone-900 font-mono">
+                      {formatXOF(editAmountValue * editingAmountTontine.members.length)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-stone-500 block">
+                      Commission ({formatPercent(editingAmountTontine.commissionRate)}) :
+                    </span>
+                    <span className="font-bold text-amber-800 font-mono">
+                      {formatXOF(
+                        editAmountValue *
+                          editingAmountTontine.members.length *
+                          editingAmountTontine.commissionRate
+                      )}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-stone-500 block">Cagnotte Nette :</span>
+                    <span className="font-bold text-emerald-800 font-mono">
+                      {formatXOF(
+                        editAmountValue *
+                          editingAmountTontine.members.length *
+                          (1 - editingAmountTontine.commissionRate)
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-stone-500 leading-snug">
+                En tant que gestionnaire, vous pouvez réajuster la cotisation unitaire selon les décisions prises en accord avec les membres de votre groupe.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-stone-100">
+              <button
+                type="button"
+                onClick={() => setEditingAmountTontine(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-100 transition-colors cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onUpdateTontineAmount && editAmountValue >= 500) {
+                    onUpdateTontineAmount(editingAmountTontine.id, editAmountValue);
+                    setEditingAmountTontine(null);
+                  }
+                }}
+                disabled={editAmountValue < 500}
+                className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                Fixer ce Montant
+              </button>
+            </div>
           </div>
         </div>
       )}

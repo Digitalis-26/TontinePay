@@ -82,6 +82,15 @@ export const TERMS_SECTIONS: TermsSection[] = [
           "La commission du Gestionnaire est automatiquement calculée et prélevée sur le total collecté lors de chaque tour, que le gestionnaire participe ou non comme cotisant.",
         ],
       },
+      {
+        num: 'Article 2.6',
+        title: 'Liberté de Fixation du Montant de la Cotisation par le Gestionnaire',
+        content: "Le Gestionnaire fixe souverainement le montant unitaire de la cotisation périodique (ex: 5 000 F, 25 000 F, 50 000 F, 100 000 F CFA ou tout montant personnalisé adapté aux capacités de sa communauté) lors de la création ou de la configuration du cercle. Ce montant est contractuel pour l'ensemble des membres du groupe et sert de base exclusive au calcul des cagnottes brutes et des commissions réglementées.",
+        bulletPoints: [
+          "Le Gestionnaire peut choisir parmi des paliers usuels ou saisir un montant sur mesure selon les objectifs du groupe d'épargne.",
+          "Toute modification du montant de la cotisation effectuée par le Gestionnaire est enregistrée dans le système et notifiée aux participants.",
+        ],
+      },
     ],
   },
   {

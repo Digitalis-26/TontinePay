@@ -35,6 +35,7 @@ interface DashboardViewProps {
   onWithdraw: (amount: number, provider: string, account: string) => void;
   onCreateTontine: (tontine: Omit<TontineRecord, 'id'>) => void;
   onPayoutBeneficiary: (tontineId: string, roundNumber: number) => void;
+  onUpdateTontineAmount?: (tontineId: string, newAmount: number) => void;
   onPayContribution: (tontineId: string, amount: number, paymentMethod: string) => void;
   onJoinTontineWithCode: (code: string, preferredTurn?: number) => boolean;
   onUpdateMemberTurn?: (tontineId: string, memberUserId: string, newTurnNumber: number) => void;
@@ -56,6 +57,7 @@ export function DashboardView({
   onWithdraw,
   onCreateTontine,
   onPayoutBeneficiary,
+  onUpdateTontineAmount,
   onPayContribution,
   onJoinTontineWithCode,
   onUpdateMemberTurn,
@@ -305,6 +307,7 @@ export function DashboardView({
           onWithdraw={onWithdraw}
           onCreateTontine={onCreateTontine}
           onPayoutBeneficiary={onPayoutBeneficiary}
+          onUpdateTontineAmount={onUpdateTontineAmount}
           onUpdateMemberTurn={onUpdateMemberTurn}
           onNavigateToSimulate={onNavigateToSimulate}
         />

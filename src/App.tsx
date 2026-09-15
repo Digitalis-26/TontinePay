@@ -248,6 +248,42 @@ export default function App() {
     showToast(`Tontine "${newTontine.name}" créée avec code invitation : ${newTontine.code}`);
   };
 
+  // Manager: Update / fix contribution amount for a managed tontine
+  const handleUpdateTontineAmount = (tontineId: string, newAmount: number) => {
+    if (!connectedUser) {
+      showToast('Veuillez vous connecter pour modifier la tontine.');
+      setActiveTab('login');
+      return;
+    }
+
+    if (newAmount < 500) {
+      showToast('Le montant de la cotisation doit être au minimum de 500 F CFA.');
+      return;
+    }
+
+    const tontine = tontines.find((t) => t.id === tontineId);
+    if (!tontine) return;
+
+    if (tontine.managerId !== connectedUser.id) {
+      showToast('Accès refusé : Seul le gestionnaire créateur peut modifier ce montant.');
+      return;
+    }
+
+    setTontines((prev) =>
+      prev.map((t) => {
+        if (t.id === tontineId) {
+          return {
+            ...t,
+            contributionAmount: newAmount,
+          };
+        }
+        return t;
+      })
+    );
+
+    showToast(`Montant de cotisation fixé à ${formatXOF(newAmount)} pour "${tontine.name}".`);
+  };
+
   // Manager: Payout round to beneficiary and collect commission
   const handlePayoutBeneficiary = (tontineId: string, roundNumber: number) => {
     if (!connectedUser) {
@@ -1091,6 +1127,7 @@ export default function App() {
             onWithdraw={handleWithdraw}
             onCreateTontine={handleCreateTontine}
             onPayoutBeneficiary={handlePayoutBeneficiary}
+            onUpdateTontineAmount={handleUpdateTontineAmount}
             onPayContribution={handlePayContribution}
             onJoinTontineWithCode={handleJoinTontineWithCode}
             onUpdateMemberTurn={handleUpdateMemberTurn}
