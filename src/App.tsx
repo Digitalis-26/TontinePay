@@ -7,6 +7,14 @@ import { DashboardView } from './components/DashboardView';
 import { LoginView } from './components/LoginView';
 import { ProfileView } from './components/ProfileView';
 import { TermsModal } from './components/TermsModal';
+import { SecurityAuditModal } from './components/SecurityAuditModal';
+import {
+  acquireFinancialLock,
+  releaseFinancialLock,
+  checkAndRecordIdempotency,
+  validateKycWithdrawalLimits,
+  assertTontineManagerOwnership,
+} from './utils/security';
 import { DEFAULT_PLANS, formatPercent, formatXOF } from './data/plans';
 import { INITIAL_USERS } from './data/users';
 import {
@@ -48,6 +56,7 @@ import {
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'plans' | 'registration' | 'login' | 'profile'>('dashboard');
   const [showFooterTermsModal, setShowFooterTermsModal] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [bgTheme, setBgTheme] = useState<BackgroundTheme>(() => {
     try {
       const saved = localStorage.getItem('tontine_bg_theme');
@@ -177,45 +186,69 @@ export default function App() {
     showToast('Profil et vérification KYC mis à jour avec succès !');
   };
 
-  // Manager: Withdraw from wallet
+  // Manager: Withdraw from wallet (Secured with Mutex & BCEAO KYC limits)
   const handleWithdraw = (amount: number, provider: string, account: string) => {
     if (!connectedUser?.managerDetails) return;
 
-    if (amount > connectedUser.managerDetails.walletBalance) {
-      showToast('Solde insuffisant pour ce montant de retrait.');
+    if (amount <= 0 || isNaN(amount)) {
+      showToast('Montant de retrait invalide.');
       return;
     }
 
-    const currentBal = connectedUser.managerDetails.walletBalance;
-    const newBal = currentBal - amount;
+    // 1. Concurrency Mutex Lock (Anti-Double Spend)
+    const lockKey = `wallet_lock_${connectedUser.id}`;
+    if (!acquireFinancialLock(lockKey, 3000)) {
+      showToast('Transaction concurrente détectée : une opération de retrait est déjà en cours.');
+      return;
+    }
 
-    const newTx: ManagerWalletTransaction = {
-      id: `wtx_${Date.now()}`,
-      managerId: connectedUser.id,
-      type: 'WITHDRAWAL',
-      amount,
-      balanceAfter: newBal,
-      description: `Retrait vers ${provider} (${account})`,
-      provider,
-      account,
-      date: new Date().toISOString(),
-      status: 'COMPLETED',
-    };
+    try {
+      // 2. Regulatory Compliance & BCEAO KYC Ceiling
+      const kycValidation = validateKycWithdrawalLimits(connectedUser, amount);
+      if (!kycValidation.allowed) {
+        showToast(kycValidation.reason || 'Plafond réglementaire dépassé.');
+        return;
+      }
 
-    setWalletTransactions((prev) => [newTx, ...prev]);
+      // 3. Balance Check
+      if (amount > connectedUser.managerDetails.walletBalance) {
+        showToast('Solde insuffisant pour ce montant de retrait.');
+        return;
+      }
 
-    const updatedUser: RegisteredUser = {
-      ...connectedUser,
-      managerDetails: {
-        ...connectedUser.managerDetails,
-        walletBalance: newBal,
-      },
-    };
+      const currentBal = connectedUser.managerDetails.walletBalance;
+      const newBal = currentBal - amount;
 
-    setConnectedUser(updatedUser);
-    setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+      const newTx: ManagerWalletTransaction = {
+        id: `wtx_${Date.now()}`,
+        managerId: connectedUser.id,
+        type: 'WITHDRAWAL',
+        amount,
+        balanceAfter: newBal,
+        description: `Retrait vers ${provider} (${account})`,
+        provider,
+        account,
+        date: new Date().toISOString(),
+        status: 'COMPLETED',
+      };
 
-    showToast(`Retrait de ${formatXOF(amount)} exécuté avec succès vers ${provider} !`);
+      setWalletTransactions((prev) => [newTx, ...prev]);
+
+      const updatedUser: RegisteredUser = {
+        ...connectedUser,
+        managerDetails: {
+          ...connectedUser.managerDetails,
+          walletBalance: newBal,
+        },
+      };
+
+      setConnectedUser(updatedUser);
+      setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+
+      showToast(`Retrait de ${formatXOF(amount)} exécuté avec succès vers ${provider} !`);
+    } finally {
+      releaseFinancialLock(lockKey);
+    }
   };
 
   // Manager: Create a new Tontine
@@ -264,8 +297,10 @@ export default function App() {
     const tontine = tontines.find((t) => t.id === tontineId);
     if (!tontine) return;
 
-    if (tontine.managerId !== connectedUser.id) {
-      showToast('Accès refusé : Seul le gestionnaire créateur peut modifier ce montant.');
+    // Strict Anti-IDOR Authorization Check
+    const authCheck = assertTontineManagerOwnership(connectedUser, tontine);
+    if (!authCheck.authorized) {
+      showToast(authCheck.reason || 'Accès refusé : Seul le gestionnaire créateur peut modifier ce montant.');
       return;
     }
 
@@ -284,7 +319,7 @@ export default function App() {
     showToast(`Montant de cotisation fixé à ${formatXOF(newAmount)} pour "${tontine.name}".`);
   };
 
-  // Manager: Payout round to beneficiary and collect commission
+  // Manager: Payout round to beneficiary and collect commission (Protected with Mutex & IDOR Guard)
   const handlePayoutBeneficiary = (tontineId: string, roundNumber: number) => {
     if (!connectedUser) {
       showToast('Veuillez vous connecter pour verser une cagnotte.');
@@ -295,78 +330,91 @@ export default function App() {
     const tontine = tontines.find((t) => t.id === tontineId);
     if (!tontine) return;
 
-    if (tontine.managerId !== connectedUser.id) {
-      showToast('Accès refusé : Seul le gestionnaire créateur de cette tontine peut verser la cagnotte.');
+    // 1. Strict Anti-IDOR Authorization Check
+    const authCheck = assertTontineManagerOwnership(connectedUser, tontine);
+    if (!authCheck.authorized) {
+      showToast(authCheck.reason || 'Accès refusé : Seul le gestionnaire créateur de cette tontine peut verser la cagnotte.');
       return;
     }
 
-    const currentBeneficiary = tontine.members.find((m) => m.turnNumber === roundNumber);
-    if (!currentBeneficiary) {
-      showToast(`Aucun membre cotisant n'est encore assigné au Tour #${roundNumber}. Le gestionnaire n'intervient pas dans les cagnottes : seul un membre cotisant participant peut la percevoir.`);
+    // 2. Concurrency Mutex Lock (Anti-Double Decaissement)
+    const payoutLockKey = `payout_lock_${tontineId}_${roundNumber}`;
+    if (!acquireFinancialLock(payoutLockKey, 4000)) {
+      showToast('Opération en cours : ce tour de tontine est déjà en cours de décaissement.');
       return;
     }
 
-    const potAmount = tontine.contributionAmount * tontine.members.length;
-    const commission = Math.round(potAmount * tontine.commissionRate);
-    const netPayout = potAmount - commission;
+    try {
+      const currentBeneficiary = tontine.members.find((m) => m.turnNumber === roundNumber);
+      if (!currentBeneficiary) {
+        showToast(`Aucun membre cotisant n'est encore assigné au Tour #${roundNumber}. Le gestionnaire n'intervient pas dans les cagnottes : seul un membre cotisant participant peut la percevoir.`);
+        return;
+      }
 
-    const currentBal = connectedUser?.managerDetails?.walletBalance || 0;
-    const newBal = currentBal + commission;
+      const potAmount = tontine.contributionAmount * tontine.members.length;
+      const commission = Math.round(potAmount * tontine.commissionRate);
+      const netPayout = potAmount - commission;
 
-    const commTx: ManagerWalletTransaction = {
-      id: `wtx_${Date.now()}`,
-      managerId: tontine.managerId,
-      type: 'COMMISSION_CREDIT',
-      amount: commission,
-      balanceAfter: newBal,
-      description: `Commission ${formatPercent(tontine.commissionRate)} retenue sur Tour ${roundNumber} - ${tontine.name}`,
-      date: new Date().toISOString(),
-      status: 'COMPLETED',
-    };
+      const currentBal = connectedUser?.managerDetails?.walletBalance || 0;
+      const newBal = currentBal + commission;
 
-    setWalletTransactions((prev) => [commTx, ...prev]);
+      const commTx: ManagerWalletTransaction = {
+        id: `wtx_${Date.now()}`,
+        managerId: tontine.managerId,
+        type: 'COMMISSION_CREDIT',
+        amount: commission,
+        balanceAfter: newBal,
+        description: `Commission ${formatPercent(tontine.commissionRate)} retenue sur Tour ${roundNumber} - ${tontine.name}`,
+        date: new Date().toISOString(),
+        status: 'COMPLETED',
+      };
 
-    setTontines((prev) =>
-      prev.map((t) => {
-        if (t.id === tontineId) {
-          const nextRound = Math.min(t.totalRounds, t.currentRound + 1);
-          return {
-            ...t,
-            currentRound: nextRound,
-            status: nextRound >= t.totalRounds ? 'COMPLETED' : 'ACTIVE',
-          };
-        }
-        return t;
-      })
-    );
+      setWalletTransactions((prev) => [commTx, ...prev]);
 
-    setUsers((prev) =>
-      prev.map((u) => {
-        if (u.id === tontine.managerId && u.managerDetails) {
-          const updated = {
-            ...u,
-            managerDetails: {
-              ...u.managerDetails,
-              walletBalance: u.managerDetails.walletBalance + commission,
-            },
-          };
-          if (connectedUser?.id === u.id) {
-            setConnectedUser(updated);
+      setTontines((prev) =>
+        prev.map((t) => {
+          if (t.id === tontineId) {
+            const nextRound = Math.min(t.totalRounds, t.currentRound + 1);
+            return {
+              ...t,
+              currentRound: nextRound,
+              status: nextRound >= t.totalRounds ? 'COMPLETED' : 'ACTIVE',
+            };
           }
-          return updated;
-        }
-        return u;
-      })
-    );
+          return t;
+        })
+      );
 
-    showToast(
-      `Tour #${roundNumber} versé au bénéficiaire (${formatXOF(netPayout)}) ! Commission de ${formatXOF(
-        commission
-      )} créditée sur votre portefeuille.`
-    );
+      setUsers((prev) =>
+        prev.map((u) => {
+          if (u.id === tontine.managerId && u.managerDetails) {
+            const updated = {
+              ...u,
+              managerDetails: {
+                ...u.managerDetails,
+                walletBalance: u.managerDetails.walletBalance + commission,
+              },
+            };
+            if (connectedUser?.id === u.id) {
+              setConnectedUser(updated);
+            }
+            return updated;
+          }
+          return u;
+        })
+      );
+
+      showToast(
+        `Tour #${roundNumber} versé au bénéficiaire (${formatXOF(netPayout)}) ! Commission de ${formatXOF(
+          commission
+        )} créditée sur votre portefeuille.`
+      );
+    } finally {
+      releaseFinancialLock(payoutLockKey);
+    }
   };
 
-  // Member: Pay contribution for a tontine
+  // Member: Pay contribution for a tontine (Protected with Idempotency)
   const handlePayContribution = (tontineId: string, amount: number, paymentMethod: string) => {
     if (!connectedUser) {
       showToast('Veuillez vous connecter pour effectuer un versement.');
@@ -388,6 +436,15 @@ export default function App() {
     }
 
     const roundNumber = tontine.currentRound;
+
+    // Idempotency: prevent double payment submissions
+    const idempotencyKey = `idemp_pay_${tontine.id}_${connectedUser.id}_${roundNumber}`;
+    const idemCheck = checkAndRecordIdempotency(idempotencyKey);
+    if (idemCheck.isDuplicate) {
+      showToast(`Doublon détecté : la cotisation pour le Tour #${roundNumber} a déjà été enregistrée (Règle d'idempotence).`);
+      return;
+    }
+
     const validMethod = (['WAVE', 'ORANGE_MONEY', 'MTN_MOMO', 'MOOV_MONEY', 'CASH'].includes(paymentMethod)
       ? paymentMethod
       : 'WAVE') as 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'MOOV_MONEY' | 'CASH';
@@ -653,10 +710,16 @@ export default function App() {
             </div>
 
             <span className="text-slate-300 hidden md:inline">|</span>
-            <span className="hidden md:inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Garantie Sécurisée</span>
-            </span>
+            <button
+              type="button"
+              onClick={() => setShowSecurityModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold text-emerald-800 bg-emerald-100/90 hover:bg-emerald-200 border border-emerald-300/80 transition-colors shadow-2xs cursor-pointer"
+              title="Ouvrir le centre d'audit et tests de sécurité"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Bouclier Sécurité</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            </button>
           </div>
         </div>
       </header>
@@ -1080,6 +1143,16 @@ export default function App() {
                 </span>
               )}
             </button>
+            <button
+              id="nav-tab-security"
+              type="button"
+              onClick={() => setShowSecurityModal(true)}
+              className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 shadow-2xs"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Bouclier Sécurité</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            </button>
           </div>
 
           <div className="flex items-center gap-1.5">
@@ -1268,6 +1341,13 @@ export default function App() {
         onClose={() => setShowFooterTermsModal(false)}
         highlightRole={connectedUser?.role}
         alreadyAccepted={!!connectedUser?.acceptedTerms}
+      />
+
+      {/* FinTech Security & Regulatory Compliance Modal */}
+      <SecurityAuditModal
+        isOpen={showSecurityModal}
+        onClose={() => setShowSecurityModal(false)}
+        currentUser={connectedUser}
       />
     </div>
   );

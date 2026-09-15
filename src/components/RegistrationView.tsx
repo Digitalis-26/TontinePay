@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react';
 import { RegisteredUser, UserRoleType, PlanConfig } from '../types';
 import { SUPPORTED_COUNTRIES } from '../data/users';
 import { formatPercent, formatXOF } from '../data/plans';
+import { verifyOtpRequestGuard } from '../utils/security';
 import {
   UserCheck,
   Briefcase,
@@ -106,6 +107,12 @@ export function RegistrationView({
       errors.phone = 'Le numéro de téléphone est requis';
     } else if (phone.replace(/\D/g, '').length < 8) {
       errors.phone = 'Format de téléphone invalide (au moins 8 chiffres)';
+    } else {
+      const fullPhone = phone.startsWith('+') ? phone : `${selectedCountry.dialCode} ${phone}`;
+      const guardResult = verifyOtpRequestGuard(fullPhone);
+      if (!guardResult.allowed) {
+        errors.phone = guardResult.reason || 'Numéro non autorisé par la politique anti-fraude.';
+      }
     }
 
     if (selectedRole === 'MANAGER') {

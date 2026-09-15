@@ -17,9 +17,10 @@ interface NavbarProps {
   registeredCount?: number;
   connectedUser?: RegisteredUser | null;
   onLogout?: () => void;
+  onOpenSecurityAudit?: () => void;
 }
 
-export function Navbar({ activeTab, setActiveTab, registeredCount, connectedUser, onLogout }: NavbarProps) {
+export function Navbar({ activeTab, setActiveTab, registeredCount, connectedUser, onLogout, onOpenSecurityAudit }: NavbarProps) {
   const isManager = connectedUser?.role === 'MANAGER';
 
   return (
@@ -146,8 +147,21 @@ export function Navbar({ activeTab, setActiveTab, registeredCount, connectedUser
             </button>
           </nav>
 
-          {/* Connected User Badge or Login CTA */}
+          {/* Security Shield & Connected User Badge / Login CTA */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {onOpenSecurityAudit && (
+              <button
+                type="button"
+                onClick={onOpenSecurityAudit}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+                title="Ouvrir le Bouclier Sécurité & Conformité FinTech"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden sm:inline">Bouclier Sécurité</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              </button>
+            )}
+
             {connectedUser ? (
               <div className="flex items-center gap-1.5">
                 <button
