@@ -10,6 +10,7 @@ import { TermsModal } from './components/TermsModal';
 import { SecurityAuditModal } from './components/SecurityAuditModal';
 import { WhatsAppBotCenter } from './components/WhatsAppBotCenter';
 import { RiskManagementCenter } from './components/RiskManagementCenter';
+import { apiClient } from './utils/apiClient';
 import {
   acquireFinancialLock,
   releaseFinancialLock,
@@ -101,6 +102,8 @@ export default function App() {
     INITIAL_WALLET_TRANSACTIONS
   );
 
+  const [cloudSqlConnected, setCloudSqlConnected] = useState<boolean>(true);
+
   // Synchronize users and connectedUser to localStorage
   useEffect(() => {
     try {
@@ -109,6 +112,34 @@ export default function App() {
       console.error('Failed to save users in localStorage', e);
     }
   }, [users]);
+
+  // Load from Cloud SQL on mount
+  useEffect(() => {
+    async function loadCloudSqlData() {
+      try {
+        const health = await apiClient.getHealth();
+        if (health && health.status === 'ok') {
+          setCloudSqlConnected(true);
+        }
+        const remoteTontines = await apiClient.getTontines();
+        if (remoteTontines && remoteTontines.length > 0) {
+          setTontines(remoteTontines);
+        }
+        const remoteUsers = await apiClient.getUsers();
+        if (remoteUsers && remoteUsers.length > 0) {
+          setUsers((prev) => {
+            const map = new Map();
+            prev.forEach((u) => map.set(u.id, u));
+            remoteUsers.forEach((u) => map.set(u.id, u));
+            return Array.from(map.values());
+          });
+        }
+      } catch (err) {
+        console.warn('Cloud SQL initial sync:', err);
+      }
+    }
+    loadCloudSqlData();
+  }, []);
 
   useEffect(() => {
     try {
@@ -150,6 +181,7 @@ export default function App() {
   const handleAddUser = (newUser: RegisteredUser) => {
     setUsers((prev) => [newUser, ...prev.filter((u) => u.id !== newUser.id)]);
     setConnectedUser(newUser);
+    apiClient.syncUser(newUser);
     setActiveTab('dashboard');
     showToast(
       newUser.role === 'MANAGER'
@@ -249,6 +281,8 @@ export default function App() {
       setConnectedUser(updatedUser);
       setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
 
+      apiClient.withdrawWallet(connectedUser.id, amount, provider, account);
+
       showToast(`Retrait de ${formatXOF(amount)} exécuté avec succès vers ${provider} !`);
     } finally {
       releaseFinancialLock(lockKey);
@@ -269,6 +303,7 @@ export default function App() {
     };
 
     setTontines((prev) => [newTontine, ...prev]);
+    apiClient.createTontine(newTontine);
 
     if (connectedUser.managerDetails) {
       const updatedUser: RegisteredUser = {
@@ -408,6 +443,8 @@ export default function App() {
         })
       );
 
+      apiClient.payoutBeneficiary(tontineId, roundNumber, tontine.managerId, commission);
+
       showToast(
         `Tour #${roundNumber} versé au bénéficiaire (${formatXOF(netPayout)}) ! Commission de ${formatXOF(
           commission
@@ -493,6 +530,8 @@ export default function App() {
       })
     );
 
+    apiClient.recordPayment(tontineId, connectedUser.id, newPayment);
+
     showToast(
       `Cotisation de ${formatXOF(amount)} pour le Tour #${roundNumber} réglée avec succès via ${paymentMethod} !`
     );
@@ -573,6 +612,8 @@ export default function App() {
       setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
     }
 
+    apiClient.joinTontine(tontine.id, newParticipation);
+
     showToast(`Félicitations ! Vous avez rejoint "${tontine.name}" avec le Tour #${newParticipation.turnNumber} réservé.`);
     return true;
   };
@@ -619,6 +660,8 @@ export default function App() {
       })
     );
 
+    apiClient.updateMemberTurn(tontineId, memberUserId, newTurnNumber);
+
     const grossAmount = tontine.contributionAmount * tontine.members.length;
     const netPot = Math.round(grossAmount * (1 - tontine.commissionRate));
 
@@ -632,6 +675,7 @@ export default function App() {
     setTontines((prev) =>
       prev.map((t) => (t.id === tontineId ? { ...t, ...updates } : t))
     );
+    apiClient.updateRiskConfig(tontineId, updates);
   };
 
   const handleUpdateMemberRiskData = (
@@ -648,6 +692,7 @@ export default function App() {
         };
       })
     );
+    apiClient.updateMemberRisk(tontineId, memberId, updates);
   };
 
   const isManager = connectedUser?.role === 'MANAGER';
