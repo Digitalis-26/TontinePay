@@ -29,6 +29,7 @@ import {
   Info,
   Pencil,
   SlidersHorizontal,
+  ShieldAlert,
 } from 'lucide-react';
 
 interface ManagerDashboardProps {
@@ -42,6 +43,7 @@ interface ManagerDashboardProps {
   onUpdateTontineAmount?: (tontineId: string, newAmount: number) => void;
   onUpdateMemberTurn?: (tontineId: string, memberUserId: string, newTurnNumber: number) => void;
   onNavigateToSimulate?: (planCode: PlanConfig['code']) => void;
+  onNavigateToRisk?: () => void;
 }
 
 export function ManagerDashboard({
@@ -55,6 +57,7 @@ export function ManagerDashboard({
   onUpdateTontineAmount,
   onUpdateMemberTurn,
   onNavigateToSimulate,
+  onNavigateToRisk,
 }: ManagerDashboardProps) {
   const managerDetails = manager.managerDetails;
   const planCode = managerDetails?.planCode || 'STARTER';
@@ -526,6 +529,32 @@ export function ManagerDashboard({
                         </span>
                       </div>
                     </div>
+
+                    {/* Anti-Default & Risk Guard Strip */}
+                    <div className="mt-3 pt-3 border-t border-stone-200/80 flex flex-wrap items-center justify-between gap-3 text-xs bg-amber-500/10 p-3 rounded-xl border border-amber-500/20">
+                      <div className="flex items-center gap-4 flex-wrap">
+                        <div className="flex items-center gap-1.5 text-amber-950 font-bold">
+                          <ShieldAlert className="w-4 h-4 text-amber-600" />
+                          <span>Séquestre Cautions : <strong>{formatXOF(tontine.totalEscrowHeld || tontine.contributionAmount * tontine.members.length)}</strong></span>
+                        </div>
+                        <div className="text-stone-600">
+                          Garants Tours 1 & 2 : <strong className="text-indigo-700">{tontine.members.filter(m => m.turnNumber <= 2 && m.guarantorStatus === 'VERIFIED').length} / {tontine.members.filter(m => m.turnNumber <= 2).length} vérifiés</strong>
+                        </div>
+                        <div className="text-stone-600">
+                          Pénalités retard : <strong className="text-rose-700">{formatXOF(tontine.penaltyPerDay || 1000)} / jour</strong>
+                        </div>
+                      </div>
+                      {onNavigateToRisk && (
+                        <button
+                          type="button"
+                          onClick={onNavigateToRisk}
+                          className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-[11px] flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                        >
+                          <ShieldAlert className="w-3.5 h-3.5" />
+                          <span>Gérer les cautions & risques</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Progress & Current Beneficiary Banner */}
@@ -675,6 +704,7 @@ export function ManagerDashboard({
                               <th className="py-2.5 px-3">Membre</th>
                               <th className="py-2.5 px-3">Téléphone</th>
                               <th className="py-2.5 px-3">Paiement Mobile</th>
+                              <th className="py-2.5 px-3">Score & Sécurité</th>
                               <th className="py-2.5 px-3 text-center">Statut Tour {tontine.currentRound}</th>
                               <th className="py-2.5 px-3 text-right">Rôle dans le Tour</th>
                             </tr>
@@ -715,6 +745,42 @@ export function ManagerDashboard({
                                     <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-stone-100 text-stone-700">
                                       {member.paymentMethod}
                                     </span>
+                                  </td>
+                                  <td className="py-2.5 px-3">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      <span
+                                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold font-mono border ${
+                                          (member.tontineScore ?? 90) >= 85
+                                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                            : (member.tontineScore ?? 90) >= 70
+                                            ? 'bg-amber-50 text-amber-800 border-amber-300'
+                                            : 'bg-rose-50 text-rose-800 border-rose-300'
+                                        }`}
+                                      >
+                                        Score {member.tontineScore ?? 90}/100
+                                      </span>
+                                      {member.cautionStatus === 'ESCROWED' && (
+                                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-700 font-semibold border border-stone-200" title="Caution bloquée sous séquestre">
+                                          🔒 Séquestre
+                                        </span>
+                                      )}
+                                      {member.turnNumber <= 2 && (
+                                        <span
+                                          className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
+                                            member.guarantorStatus === 'VERIFIED'
+                                              ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                              : 'bg-rose-50 text-rose-700 border border-rose-200'
+                                          }`}
+                                          title={
+                                            member.guarantorStatus === 'VERIFIED'
+                                              ? `Garant vérifié: ${member.guarantorName || 'Parrain validé'}`
+                                              : 'Garant obligatoire pour Tour 1 ou 2'
+                                          }
+                                        >
+                                          {member.guarantorStatus === 'VERIFIED' ? '🛡️ Co-cautionné' : '⚠️ Garant Requis'}
+                                        </span>
+                                      )}
+                                    </div>
                                   </td>
                                   <td className="py-2.5 px-3 text-center">
                                     {member.hasPaidCurrentRound ? (

@@ -113,6 +113,17 @@ export interface TontineMemberParticipation {
   hasPaidCurrentRound: boolean;
   isCurrentBeneficiary: boolean;
   paymentMethod: string;
+  // Risk & Default Prevention
+  cautionAmount?: number;
+  cautionStatus?: 'ESCROWED' | 'RELEASED' | 'FORFEITED' | 'EXEMPT';
+  guarantorName?: string;
+  guarantorPhone?: string;
+  guarantorRelation?: string;
+  guarantorStatus?: 'VERIFIED' | 'PENDING' | 'REQUIRED' | 'NONE';
+  daysLate?: number;
+  penaltiesAmount?: number;
+  tontineScore?: number; // 0 - 100
+  tontineScoreTier?: 'A' | 'B' | 'C' | 'D';
 }
 
 export interface TontineRecord {
@@ -131,6 +142,14 @@ export interface TontineRecord {
   nextDueDate: string;
   managerParticipatesAsMember?: boolean;
   members: TontineMemberParticipation[];
+  // Risk Management Configuration
+  escrowCautionEnabled?: boolean;
+  cautionPerMember?: number; // e.g. 1 round advance = 50 000 XOF
+  totalEscrowHeld?: number; // total amount secured on escrow account
+  guarantorRequiredForPriorityRounds?: boolean; // Tours 1 & 2
+  penaltyPerDay?: number; // e.g. 1000 XOF/day
+  penaltyDestination?: 'CAGNOTTE' | 'MANAGER';
+  gracePeriodDays?: number;
 }
 
 export interface MemberContributionPayment {

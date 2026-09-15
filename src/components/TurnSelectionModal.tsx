@@ -212,6 +212,22 @@ export function TurnSelectionModal({
           </div>
         </div>
 
+        {/* Priority Round Guard Notice (Tours 1 & 2) */}
+        {selectedTurn <= 2 && (
+          <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-950 space-y-1.5">
+            <div className="flex items-center gap-2 font-bold text-amber-900">
+              <ShieldCheck className="w-4 h-4 text-amber-600" />
+              <span>Règle de Sécurité Anti-Défaut (Tours 1 & 2)</span>
+            </div>
+            <p className="text-[11px] text-amber-800 leading-relaxed">
+              Pour percevoir la cagnotte dès les tours d'ouverture (Tour #{selectedTurn}),
+              le protocole anti-défaut applique :
+              <strong> 1 caution de garantie sous séquestre ({formatXOF(tontine.contributionAmount)})</strong> libérée en fin de cycle,
+              et l'exigence d'un <strong>Garant Co-cautionneur solidaire vérifié</strong> ou d'un Tontine Score Palier A.
+            </p>
+          </div>
+        )}
+
         {/* Strategy recommendation guide */}
         <div className="p-3.5 rounded-xl bg-amber-50/50 border border-amber-200/70 text-xs text-amber-900 space-y-1">
           <div className="flex items-center gap-1.5 font-bold text-amber-950">

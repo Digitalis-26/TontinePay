@@ -1,6 +1,6 @@
 {
   "name": "TONTINE",
-  "description": "Plateforme d'épargne rotative tontine avec intégration WhatsApp Bot conversationnel, relances automatiques 48h, forfaits commissions et tableaux de bord connectés.",
+  "description": "Plateforme d'épargne rotative tontine avec WhatsApp Bot conversationnel, relances J-2, système anti-défaut par caution séquestre, co-cautionnement de garants, pénalités de retard et Score Tontine.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

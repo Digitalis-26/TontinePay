@@ -22,6 +22,7 @@ import {
   Lock,
   PlusCircle,
   HelpCircle,
+  ShieldAlert,
 } from 'lucide-react';
 
 interface MemberDashboardProps {
@@ -31,6 +32,7 @@ interface MemberDashboardProps {
   onPayContribution: (tontineId: string, amount: number, paymentMethod: string) => void;
   onJoinTontineWithCode: (code: string, preferredTurn?: number) => boolean;
   onUpdateMemberTurn?: (tontineId: string, memberUserId: string, newTurnNumber: number) => void;
+  onNavigateToRisk?: () => void;
 }
 
 export function MemberDashboard({
@@ -40,6 +42,7 @@ export function MemberDashboard({
   onPayContribution,
   onJoinTontineWithCode,
   onUpdateMemberTurn,
+  onNavigateToRisk,
 }: MemberDashboardProps) {
   const memberDetails = member.memberDetails;
   const defaultMethod = memberDetails?.paymentMethod || 'WAVE';
@@ -80,6 +83,24 @@ export function MemberDashboard({
 
   // Computed metrics
   const totalPaidAmount = myPayments.reduce((acc, p) => acc + p.amount, 0);
+
+  // Risk & Escrow metrics
+  const myTotalEscrow = myParticipations.reduce((acc, t) => {
+    const part = t.members.find((m) => m.userId === member.id);
+    if (part && (part.cautionStatus === 'ESCROWED' || !part.cautionStatus)) {
+      return acc + (part.cautionAmount || t.contributionAmount);
+    }
+    return acc;
+  }, 0);
+
+  const myAverageTontineScore = myParticipations.length > 0
+    ? Math.round(
+        myParticipations.reduce((acc, t) => {
+          const part = t.members.find((m) => m.userId === member.id);
+          return acc + (part?.tontineScore ?? 95);
+        }, 0) / myParticipations.length
+      )
+    : 95;
 
   // Find if member is beneficiary anywhere this round
   const beneficiaryTontines = myParticipations.filter((t) => {
@@ -307,6 +328,39 @@ export function MemberDashboard({
             Rejoindre une autre tontine
           </button>
         </div>
+      </div>
+
+      {/* Risk Shield & Escrow Status for Member */}
+      <div className="bg-white p-5 rounded-2xl border border-amber-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-700 shrink-0">
+            <ShieldAlert className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-sm font-bold text-stone-900">
+                Garantie Anti-Défaut & Solvabilité Personnelle
+              </h3>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                Score Tontine : {myAverageTontineScore}/100 (Palier A)
+              </span>
+            </div>
+            <p className="text-xs text-stone-500 mt-0.5">
+              Caution sous séquestre : <strong className="text-stone-900 font-mono">{formatXOF(myTotalEscrow)}</strong> (débloquée et restituée au dernier tour) • Co-cautionnement solidaire actif.
+            </p>
+          </div>
+        </div>
+
+        {onNavigateToRisk && (
+          <button
+            type="button"
+            onClick={onNavigateToRisk}
+            className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 shadow-2xs"
+          >
+            <ShieldAlert className="w-3.5 h-3.5" />
+            <span>Voir Détails Cautions & Scores</span>
+          </button>
+        )}
       </div>
 
       {/* MY ACTIVE TONTINES */}

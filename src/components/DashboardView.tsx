@@ -21,6 +21,7 @@ import {
   LogOut,
   EyeOff,
   UserCheck,
+  ShieldAlert,
 } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -43,6 +44,7 @@ interface DashboardViewProps {
   onNavigateToRegister: () => void;
   onNavigateToLogin?: () => void;
   onNavigateToProfile?: () => void;
+  onNavigateToRisk?: () => void;
 }
 
 export function DashboardView({
@@ -65,6 +67,7 @@ export function DashboardView({
   onNavigateToRegister,
   onNavigateToLogin,
   onNavigateToProfile,
+  onNavigateToRisk,
 }: DashboardViewProps) {
   const managers = users.filter((u) => u.role === 'MANAGER');
   const members = users.filter((u) => u.role === 'MEMBER');
@@ -310,6 +313,7 @@ export function DashboardView({
           onUpdateTontineAmount={onUpdateTontineAmount}
           onUpdateMemberTurn={onUpdateMemberTurn}
           onNavigateToSimulate={onNavigateToSimulate}
+          onNavigateToRisk={onNavigateToRisk}
         />
       ) : (
         <MemberDashboard
@@ -319,6 +323,7 @@ export function DashboardView({
           onPayContribution={onPayContribution}
           onJoinTontineWithCode={onJoinTontineWithCode}
           onUpdateMemberTurn={onUpdateMemberTurn}
+          onNavigateToRisk={onNavigateToRisk}
         />
       )}
     </div>

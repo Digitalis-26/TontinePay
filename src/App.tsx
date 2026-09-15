@@ -9,6 +9,7 @@ import { ProfileView } from './components/ProfileView';
 import { TermsModal } from './components/TermsModal';
 import { SecurityAuditModal } from './components/SecurityAuditModal';
 import { WhatsAppBotCenter } from './components/WhatsAppBotCenter';
+import { RiskManagementCenter } from './components/RiskManagementCenter';
 import {
   acquireFinancialLock,
   releaseFinancialLock,
@@ -48,6 +49,7 @@ import {
   UserPlus,
   Palette,
   MessageSquare,
+  ShieldAlert,
 } from 'lucide-react';
 import {
   AttractiveBackground,
@@ -56,7 +58,7 @@ import {
 } from './components/AttractiveBackground';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'plans' | 'registration' | 'login' | 'profile' | 'whatsapp'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'plans' | 'registration' | 'login' | 'profile' | 'whatsapp' | 'risk'>('dashboard');
   const [showFooterTermsModal, setShowFooterTermsModal] = useState(false);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [bgTheme, setBgTheme] = useState<BackgroundTheme>(() => {
@@ -625,6 +627,29 @@ export default function App() {
     );
   };
 
+  // Risk & Escrow management handlers
+  const handleUpdateTontineRiskConfig = (tontineId: string, updates: Partial<TontineRecord>) => {
+    setTontines((prev) =>
+      prev.map((t) => (t.id === tontineId ? { ...t, ...updates } : t))
+    );
+  };
+
+  const handleUpdateMemberRiskData = (
+    tontineId: string,
+    memberId: string,
+    updates: Partial<TontineMemberParticipation>
+  ) => {
+    setTontines((prev) =>
+      prev.map((t) => {
+        if (t.id !== tontineId) return t;
+        return {
+          ...t,
+          members: t.members.map((m) => (m.id === memberId ? { ...m, ...updates } : m)),
+        };
+      })
+    );
+  };
+
   const isManager = connectedUser?.role === 'MANAGER';
   const myAccessibleTontines = connectedUser
     ? getUserAccessibleTontines(tontines, connectedUser.id)
@@ -836,6 +861,16 @@ export default function App() {
                   >
                     <MessageSquare className="w-4 h-4 text-emerald-400" />
                     <span>WhatsApp Bot</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('risk')}
+                    className="px-3.5 py-3 rounded-xl text-xs sm:text-sm font-bold bg-amber-950/40 hover:bg-amber-900/60 text-amber-200 transition-colors border border-amber-400/30 shadow-xs flex items-center gap-1.5 backdrop-blur-xs cursor-pointer"
+                    title="Gérer les cautions sous séquestre, garants et pénalités de retard"
+                  >
+                    <ShieldAlert className="w-4 h-4 text-amber-400" />
+                    <span>Anti-Défaut & Cautions</span>
                   </button>
                 </div>
               )}
@@ -1149,6 +1184,22 @@ export default function App() {
             </button>
 
             <button
+              id="nav-tab-risk"
+              onClick={() => setActiveTab('risk')}
+              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'risk'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
+              <span>Anti-Défaut & Cautions</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-amber-100 text-amber-800 uppercase">
+                Séquestre
+              </span>
+            </button>
+
+            <button
               id="nav-tab-profile"
               onClick={() => setActiveTab('profile')}
               className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
@@ -1236,6 +1287,7 @@ export default function App() {
             onNavigateToRegister={() => setActiveTab('registration')}
             onNavigateToLogin={() => setActiveTab('login')}
             onNavigateToProfile={() => setActiveTab('profile')}
+            onNavigateToRisk={() => setActiveTab('risk')}
           />
         )}
 
@@ -1338,6 +1390,20 @@ export default function App() {
             currentUser={connectedUser}
             onPayContribution={handlePayContribution}
             showToast={showToast}
+          />
+        )}
+
+        {/* =========================================================================
+            TAB 7: GESTION DU RISQUE DE DÉFAUT & DES IMPAYÉS
+            ========================================================================= */}
+        {activeTab === 'risk' && (
+          <RiskManagementCenter
+            tontines={tontines}
+            connectedUser={connectedUser}
+            onUpdateTontineRiskConfig={handleUpdateTontineRiskConfig}
+            onUpdateMemberRiskData={handleUpdateMemberRiskData}
+            onShowToast={showToast}
+            onNavigateToWhatsApp={() => setActiveTab('whatsapp')}
           />
         )}
       </main>
