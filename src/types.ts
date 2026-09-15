@@ -160,3 +160,25 @@ export interface ManagerWalletTransaction {
   status: 'COMPLETED' | 'PENDING';
 }
 
+export type WhatsAppMessageType = 'TEXT' | 'INTERACTIVE_BUTTONS' | 'TEMPLATE' | 'DOCUMENT';
+
+export interface WhatsAppNotificationTemplate {
+  id: string;
+  code: 'DUE_DATE_REMINDER_48H' | 'PAYMENT_RECEIPT' | 'BENEFICIARY_POT_ALERT' | 'LATE_NOTICE' | 'MONTHLY_REPORT';
+  name: string;
+  category: 'UTILITY' | 'MARKETING';
+  description: string;
+  sampleBody: string;
+}
+
+export interface WhatsAppChatMessage {
+  id: string;
+  sender: 'USER' | 'BOT' | 'SYSTEM';
+  text: string;
+  timestamp: string;
+  buttons?: { id: string; title: string; action: string }[];
+  paymentLink?: { provider: string; url: string; amount: number };
+  documentName?: string;
+}
+
+

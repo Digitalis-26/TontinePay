@@ -8,6 +8,7 @@ import { LoginView } from './components/LoginView';
 import { ProfileView } from './components/ProfileView';
 import { TermsModal } from './components/TermsModal';
 import { SecurityAuditModal } from './components/SecurityAuditModal';
+import { WhatsAppBotCenter } from './components/WhatsAppBotCenter';
 import {
   acquireFinancialLock,
   releaseFinancialLock,
@@ -46,6 +47,7 @@ import {
   LogIn,
   UserPlus,
   Palette,
+  MessageSquare,
 } from 'lucide-react';
 import {
   AttractiveBackground,
@@ -54,7 +56,7 @@ import {
 } from './components/AttractiveBackground';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'plans' | 'registration' | 'login' | 'profile'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'plans' | 'registration' | 'login' | 'profile' | 'whatsapp'>('dashboard');
   const [showFooterTermsModal, setShowFooterTermsModal] = useState(false);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [bgTheme, setBgTheme] = useState<BackgroundTheme>(() => {
@@ -825,6 +827,16 @@ export default function App() {
                   >
                     Voir les forfaits
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('whatsapp')}
+                    className="px-3.5 py-3 rounded-xl text-xs sm:text-sm font-bold bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-200 transition-colors border border-emerald-400/30 shadow-xs flex items-center gap-1.5 backdrop-blur-xs cursor-pointer"
+                    title="Ouvrir l'assistant WhatsApp conversationnel & les relances"
+                  >
+                    <MessageSquare className="w-4 h-4 text-emerald-400" />
+                    <span>WhatsApp Bot</span>
+                  </button>
                 </div>
               )}
             </motion.div>
@@ -1121,6 +1133,22 @@ export default function App() {
             </button>
 
             <button
+              id="nav-tab-whatsapp"
+              onClick={() => setActiveTab('whatsapp')}
+              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'whatsapp'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
+              <span>WhatsApp Bot & Relances</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-emerald-100 text-emerald-800 uppercase">
+                Direct
+              </span>
+            </button>
+
+            <button
               id="nav-tab-profile"
               onClick={() => setActiveTab('profile')}
               className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
@@ -1298,6 +1326,18 @@ export default function App() {
             onNavigateToDashboard={() => setActiveTab('dashboard')}
             onNavigateToLogin={() => setActiveTab('login')}
             onNavigateToRegister={() => setActiveTab('registration')}
+          />
+        )}
+
+        {/* =========================================================================
+            TAB 6: WHATSAPP BOT & NOTIFICATIONS
+            ========================================================================= */}
+        {activeTab === 'whatsapp' && (
+          <WhatsAppBotCenter
+            tontines={tontines}
+            currentUser={connectedUser}
+            onPayContribution={handlePayContribution}
+            showToast={showToast}
           />
         )}
       </main>
