@@ -52,6 +52,8 @@ import {
   MessageSquare,
   ShieldAlert,
 } from 'lucide-react';
+import { PWAInstallButton } from './components/PWAInstallButton.tsx';
+import { OfflineIndicator } from './components/OfflineIndicator.tsx';
 import {
   AttractiveBackground,
   BackgroundTheme,
@@ -782,6 +784,9 @@ export default function App() {
             </div>
 
             <span className="text-slate-300 hidden md:inline">|</span>
+            <PWAInstallButton />
+
+            <span className="text-slate-300 hidden md:inline">|</span>
             <button
               type="button"
               onClick={() => setShowSecurityModal(true)}
@@ -1500,6 +1505,9 @@ export default function App() {
         onClose={() => setShowSecurityModal(false)}
         currentUser={connectedUser}
       />
+
+      {/* PWA Offline Connectivity Indicator */}
+      <OfflineIndicator />
     </div>
   );
 }
