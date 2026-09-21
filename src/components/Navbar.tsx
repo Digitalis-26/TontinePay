@@ -42,9 +42,6 @@ export function Navbar({ activeTab, setActiveTab, registeredCount, connectedUser
                   Épargne & Commissions
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">
-                Starter 2 500 F • Premium 5 000 F • Business 10 000 F
-              </p>
             </div>
           </div>
 

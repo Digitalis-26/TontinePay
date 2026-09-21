@@ -295,16 +295,6 @@ export function ManagerDashboard({
               {myTontines.length}
             </span>
           </div>
-
-          <button
-            type="button"
-            id="create-tontine-top-btn"
-            onClick={() => setShowCreateModal(true)}
-            className="px-3.5 sm:px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-stone-950 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Nouvelle Tontine</span>
-          </button>
         </div>
 
         {/* Tontine Cards List */}

@@ -977,13 +977,6 @@ export default function App() {
               Politique d'Utilisation
             </button>
           </div>
-          <div className="flex items-center gap-3 font-medium">
-            <span>Starter 2 500 F</span>
-            <span>•</span>
-            <span>Premium 5 000 F</span>
-            <span>•</span>
-            <span>Business 10 000 F</span>
-          </div>
         </div>
       </footer>
 
