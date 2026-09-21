@@ -351,15 +351,14 @@ const newMember = await prisma.$transaction(async (tx) => {
         <div>
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-800 border border-amber-500/20">
-              Module Utilisateurs & RBAC
+              Espace Inscription
             </span>
-            <span className="text-xs text-stone-400 font-mono">• PostgreSQL / Prisma</span>
           </div>
           <h2 className="text-xl font-bold text-stone-900 mt-1">
             Portail d'Inscription des Membres et Managers
           </h2>
           <p className="text-xs text-stone-500 mt-0.5">
-            Gérez l'onboarding des cotisants et des gestionnaires avec leurs règles de commissions respectives.
+            Créez votre profil cotisant ou gestionnaire en quelques instants.
           </p>
         </div>
 
@@ -942,7 +941,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                         </li>
                         <li className="flex items-start gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
-                          <span>Interdiction formelle de spéculation ou d'utilisation personnelle des fonds. Enregistrement systématique au Grand Livre d'audit.</span>
+                          <span>Gestion rigoureuse et transparente des fonds avec traçabilité de chaque opération.</span>
                         </li>
                         <li className="flex items-start gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
@@ -961,7 +960,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                         </li>
                         <li className="flex items-start gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                          <span>Conformité avec la vérification d'identité (KYC) selon les plafonds réglementaires BCEAO / UEMOA.</span>
+                          <span>Vérification d'identité conforme aux règles des paiements mobiles.</span>
                         </li>
                       </>
                     )}
@@ -1017,19 +1016,10 @@ const newMember = await prisma.$transaction(async (tx) => {
               </div>
 
               {/* Submit Buttons */}
-              <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <button
-                  type="button"
-                  onClick={() => setShowCodePreview(!showCodePreview)}
-                  className="text-xs font-semibold text-stone-600 hover:text-stone-900 flex items-center gap-1.5"
-                >
-                  <Code2 className="w-4 h-4 text-amber-600" />
-                  {showCodePreview ? 'Masquer le script Prisma ORM' : 'Voir le code Prisma généré'}
-                </button>
-
+              <div className="pt-4 flex flex-col sm:flex-row items-center justify-end gap-4">
                 <button
                   type="submit"
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <UserCheck className="w-4 h-4" />
                   {selectedRole === 'MANAGER'
@@ -1040,7 +1030,7 @@ const newMember = await prisma.$transaction(async (tx) => {
             </form>
           </div>
 
-          {/* Right Sidebar: Summary, Schema info & Prisma code preview */}
+          {/* Right Sidebar: Summary */}
           <div className="lg:col-span-4 space-y-6">
             {/* Live Registration Card Summary */}
             <div className="bg-stone-900 text-white p-6 rounded-2xl border border-stone-800 shadow-md space-y-4">
@@ -1118,42 +1108,6 @@ const newMember = await prisma.$transaction(async (tx) => {
                     )} sur chaque cotisation collectée dans ses tontines.`
                   : 'Ce membre pourra participer aux tontines et recevra ses paiements directement sur son compte Mobile Money.'}
               </div>
-            </div>
-
-            {/* Prisma ORM Transaction Card */}
-            <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Code2 className="w-4 h-4 text-amber-600" />
-                  <h4 className="text-xs font-bold text-stone-900">Requête Prisma Client (ORM)</h4>
-                </div>
-                <button
-                  onClick={copySnippet}
-                  className="px-2 py-1 rounded text-[11px] font-medium text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 flex items-center gap-1 transition-colors"
-                >
-                  <Copy className="w-3 h-3" />
-                  {copiedCode ? 'Copié !' : 'Copier'}
-                </button>
-              </div>
-
-              <div className="rounded-xl bg-stone-950 p-3.5 font-mono text-[11px] text-stone-300 overflow-x-auto max-h-80 border border-stone-800 leading-snug">
-                <pre>{prismaSnippet}</pre>
-              </div>
-
-              <p className="text-[10px] text-stone-500 leading-normal">
-                Modèles mis en jeu : <code className="text-stone-800 font-bold">User</code>,{' '}
-                <code className="text-stone-800 font-bold">UserRole</code>,{' '}
-                {selectedRole === 'MANAGER' ? (
-                  <>
-                    <code className="text-stone-800 font-bold">Manager</code>,{' '}
-                    <code className="text-stone-800 font-bold">Subscription</code>,{' '}
-                    <code className="text-stone-800 font-bold">Wallet</code>
-                  </>
-                ) : (
-                  <code className="text-stone-800 font-bold">TontineMember</code>
-                )}
-                .
-              </p>
             </div>
           </div>
         </div>

@@ -294,7 +294,7 @@ export function CommissionSimulator({
         <div className="mt-6 rounded-xl bg-stone-900 text-stone-100 p-4 font-mono text-xs space-y-1">
           <div className="text-stone-400 font-sans text-xs font-semibold flex items-center gap-1.5 mb-2">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            Vérification selon le schéma Prisma (ManagerCommission & Payment)
+            Détail du calcul certifié (Commission & Cotisation)
           </div>
           <div className="text-amber-300">
             base_amount = {params.contributionAmount} XOF

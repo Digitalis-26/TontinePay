@@ -396,10 +396,10 @@ export function ProfileView({
           <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
             <div>
               <h2 className="text-base font-bold text-slate-900">
-                Paliers de Conformité & Niveaux de Vérification
+                Paliers & Niveaux de Compte
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Conforme aux directives BCEAO et UEMOA sur la lutte anti-blanchiment (LCB-FT).
+                Vérification par paliers pour augmenter vos capacités de transaction.
               </p>
             </div>
 
@@ -946,11 +946,10 @@ export function ProfileView({
         <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
           <div>
             <h2 className="text-lg font-bold text-slate-900">
-              Plafonds de Transactions et Directives UEMOA / BCEAO
+              Plafonds de Transactions selon votre Niveau de Compte
             </h2>
             <p className="text-xs text-slate-500 mt-1">
-              Les paliers de transaction sont fixés conformément aux règlements des banques centrales
-              sur la monnaie électronique et la protection des fonds communautaires.
+              Les paliers de transaction définissent vos limites mensuelles de versement et de retrait selon votre niveau de vérification.
             </p>
           </div>
 
@@ -1031,7 +1030,7 @@ export function ProfileView({
                 </span>
               </div>
               <p className="text-[11px] text-slate-600 max-w-xl">
-                Document contractuel opposable régissant les droits et devoirs des Gestionnaires et des Membres cotisants conformément aux directives BCEAO / UEMOA.
+                Document régissant les engagements et les droits des Gestionnaires et des Membres cotisants.
               </p>
             </div>
             <button

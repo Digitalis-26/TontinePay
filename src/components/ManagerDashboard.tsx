@@ -71,7 +71,6 @@ export function ManagerDashboard({
   const [managingTurnData, setManagingTurnData] = useState<{ tontine: TontineRecord; memberUserId: string } | null>(null);
   const [expandedTontineId, setExpandedTontineId] = useState<string | null>(tontines[0]?.id || null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
-  const [showPrismaQuery, setShowPrismaQuery] = useState(false);
 
   // Withdrawal form
   const [withdrawAmount, setWithdrawAmount] = useState(50000);
@@ -208,204 +207,127 @@ export function ManagerDashboard({
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Top Profile Header */}
-      <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-700 text-xl font-bold shrink-0">
-              {manager.firstName.charAt(0)}
-              {manager.lastName.charAt(0)}
-            </div>
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-black text-stone-900">
-                  {manager.firstName} {manager.lastName}
-                </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500 text-stone-950 flex items-center gap-1">
-                  <Briefcase className="w-3 h-3" />
-                  Gestionnaire
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-stone-100 text-stone-700 border border-stone-200">
-                  {manager.countryName} ({manager.city})
-                </span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3 text-xs text-stone-600">
-                <span className="font-semibold text-amber-900 flex items-center gap-1">
-                  <Building2 className="w-3.5 h-3.5 text-amber-600" />
-                  {managerDetails?.businessName || 'Organisation Tontine'}
-                </span>
-                <span>•</span>
-                <span className="font-mono text-stone-500">{manager.phone}</span>
-                <span>•</span>
-                <span className="text-emerald-700 font-medium flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  Statut : {manager.status}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Plan & Commission Badge */}
-          <div className="flex flex-wrap items-center gap-3 p-3.5 rounded-xl bg-stone-50 border border-stone-200">
-            <div>
-              <div className="text-[11px] text-stone-500 font-medium">Abonnement Actif</div>
-              <div className="text-sm font-bold text-stone-900 flex items-center gap-1.5">
-                Plan {planCode}
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-mono">
-                  Max {formatPercent(effectiveMaxRate)}
-                </span>
-              </div>
-            </div>
-            <div className="h-8 w-px bg-stone-200" />
-            <div>
-              <div className="text-[11px] text-stone-500 font-medium">Portefeuille Reversement</div>
-              <div className="text-xs font-semibold text-stone-800 flex items-center gap-1">
-                <Wallet className="w-3.5 h-3.5 text-stone-500" />
-                {managerDetails?.payoutProvider} ({managerDetails?.payoutAccount || manager.phone})
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 4 Main KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="space-y-6 animate-fade-in">
+      {/* 4 Main KPI Cards - Compact & Fluid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Wallet Balance */}
-        <div className="bg-stone-900 text-white p-5 rounded-2xl border border-stone-800 shadow-sm flex flex-col justify-between">
+        <div className="bg-stone-900 text-white p-4 sm:p-5 rounded-2xl border border-stone-800 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-stone-400">
-              <span className="font-medium">Solde Portefeuille Commissions</span>
+              <span className="font-medium">Solde Portefeuille</span>
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             </div>
-            <div className="text-2xl font-black text-amber-400 mt-2 font-mono">
+            <div className="text-xl sm:text-2xl font-black text-amber-400 mt-2 font-mono">
               {formatXOF(walletBalance)}
             </div>
-            <p className="text-[11px] text-stone-400 mt-1">
-              Disponible pour virement immédiat
-            </p>
           </div>
           <button
+            type="button"
             onClick={() => setShowWithdrawModal(true)}
             disabled={walletBalance <= 0}
-            className="mt-4 w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:bg-stone-800 disabled:text-stone-600 text-stone-950 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+            className="mt-3 w-full py-1.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:bg-stone-800 disabled:text-stone-600 text-stone-950 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <ArrowUpRight className="w-3.5 h-3.5" />
-            Retirer les commissions
+            <span>Retirer</span>
           </button>
         </div>
 
         {/* Total Earned */}
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between">
+        <div className="bg-white/95 backdrop-blur-sm p-4 sm:p-5 rounded-2xl border border-white/20 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-stone-500">
-              <span className="font-medium">Commissions Cumulées</span>
+              <span className="font-medium">Commissions</span>
               <Coins className="w-4 h-4 text-amber-600" />
             </div>
-            <div className="text-2xl font-black text-stone-900 mt-2 font-mono">
+            <div className="text-xl sm:text-2xl font-black text-stone-900 mt-2 font-mono">
               {formatXOF(totalCommissionsEarned)}
             </div>
-            <p className="text-[11px] text-stone-500 mt-1">
-              Taux appliqué : <strong className="text-amber-700">{formatPercent(effectiveMaxRate)}</strong>
-            </p>
           </div>
-          <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
-            <span>Retenue automatique :</span>
-            <span className="font-semibold text-emerald-600">Active ✓</span>
+          <div className="mt-3 pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
+            <span>Taux max :</span>
+            <span className="font-bold text-amber-700">{formatPercent(effectiveMaxRate)}</span>
           </div>
         </div>
 
         {/* Total Funds Managed */}
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between">
+        <div className="bg-white/95 backdrop-blur-sm p-4 sm:p-5 rounded-2xl border border-white/20 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-stone-500">
-              <span className="font-medium">Volume Collecté & Tournant</span>
-              <TrendingUp className="w-4 h-4 text-blue-600" />
+              <span className="font-medium">Volume Collecté</span>
+              <TrendingUp className="w-4 h-4 text-emerald-600" />
             </div>
-            <div className="text-2xl font-black text-stone-900 mt-2 font-mono">
+            <div className="text-xl sm:text-2xl font-black text-stone-900 mt-2 font-mono">
               {formatXOF(totalCollectedVolume)}
             </div>
-            <p className="text-[11px] text-stone-500 mt-1">
-              Cotisations collectées sur l'ensemble des tours
-            </p>
           </div>
-          <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
-            <span>Taux de recouvrement :</span>
-            <span className="font-bold text-stone-900">96.8%</span>
+          <div className="mt-3 pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
+            <span>Recouvrement :</span>
+            <span className="font-bold text-emerald-700">96.8%</span>
           </div>
         </div>
 
         {/* Tontines & Members */}
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between">
+        <div className="bg-white/95 backdrop-blur-sm p-4 sm:p-5 rounded-2xl border border-white/20 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-stone-500">
               <span className="font-medium">Tontines Actives</span>
               <Users className="w-4 h-4 text-purple-600" />
             </div>
-            <div className="text-2xl font-black text-stone-900 mt-2 font-mono">
-              {myTontines.length} <span className="text-sm font-normal text-stone-500">tontines</span>
+            <div className="text-xl sm:text-2xl font-black text-stone-900 mt-2 font-mono">
+              {myTontines.length}
             </div>
-            <p className="text-[11px] text-stone-500 mt-1">
-              {totalMembersCount} membres cotisants enregistrés
-            </p>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="mt-4 w-full py-2 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5 text-amber-400" />
-            Créer une tontine
-          </button>
+          <div className="mt-3 pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
+            <span>Membres :</span>
+            <span className="font-bold text-stone-800">{totalMembersCount}</span>
+          </div>
         </div>
       </div>
 
       {/* TONTINES MANAGEMENT LIST */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-bold text-stone-900">
-              Tontines sous votre Gestion ({myTontines.length})
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+              Tontines gérées
             </h2>
-            <p className="text-xs text-stone-500">
-              Suivez l'état des tours, les cotisations des membres et les retenues de vos commissions.
-            </p>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/10 text-emerald-200 border border-white/10 font-mono">
+              {myTontines.length}
+            </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            {onNavigateToSimulate && (
-              <button
-                onClick={() => onNavigateToSimulate(planCode)}
-                className="px-3 py-2 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-              >
-                <Coins className="w-3.5 h-3.5 text-amber-600" />
-                Simuler un cycle ({formatPercent(effectiveMaxRate)})
-              </button>
-            )}
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Nouvelle Tontine
-            </button>
-          </div>
+          <button
+            type="button"
+            id="create-tontine-top-btn"
+            onClick={() => setShowCreateModal(true)}
+            className="px-3.5 sm:px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-stone-950 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Nouvelle Tontine</span>
+          </button>
         </div>
 
         {/* Tontine Cards List */}
         {myTontines.length === 0 ? (
-          <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-stone-300 space-y-3">
-            <Building2 className="w-10 h-10 text-stone-400 mx-auto" />
-            <h3 className="text-sm font-bold text-stone-800">Aucune tontine créée pour le moment</h3>
-            <p className="text-xs text-stone-500 max-w-md mx-auto">
-              Lancez votre première tontine en définissant le montant de la cotisation, le nombre de tours et le taux de commission autorisé par votre plan {planCode}.
-            </p>
+          <div className="p-8 sm:p-10 text-center bg-white/95 backdrop-blur-sm rounded-2xl border border-white/20 shadow-sm space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-600 mx-auto">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-slate-900">
+                Aucune tontine pour le moment
+              </h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                Créez votre première tontine pour démarrer les cycles de cotisations.
+              </p>
+            </div>
             <button
+              type="button"
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 rounded-xl bg-amber-500 text-stone-950 font-bold text-xs inline-flex items-center gap-2"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs shadow-sm transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              Créer ma première tontine
+              <span>Créer ma première tontine</span>
             </button>
           </div>
         ) : (
@@ -890,46 +812,13 @@ export function ManagerDashboard({
       </div>
 
       {/* WALLET TRANSACTIONS & COMMISSION LOG */}
-      <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h3 className="text-base font-bold text-stone-900 flex items-center gap-2">
-              <Coins className="w-4 h-4 text-amber-600" />
-              Journal des Mouvements du Portefeuille de Commissions
-            </h3>
-            <p className="text-xs text-stone-500">
-              Historique vérifiable des crédits de commissions retenues et des retraits vers votre Mobile Money.
-            </p>
-          </div>
-
-          <button
-            onClick={() => setShowPrismaQuery(!showPrismaQuery)}
-            className="text-xs font-semibold text-stone-600 hover:text-stone-900 flex items-center gap-1.5 self-start"
-          >
-            <Code2 className="w-4 h-4 text-amber-600" />
-            {showPrismaQuery ? 'Masquer la requête Prisma' : 'Voir la requête Prisma'}
-          </button>
+      <div className="bg-white/95 backdrop-blur-sm p-5 sm:p-6 rounded-2xl border border-white/20 shadow-sm space-y-4">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm sm:text-base font-bold text-stone-900 flex items-center gap-2">
+            <Coins className="w-4 h-4 text-amber-600" />
+            <span>Historique des Commissions & Retraits</span>
+          </h3>
         </div>
-
-        {showPrismaQuery && (
-          <div className="p-4 rounded-xl bg-stone-950 text-stone-300 font-mono text-[11px] overflow-x-auto border border-stone-800 space-y-1">
-            <p className="text-stone-500">// Requête ORM pour charger le portefeuille et le grand livre du Manager</p>
-            <pre>{`const managerData = await prisma.manager.findUnique({
-  where: { id: "${manager.id}" },
-  include: {
-    wallet: true,
-    tontines: {
-      include: {
-        members: { include: { user: true } },
-        commissions: true
-      }
-    },
-    commissions: { orderBy: { createdAt: 'desc' }, take: 20 },
-    withdrawals: { orderBy: { createdAt: 'desc' } }
-  }
-});`}</pre>
-          </div>
-        )}
 
         {/* Transactions Table */}
         <div className="overflow-x-auto rounded-xl border border-stone-200">

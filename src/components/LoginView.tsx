@@ -176,21 +176,14 @@ export function LoginView({
       {/* Main Login Card Container */}
       <div className="bg-white rounded-3xl border border-stone-200 shadow-sm overflow-hidden">
         {/* Header Hero Section */}
-        <div className="bg-gradient-to-r from-stone-950 via-stone-900 to-stone-950 text-white p-6 sm:p-8 border-b border-stone-800">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold">
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                Portail d'Accès Sécurisé • UEMOA & Mobile Money
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                Connexion à votre Espace TONTINE
-              </h1>
-              <p className="text-xs sm:text-sm text-stone-400 max-w-xl">
-                Gérez vos cercles de tontine, encaissez vos commissions de gestionnaire
-                ou suivez et réglez vos cotisations de membre cotisant en toute sécurité.
-              </p>
-            </div>
+        <div className="bg-gradient-to-r from-stone-950 via-stone-900 to-stone-950 text-white p-6 sm:p-7 border-b border-stone-800">
+          <div className="space-y-1">
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+              Connexion à votre Espace TONTINE
+            </h1>
+            <p className="text-xs sm:text-sm text-stone-400 max-w-xl">
+              Gérez vos cercles de tontine, encaissez vos commissions de gestionnaire ou suivez vos cotisations de membre.
+            </p>
           </div>
         </div>
 
@@ -301,12 +294,12 @@ export function LoginView({
                   </div>
                 )}
 
-                {/* Password or Security PIN */}
+                {/* Password or PIN */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
                       <KeyRound className="w-3.5 h-3.5 text-amber-600" />
-                      Code PIN Secret ou Mot de passe
+                      Code PIN ou Mot de passe
                     </label>
                   </div>
                   <div className="relative">
@@ -359,11 +352,10 @@ export function LoginView({
                   {isSubmitting ? (
                     <>
                       <div className="w-4 h-4 border-2 border-stone-950 border-t-transparent rounded-full animate-spin" />
-                      <span>Vérification des identifiants...</span>
+                      <span>Connexion en cours...</span>
                     </>
                   ) : (
                     <>
-                      <Lock className="w-4 h-4" />
                       <span>Se Connecter à Mon Espace</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
@@ -385,17 +377,16 @@ export function LoginView({
               </div>
             </div>
 
-            {/* Right Column: Security & Platform Overview */}
-            <div className="lg:col-span-5 bg-stone-50 p-5 rounded-2xl border border-stone-200/80 space-y-4">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            {/* Right Column: Platform Overview */}
+            <div className="lg:col-span-5 bg-stone-50 p-5 sm:p-6 rounded-2xl border border-stone-200/80 space-y-4">
+              <div className="space-y-1">
                 <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
-                  Sécurité & Avantages Plateforme
+                  Avantages Plateforme
                 </h3>
+                <p className="text-xs text-stone-500 leading-relaxed">
+                  Une solution intuitive pour administrer vos tontines et suivre les cotisations en temps réel.
+                </p>
               </div>
-              <p className="text-[11px] text-stone-500 leading-relaxed">
-                TONTINE protège chaque cercle d'épargne avec un cloisonnement strict et des transferts directs via les opérateurs Mobile Money agréés.
-              </p>
 
               <div className="space-y-3 pt-1">
                 <div className="p-3 bg-white rounded-xl border border-stone-200 shadow-2xs space-y-1">
@@ -404,27 +395,27 @@ export function LoginView({
                     Paiements & Retraits Mobile Money
                   </div>
                   <p className="text-[11px] text-stone-600 leading-relaxed">
-                    Wave, Orange Money et MTN MoMo intégrés pour des cotisations sans frais cachés et des versements directs.
+                    Wave, Orange Money et MTN MoMo intégrés pour des cotisations simples et des versements directs.
                   </p>
                 </div>
 
                 <div className="p-3 bg-white rounded-xl border border-stone-200 shadow-2xs space-y-1">
                   <div className="flex items-center gap-2 text-xs font-bold text-stone-900">
                     <Users className="w-4 h-4 text-blue-600" />
-                    Cloisonnement Strict des Tontines
+                    Suivi Transparent des Tours
                   </div>
                   <p className="text-[11px] text-stone-600 leading-relaxed">
-                    Chaque utilisateur n'accède qu'aux tontines qu'il a créées ou rejointes en tant que membre cotisant.
+                    Tableau de bord clair pour suivre la progression de chaque tour et l'attribution des cagnottes.
                   </p>
                 </div>
 
                 <div className="p-3 bg-white rounded-xl border border-stone-200 shadow-2xs space-y-1">
                   <div className="flex items-center gap-2 text-xs font-bold text-stone-900">
                     <Coins className="w-4 h-4 text-amber-600" />
-                    Commissions Claires & Transparentes
+                    Commissions Automatisées
                   </div>
                   <p className="text-[11px] text-stone-600 leading-relaxed">
-                    Taux plafonnés selon votre formule (1,5% à 3,5%) calculés automatiquement à chaque distribution de cagnotte.
+                    Calcul automatique selon votre formule pour des versements précis et instantanés.
                   </p>
                 </div>
               </div>
@@ -436,21 +427,10 @@ export function LoginView({
                   className="w-full py-2.5 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-amber-400 text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  Nouveau ? Créer un Compte
+                  <span>Nouveau ? Créer un Compte</span>
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Informational Security Notice footer */}
-        <div className="bg-stone-50 px-6 py-4 border-t border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-stone-500">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Chiffrement TLS 256-bit • Conformité aux règlements BCEAO & UEMOA sur la monnaie électronique.</span>
-          </div>
-          <div className="font-mono text-[11px] text-stone-400">
-            TONTINE • Plateforme Sécurisée
           </div>
         </div>
       </div>

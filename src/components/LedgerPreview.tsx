@@ -37,9 +37,7 @@ export function LedgerPreview({
               Grand Livre Comptable & Écritures en Partie Double
             </div>
             <p className="text-xs text-stone-500 mt-1">
-              Conformité avec les modèles Prisma <code className="text-stone-700 bg-stone-100 px-1 py-0.5 rounded">LedgerAccount</code>,{' '}
-              <code className="text-stone-700 bg-stone-100 px-1 py-0.5 rounded">LedgerTransaction</code> et{' '}
-              <code className="text-stone-700 bg-stone-100 px-1 py-0.5 rounded">LedgerEntry</code>.
+              Traçabilité intégrale et écritures équilibrées pour chaque tour de cotisation.
             </p>
           </div>
 

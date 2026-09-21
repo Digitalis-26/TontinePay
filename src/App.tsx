@@ -7,7 +7,6 @@ import { DashboardView } from './components/DashboardView';
 import { LoginView } from './components/LoginView';
 import { ProfileView } from './components/ProfileView';
 import { TermsModal } from './components/TermsModal';
-import { SecurityAuditModal } from './components/SecurityAuditModal';
 import { WhatsAppBotCenter } from './components/WhatsAppBotCenter';
 import { RiskManagementCenter } from './components/RiskManagementCenter';
 import { apiClient } from './utils/apiClient';
@@ -37,6 +36,7 @@ import {
 import {
   Sparkles,
   ArrowRight,
+  ArrowLeft,
   LayoutDashboard,
   Coins,
   PlusCircle,
@@ -51,6 +51,7 @@ import {
   Palette,
   MessageSquare,
   ShieldAlert,
+  LogOut,
 } from 'lucide-react';
 import { PWAInstallButton } from './components/PWAInstallButton.tsx';
 import { OfflineIndicator } from './components/OfflineIndicator.tsx';
@@ -63,7 +64,6 @@ import {
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'plans' | 'registration' | 'login' | 'profile' | 'whatsapp' | 'risk'>('dashboard');
   const [showFooterTermsModal, setShowFooterTermsModal] = useState(false);
-  const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [bgTheme, setBgTheme] = useState<BackgroundTheme>(() => {
     try {
       const saved = localStorage.getItem('tontine_bg_theme');
@@ -713,605 +713,116 @@ export default function App() {
       {/* High-End Dynamic Ambient Background (Mesh gradients, animated glow orbs, geometric dot matrix) */}
       <AttractiveBackground currentTheme={bgTheme} onThemeChange={handleThemeChange} />
 
-      {/* Top Status & Ambiance Bar */}
-      <header className="relative z-10 w-full border-b border-emerald-900/10 bg-white/75 backdrop-blur-md transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-10 flex items-center justify-between text-xs text-slate-600">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 font-bold text-emerald-800">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
-              </span>
-              <span>Hub Tontine Digital</span>
-            </div>
-            <span className="hidden sm:inline text-slate-300">|</span>
-            <span className="hidden sm:inline text-[11px] text-slate-500">
-              Espace Sécurisé UEMOA & CEMAC • Mobile Money Intégré
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Quick theme ambiance switcher chips */}
-            <div className="flex items-center gap-1 bg-slate-100/90 p-0.5 rounded-full border border-slate-200/80">
-              <button
-                type="button"
-                onClick={() => handleThemeChange('emerald')}
-                className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
-                  bgTheme === 'emerald'
-                    ? 'bg-emerald-600 text-white shadow-2xs'
-                    : 'text-slate-600 hover:text-emerald-700'
-                }`}
-                title="Ambiance Émeraude & Or (Défaut)"
-              >
-                Émeraude
-              </button>
-              <button
-                type="button"
-                onClick={() => handleThemeChange('ocean')}
-                className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
-                  bgTheme === 'ocean'
-                    ? 'bg-teal-600 text-white shadow-2xs'
-                    : 'text-slate-600 hover:text-teal-700'
-                }`}
-                title="Ambiance Lagon Turquoise"
-              >
-                Lagon
-              </button>
-              <button
-                type="button"
-                onClick={() => handleThemeChange('ivory')}
-                className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
-                  bgTheme === 'ivory'
-                    ? 'bg-amber-600 text-white shadow-2xs'
-                    : 'text-slate-600 hover:text-amber-700'
-                }`}
-                title="Ambiance Nacre Dorée"
-              >
-                Nacre
-              </button>
-              <button
-                type="button"
-                onClick={() => handleThemeChange('night')}
-                className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
-                  bgTheme === 'night'
-                    ? 'bg-slate-900 text-emerald-300 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-                title="Ambiance Obsidienne Nuit"
-              >
-                Nuit
-              </button>
-            </div>
-
-            <span className="text-slate-300 hidden md:inline">|</span>
-            <PWAInstallButton />
-
-            <span className="text-slate-300 hidden md:inline">|</span>
-            <button
-              type="button"
-              onClick={() => setShowSecurityModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold text-emerald-800 bg-emerald-100/90 hover:bg-emerald-200 border border-emerald-300/80 transition-colors shadow-2xs cursor-pointer"
-              title="Ouvrir le centre d'audit et tests de sécurité"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
-              <span>Bouclier Sécurité</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            </button>
-          </div>
-        </div>
-      </header>
-
       {/* Main Container */}
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* =========================================================================
-            HEADLINE CARD - Left-Anchored, Airy, Animated Green Gradient Background
+            HEADER - Clean, Compact & Fluid
             ========================================================================= */}
-        <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 animated-green-gradient p-6 sm:p-10 shadow-lg text-white">
-          {/* Animated subtle floating glow shapes */}
-          <motion.div
-            animate={{
-              x: [0, 25, 0],
-              y: [0, -20, 0],
-              scale: [1, 1.15, 1],
-              opacity: [0.35, 0.6, 0.35],
-            }}
-            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-            className="pointer-events-none absolute -top-24 -right-24 w-96 h-96 bg-emerald-400/25 rounded-full blur-3xl"
-          />
-          <motion.div
-            animate={{
-              x: [0, -30, 0],
-              y: [0, 25, 0],
-              scale: [1, 1.2, 1],
-              opacity: [0.25, 0.5, 0.25],
-            }}
-            transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-            className="pointer-events-none absolute -bottom-24 -left-20 w-80 h-80 bg-teal-300/20 rounded-full blur-3xl"
-          />
-          <motion.div
-            animate={{
-              opacity: [0.15, 0.35, 0.15],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-            className="pointer-events-none absolute top-1/2 left-1/3 w-64 h-64 bg-emerald-200/15 rounded-full blur-2xl"
-          />
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
-            {/* LEFT COLUMN: Clean Headline with TONTINE in grand characters */}
-            <motion.div
-              initial={{ opacity: 0, x: -25 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
-              className={connectedUser ? "lg:col-span-7 space-y-4 text-left" : "lg:col-span-12 space-y-4 text-left"}
-            >
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-950/40 backdrop-blur-md text-emerald-200 border border-emerald-400/30 text-xs font-bold shadow-xs">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
-                <span>Plateforme Tontine Digitale & Commissions</span>
-              </div>
-
-              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-tight text-white leading-none">
+        <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30 animated-green-gradient p-4 sm:p-5 shadow-md text-white">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+            {/* Brand & Role */}
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
                 TONTINE
               </h1>
-
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-emerald-100/95 tracking-tight leading-snug">
-                Gérez vos tontines et commissions en toute simplicité.
-              </p>
-
-              <p className="text-sm sm:text-base text-emerald-100/80 max-w-2xl leading-relaxed">
-                Suivi transparent des tours, versements instantanés Mobile Money (Wave, Orange Money, MTN) et rétribution automatique des gestionnaires.
-              </p>
-
-              {/* Connected user quick shortcuts */}
               {connectedUser && (
-                <div className="pt-2 flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('dashboard')}
-                    className="px-5 py-3 rounded-xl text-xs sm:text-sm font-bold bg-white hover:bg-emerald-50 text-emerald-950 transition-all shadow-md hover:shadow-lg flex items-center gap-2 active:scale-95 cursor-pointer"
-                  >
-                    <LayoutDashboard className="w-4 h-4 text-emerald-700" />
-                    <span>Ouvrir mon tableau de bord</span>
-                    <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                  </button>
-
-                  {isManager ? (
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('dashboard')}
-                      className="px-4 py-3 rounded-xl text-xs sm:text-sm font-bold bg-emerald-950/50 hover:bg-emerald-900/60 text-white transition-colors border border-emerald-400/30 shadow-xs flex items-center gap-2 backdrop-blur-xs cursor-pointer"
-                    >
-                      <PlusCircle className="w-4 h-4 text-emerald-300" />
-                      <span>Créer une tontine</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('dashboard')}
-                      className="px-4 py-3 rounded-xl text-xs sm:text-sm font-bold bg-emerald-950/50 hover:bg-emerald-900/60 text-white transition-colors border border-emerald-400/30 shadow-xs flex items-center gap-2 backdrop-blur-xs cursor-pointer"
-                    >
-                      <CreditCard className="w-4 h-4 text-emerald-300" />
-                      <span>Payer ma cotisation</span>
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('plans')}
-                    className="px-3.5 py-3 rounded-xl text-xs font-semibold text-emerald-100 hover:text-white hover:bg-emerald-900/40 transition-colors cursor-pointer"
-                  >
-                    Voir les forfaits
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('whatsapp')}
-                    className="px-3.5 py-3 rounded-xl text-xs sm:text-sm font-bold bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-200 transition-colors border border-emerald-400/30 shadow-xs flex items-center gap-1.5 backdrop-blur-xs cursor-pointer"
-                    title="Ouvrir l'assistant WhatsApp conversationnel & les relances"
-                  >
-                    <MessageSquare className="w-4 h-4 text-emerald-400" />
-                    <span>WhatsApp Bot</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('risk')}
-                    className="px-3.5 py-3 rounded-xl text-xs sm:text-sm font-bold bg-amber-950/40 hover:bg-amber-900/60 text-amber-200 transition-colors border border-amber-400/30 shadow-xs flex items-center gap-1.5 backdrop-blur-xs cursor-pointer"
-                    title="Gérer les cautions sous séquestre, garants et pénalités de retard"
-                  >
-                    <ShieldAlert className="w-4 h-4 text-amber-400" />
-                    <span>Anti-Défaut & Cautions</span>
-                  </button>
-                </div>
+                <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-400/20 text-emerald-200 border border-emerald-400/30 font-semibold flex items-center gap-1.5">
+                  <span className={`w-2 h-2 rounded-full ${isManager ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                  {isManager ? 'Gestionnaire' : 'Membre'}
+                </span>
               )}
-            </motion.div>
+            </div>
 
-            {/* RIGHT COLUMN: Active Session Quick Highlight (only when connectedUser is active) */}
-            {connectedUser && (
-              <motion.div
-                initial={{ opacity: 0, x: 25 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.15, ease: 'easeOut' }}
-                className="lg:col-span-5"
-              >
-                <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-emerald-400/20 p-5 sm:p-6 shadow-xl space-y-4 text-slate-900">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
-                          isManager
-                            ? 'bg-amber-100 text-amber-900 border border-amber-200'
-                            : 'bg-emerald-100 text-emerald-900 border border-emerald-200'
-                        }`}
-                      >
-                        {connectedUser.firstName.charAt(0)}
-                        {connectedUser.lastName.charAt(0)}
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold text-slate-900">
-                          {connectedUser.firstName} {connectedUser.lastName}
-                        </div>
-                        <div className="text-[11px] text-slate-500 flex items-center gap-1.5 font-medium">
-                          <span
-                            className={`w-2 h-2 rounded-full ${
-                              isManager ? 'bg-amber-500' : 'bg-emerald-500'
-                            }`}
-                          />
-                          {isManager
-                            ? `Gestionnaire (Plan ${connectedUser.managerDetails?.planCode || 'STARTER'})`
-                            : `Membre Cotisant (${connectedUser.memberDetails?.paymentMethod || 'WAVE'})`}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('profile')}
-                        className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 cursor-pointer ${
-                          connectedUser.kyc?.status === 'VERIFIED'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                            : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100 animate-pulse'
-                        }`}
-                        title="Gérer mon profil et ma vérification KYC"
-                      >
-                        <ShieldCheck className="w-3 h-3" />
-                        <span>{connectedUser.kyc?.status === 'VERIFIED' ? 'KYC Vérifié' : 'Vérifier KYC'}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('login')}
-                        className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
-                        title="Changer de profil"
-                      >
-                        Changer
-                      </button>
-                    </div>
+            {/* Profile & Quick Actions */}
+            {connectedUser ? (
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('profile')}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-xs font-semibold text-white transition-all cursor-pointer"
+                  title="Gérer mon profil"
+                >
+                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-black text-[10px] ${
+                    isManager ? 'bg-amber-400 text-stone-950' : 'bg-emerald-400 text-stone-950'
+                  }`}>
+                    {connectedUser.firstName.charAt(0)}{connectedUser.lastName.charAt(0)}
                   </div>
-
-                  {/* Quick Metric highlight */}
-                  {isManager ? (
-                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                      <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                        <span>Solde Portefeuille Commissions</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
-                          Disponible
-                        </span>
-                      </div>
-                      <div className="text-2xl font-black text-slate-900 mt-1 font-mono">
-                        {formatXOF(connectedUser.managerDetails?.walletBalance || 0)}
-                      </div>
-                      <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-                        <span>Tontines gérées : {myAccessibleTontines.length}</span>
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab('dashboard')}
-                          className="text-emerald-700 font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
-                        >
-                          Retirer <ArrowUpRight className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
+                  <span>{connectedUser.firstName} {connectedUser.lastName}</span>
+                  {connectedUser.kyc?.status === 'VERIFIED' ? (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/30 text-emerald-200 font-bold flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-emerald-300" />
+                      KYC
+                    </span>
                   ) : (
-                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                      <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                        <span>Mes Tontines Actives</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
-                          {myAccessibleTontines.length} groupe(s)
-                        </span>
-                      </div>
-                      <div className="text-xl font-bold text-slate-900 mt-1">
-                        {myAccessibleTontines[0]?.name || 'Prêt pour une tontine'}
-                      </div>
-                      <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-                        <span>Mode : {connectedUser.memberDetails?.paymentMethod || 'Mobile Money'}</span>
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab('dashboard')}
-                          className="text-emerald-700 font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
-                        >
-                          Payer mon tour <ArrowRight className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/30 text-amber-200 font-bold">
+                      KYC à vérifier
+                    </span>
                   )}
-                </div>
-              </motion.div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('login')}
+                  className="text-xs font-medium text-emerald-100 hover:text-white px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                  title="Changer de profil"
+                >
+                  Changer
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="p-2 rounded-xl text-xs font-bold text-rose-200 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 transition-colors cursor-pointer"
+                  title="Se déconnecter"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('login')}
+                  className="px-3.5 py-1.5 rounded-xl bg-white text-emerald-950 text-xs font-bold shadow-sm transition-all cursor-pointer"
+                >
+                  Connexion
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('register')}
+                  className="px-3.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/20 text-white text-xs font-semibold transition-all cursor-pointer"
+                >
+                  Créer un compte
+                </button>
+              </div>
             )}
           </div>
         </div>
 
-        {/* =========================================================================
-            TÂCHES FORTES (Quick Task Actions Bar)
-            ========================================================================= */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.25 }}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-4"
-        >
-          {!connectedUser ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setActiveTab('registration')}
-                className="p-4 rounded-2xl bg-white/85 backdrop-blur-md hover:bg-white border border-emerald-900/10 hover:border-emerald-400/50 transition-all text-left shadow-xs hover:shadow-md group cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
-                  <PlusCircle className="w-5 h-5" />
-                </div>
-                <div className="text-sm font-bold text-slate-900">Créer un Compte Gestionnaire</div>
-                <div className="text-xs text-slate-500 mt-0.5">
-                  Lancez votre propre tontine et encaissez vos commissions de gestion.
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('registration')}
-                className="p-4 rounded-2xl bg-white/85 backdrop-blur-md hover:bg-white border border-emerald-900/10 hover:border-emerald-400/50 transition-all text-left shadow-xs hover:shadow-md group cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
-                  <Users className="w-5 h-5" />
-                </div>
-                <div className="text-sm font-bold text-slate-900">Rejoindre en tant que Membre</div>
-                <div className="text-xs text-slate-500 mt-0.5">
-                  Intégrez une tontine avec votre code d'invitation et cotisez via Mobile Money.
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('plans')}
-                className="p-4 rounded-2xl bg-white/85 backdrop-blur-md hover:bg-white border border-emerald-900/10 hover:border-emerald-400/50 transition-all text-left shadow-xs hover:shadow-md group cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <div className="text-sm font-bold text-slate-900">Simuler la Rentabilité</div>
-                <div className="text-xs text-slate-500 mt-0.5">
-                  Calculer les montants collectés et commissions potentielles selon votre formule.
-                </div>
-              </button>
-            </>
-          ) : isManager ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setActiveTab('dashboard')}
-                className="p-4 rounded-2xl bg-white/85 backdrop-blur-md hover:bg-white border border-emerald-900/10 hover:border-emerald-400/50 transition-all text-left shadow-xs hover:shadow-md group cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
-                  <PlusCircle className="w-5 h-5" />
-                </div>
-                <div className="text-sm font-bold text-slate-900">Créer une Tontine</div>
-                <div className="text-xs text-slate-500 mt-0.5">
-                  Fixer la cotisation, la périodicité et générer le code d'invitation.
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('dashboard')}
-                className="p-4 rounded-2xl bg-white/85 backdrop-blur-md hover:bg-white border border-emerald-900/10 hover:border-emerald-400/50 transition-all text-left shadow-xs hover:shadow-md group cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
-                  <Coins className="w-5 h-5" />
-                </div>
-                <div className="text-sm font-bold text-slate-900">Verser la Cagnotte</div>
-                <div className="text-xs text-slate-500 mt-0.5">
-                  Distribuer les fonds au bénéficiaire et encaisser votre commission.
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('dashboard')}
-                className="p-4 rounded-2xl bg-white/85 backdrop-blur-md hover:bg-white border border-emerald-900/10 hover:border-emerald-400/50 transition-all text-left shadow-xs hover:shadow-md group cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
-                  <ArrowUpRight className="w-5 h-5" />
-                </div>
-                <div className="text-sm font-bold text-slate-900">Retirer mes Gains</div>
-                <div className="text-xs text-slate-500 mt-0.5">
-                  Transférer vos commissions directement vers Wave ou Orange Money.
-                </div>
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => setActiveTab('dashboard')}
-                className="p-4 rounded-2xl bg-white/85 backdrop-blur-md hover:bg-white border border-emerald-900/10 hover:border-emerald-400/50 transition-all text-left shadow-xs hover:shadow-md group cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
-                  <CreditCard className="w-5 h-5" />
-                </div>
-                <div className="text-sm font-bold text-slate-900">Payer ma Cotisation</div>
-                <div className="text-xs text-slate-500 mt-0.5">
-                  Régler le tour en cours via Mobile Money sécurisé.
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('dashboard')}
-                className="p-4 rounded-2xl bg-white/85 backdrop-blur-md hover:bg-white border border-emerald-900/10 hover:border-emerald-400/50 transition-all text-left shadow-xs hover:shadow-md group cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
-                  <Users className="w-5 h-5" />
-                </div>
-                <div className="text-sm font-bold text-slate-900">Rejoindre avec Code</div>
-                <div className="text-xs text-slate-500 mt-0.5">
-                  Entrer un code d'invitation TNT-... pour intégrer une tontine.
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('plans')}
-                className="p-4 rounded-2xl bg-white/85 backdrop-blur-md hover:bg-white border border-emerald-900/10 hover:border-emerald-400/50 transition-all text-left shadow-xs hover:shadow-md group cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold mb-3 group-hover:scale-105 transition-transform">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <div className="text-sm font-bold text-slate-900">Simuler la Rentabilité</div>
-                <div className="text-xs text-slate-500 mt-0.5">
-                  Calculer les montants collectés et commissions potentielles.
-                </div>
-              </button>
-            </>
-          )}
-        </motion.div>
-
-        {/* =========================================================================
-            CLEAN NAVIGATION TABS BAR
-            ========================================================================= */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-white/85 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl border border-emerald-900/10 shadow-xs">
-          <div className="flex flex-wrap items-center gap-1.5">
+        {/* Navigation Return bar (only shown when not on the main dashboard) */}
+        {activeTab !== 'dashboard' && (
+          <div className="flex items-center justify-between gap-3">
             <button
-              id="nav-tab-dashboard"
               onClick={() => setActiveTab('dashboard')}
-              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'dashboard'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-slate-800 font-bold text-xs shadow-xs border border-slate-200 transition-all cursor-pointer"
             >
-              <LayoutDashboard className="w-3.5 h-3.5" />
-              <span>Tableau de Bord</span>
+              <ArrowLeft className="w-4 h-4" />
+              <span>Retour au Tableau de Bord</span>
             </button>
 
-            <button
-              id="nav-tab-plans"
-              onClick={() => setActiveTab('plans')}
-              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'plans'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Forfaits & Simulateur</span>
-            </button>
-
-            <button
-              id="nav-tab-whatsapp"
-              onClick={() => setActiveTab('whatsapp')}
-              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'whatsapp'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
-              <span>WhatsApp Bot & Relances</span>
-              <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-emerald-100 text-emerald-800 uppercase">
-                Direct
-              </span>
-            </button>
-
-            <button
-              id="nav-tab-risk"
-              onClick={() => setActiveTab('risk')}
-              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'risk'
-                  ? 'bg-amber-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
-              <span>Anti-Défaut & Cautions</span>
-              <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-amber-100 text-amber-800 uppercase">
-                Séquestre
-              </span>
-            </button>
-
-            <button
-              id="nav-tab-profile"
-              onClick={() => setActiveTab('profile')}
-              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'profile'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Mon Profil & KYC</span>
-              {connectedUser && (
-                <span
-                  className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold uppercase ${
-                    connectedUser.kyc?.status === 'VERIFIED'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-amber-100 text-amber-800 animate-pulse'
-                  }`}
-                >
-                  {connectedUser.kyc?.status === 'VERIFIED' ? 'Niv. 2' : 'À vérifier'}
-                </span>
-              )}
-            </button>
-            <button
-              id="nav-tab-security"
-              type="button"
-              onClick={() => setShowSecurityModal(true)}
-              className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 shadow-2xs"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Bouclier Sécurité</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            </button>
+            {connectedUser && (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
+                title="Se déconnecter"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Déconnexion</span>
+              </button>
+            )}
           </div>
-
-          <div className="flex items-center gap-1.5">
-            <button
-              id="nav-tab-registration"
-              onClick={() => setActiveTab('registration')}
-              className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'registration'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>Inscription</span>
-            </button>
-
-            <button
-              id="nav-tab-login"
-              onClick={() => setActiveTab('login')}
-              className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'login'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <LogIn className="w-3.5 h-3.5" />
-              <span>Connexion</span>
-            </button>
-          </div>
-        </div>
+        )}
 
         {/* =========================================================================
             TAB 1: DASHBOARD
@@ -1497,13 +1008,6 @@ export default function App() {
         onClose={() => setShowFooterTermsModal(false)}
         highlightRole={connectedUser?.role}
         alreadyAccepted={!!connectedUser?.acceptedTerms}
-      />
-
-      {/* FinTech Security & Regulatory Compliance Modal */}
-      <SecurityAuditModal
-        isOpen={showSecurityModal}
-        onClose={() => setShowSecurityModal(false)}
-        currentUser={connectedUser}
       />
 
       {/* PWA Offline Connectivity Indicator */}

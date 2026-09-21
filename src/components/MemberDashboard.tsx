@@ -18,7 +18,6 @@ import {
   FileText,
   Sparkles,
   ExternalLink,
-  Code2,
   Lock,
   PlusCircle,
   HelpCircle,
@@ -69,9 +68,6 @@ export function MemberDashboard({
   const matchedTontineForJoin = invitationCodeInput.trim()
     ? tontines.find((t) => t.code.toUpperCase() === invitationCodeInput.trim().toUpperCase())
     : null;
-
-  // Prisma Inspector
-  const [showPrismaQuery, setShowPrismaQuery] = useState(false);
 
   // Filter tontines where this member participates as a contributing member
   const myParticipations = tontines.filter((t) =>
@@ -560,36 +556,7 @@ export function MemberDashboard({
               Reçus officiels horodatés certifiant vos versements auprès du gestionnaire.
             </p>
           </div>
-
-          <button
-            onClick={() => setShowPrismaQuery(!showPrismaQuery)}
-            className="text-xs font-semibold text-stone-600 hover:text-stone-900 flex items-center gap-1.5 self-start"
-          >
-            <Code2 className="w-4 h-4 text-emerald-600" />
-            {showPrismaQuery ? 'Masquer la requête Prisma' : 'Voir la requête Prisma'}
-          </button>
         </div>
-
-        {showPrismaQuery && (
-          <div className="p-4 rounded-xl bg-stone-950 text-stone-300 font-mono text-[11px] overflow-x-auto border border-stone-800 space-y-1">
-            <p className="text-stone-500">// Requête ORM pour charger les cotisations du membre</p>
-            <pre>{`const memberData = await prisma.user.findUnique({
-  where: { id: "${member.id}" },
-  include: {
-    tontineMemberships: {
-      include: {
-        tontine: {
-          include: { manager: true }
-        }
-      }
-    },
-    contributions: {
-      orderBy: { paidAt: 'desc' }
-    }
-  }
-});`}</pre>
-          </div>
-        )}
 
         {/* History Table */}
         <div className="overflow-x-auto rounded-xl border border-stone-200">
