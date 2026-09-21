@@ -3,6 +3,7 @@
   "appId": "1:1037463272186:web:93e5dfbcdce1a18e75a743",
   "apiKey": "AIzaSyCX4DpfJYdrHsh0mkFfFFeJbTFlCFlPRfE",
   "authDomain": "advance-clarity-slcf1.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-gestiondescommis-9b55cdf3-e095-4589-b6dd-e197dc27173b",
   "storageBucket": "advance-clarity-slcf1.firebasestorage.app",
   "messagingSenderId": "1037463272186",
   "measurementId": "",

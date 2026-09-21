@@ -346,64 +346,6 @@ const newMember = await prisma.$transaction(async (tx) => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Top Banner Navigation */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-800 border border-amber-500/20">
-              Espace Inscription
-            </span>
-          </div>
-          <h2 className="text-xl font-bold text-stone-900 mt-1">
-            Portail d'Inscription des Membres et Managers
-          </h2>
-          <p className="text-xs text-stone-500 mt-0.5">
-            Créez votre profil cotisant ou gestionnaire en quelques instants.
-          </p>
-        </div>
-
-        {/* View Toggle & Login Shortcut */}
-        <div className="flex flex-wrap items-center gap-2">
-          {onNavigateToLogin && (
-            <button
-              onClick={onNavigateToLogin}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors"
-            >
-              <Lock className="w-3.5 h-3.5 text-amber-700" />
-              Déjà un compte ? Se connecter
-            </button>
-          )}
-
-          <div className="flex items-center p-1 bg-stone-100 rounded-xl border border-stone-200 text-xs font-medium shrink-0">
-            <button
-              onClick={() => setViewMode('form')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg transition-all ${
-                viewMode === 'form'
-                  ? 'bg-white text-stone-900 shadow-sm font-semibold'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              <UserCheck className="w-3.5 h-3.5 text-amber-600" />
-              Nouvelle Inscription
-            </button>
-            <button
-              onClick={() => setViewMode('directory')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg transition-all ${
-                viewMode === 'directory'
-                  ? 'bg-white text-stone-900 shadow-sm font-semibold'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              <Users className="w-3.5 h-3.5 text-amber-600" />
-              Comptes Inscrits
-              <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-stone-200 text-stone-700 font-mono">
-                {users.length}
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Success Notification */}
       {successBanner && (
         <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between gap-3">
@@ -422,10 +364,8 @@ const newMember = await prisma.$transaction(async (tx) => {
 
       {/* VIEW 1: REGISTRATION FORM */}
       {viewMode === 'form' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Form Column */}
-          <div className="lg:col-span-8 space-y-6">
-            {/* Role Switcher Cards */}
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Role Switcher Cards */}
             <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-4">
               <label className="text-xs font-bold uppercase tracking-wider text-stone-500 block">
                 1. Choisissez le profil du compte à inscrire
@@ -659,9 +599,6 @@ const newMember = await prisma.$transaction(async (tx) => {
                         <Coins className="w-4 h-4 text-amber-600" />
                         3. Plan d'abonnement & Plafond de commission
                       </label>
-                      <span className="text-[11px] text-stone-500">
-                        Plafonds configurés dans la BDD
-                      </span>
                     </div>
                     <p className="text-xs text-stone-500 mt-1">
                       Sélectionnez le forfait souscrit par ce gestionnaire. Chaque plan fixe la commission maximale autorisée par tour de tontine.
@@ -1016,7 +953,7 @@ const newMember = await prisma.$transaction(async (tx) => {
               </div>
 
               {/* Submit Buttons */}
-              <div className="pt-4 flex flex-col sm:flex-row items-center justify-end gap-4">
+              <div className="pt-4 flex items-center justify-end">
                 <button
                   type="submit"
                   className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
@@ -1028,88 +965,6 @@ const newMember = await prisma.$transaction(async (tx) => {
                 </button>
               </div>
             </form>
-          </div>
-
-          {/* Right Sidebar: Summary */}
-          <div className="lg:col-span-4 space-y-6">
-            {/* Live Registration Card Summary */}
-            <div className="bg-stone-900 text-white p-6 rounded-2xl border border-stone-800 shadow-md space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  Aperçu du Compte
-                </span>
-                <span className="text-xs text-stone-400 font-mono">
-                  {selectedRole === 'MANAGER' ? 'ROLE_MANAGER' : 'ROLE_MEMBER'}
-                </span>
-              </div>
-
-              <div>
-                <h4 className="text-lg font-bold text-white">
-                  {firstName.trim() || lastName.trim()
-                    ? `${firstName.trim()} ${lastName.trim()}`
-                    : 'Nouvel Utilisateur'}
-                </h4>
-                {selectedRole === 'MANAGER' && (
-                  <p className="text-xs text-amber-400 font-medium">
-                    {businessName.trim() || 'Organisation / Tontine'}
-                  </p>
-                )}
-                <p className="text-xs text-stone-400 mt-1 flex items-center gap-1">
-                  <span>{selectedCountry.flag}</span>
-                  <span>{city || selectedCountry.defaultCity}, {selectedCountry.name}</span>
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-stone-800/80 border border-stone-700/80 space-y-2 text-xs">
-                <div className="flex items-center justify-between text-stone-300">
-                  <span className="text-stone-400">Téléphone :</span>
-                  <span className="font-mono text-white">
-                    {phone.trim() ? (phone.startsWith('+') ? phone : `${selectedCountry.dialCode} ${phone}`) : '—'}
-                  </span>
-                </div>
-
-                {selectedRole === 'MANAGER' ? (
-                  <>
-                    <div className="flex items-center justify-between text-stone-300">
-                      <span className="text-stone-400">Abonnement :</span>
-                      <span className="font-bold text-white">Plan {selectedPlanCode}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-stone-300">
-                      <span className="text-stone-400">Taux Commission :</span>
-                      <span className="font-black text-amber-400 font-mono">
-                        {formatPercent(managerCommissionRate)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-stone-300">
-                      <span className="text-stone-400">Paiement :</span>
-                      <span className="text-white">{payoutProvider}</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex items-center justify-between text-stone-300">
-                      <span className="text-stone-400">Paiement Mobile :</span>
-                      <span className="font-bold text-emerald-400">{memberPaymentMethod}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-stone-300">
-                      <span className="text-stone-400">Invitation :</span>
-                      <span className="font-mono text-white">
-                        {tontineInvitationCode.trim() || 'Libre'}
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <div className="text-[11px] text-stone-400 leading-relaxed border-t border-stone-800 pt-3">
-                {selectedRole === 'MANAGER'
-                  ? `Ce gestionnaire sera habilité à retenir jusqu'à ${formatPercent(
-                      managerCommissionRate
-                    )} sur chaque cotisation collectée dans ses tontines.`
-                  : 'Ce membre pourra participer aux tontines et recevra ses paiements directement sur son compte Mobile Money.'}
-              </div>
-            </div>
-          </div>
         </div>
       )}
 

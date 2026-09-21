@@ -806,8 +806,8 @@ export function MemberDashboard({
                 <span>{new Date(paymentReceipt.date).toLocaleString('fr-FR')}</span>
               </div>
               <div className="pt-2 border-t border-stone-200 flex items-center justify-between font-sans text-emerald-700 font-semibold">
-                <span>Certification BDD :</span>
-                <span>Valide & Enregistré ✓</span>
+                <span>Statut :</span>
+                <span>Validé & Enregistré ✓</span>
               </div>
             </div>
 
