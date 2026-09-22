@@ -63,9 +63,7 @@ export function Navbar({ activeTab, setActiveTab, registeredCount, connectedUser
                   className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold uppercase ${
                     activeTab === 'dashboard'
                       ? 'bg-slate-900 text-emerald-300'
-                      : isManager
-                      ? 'bg-amber-500/20 text-amber-300'
-                      : 'bg-emerald-500/20 text-emerald-300'
+                      : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                   }`}
                 >
                   {isManager ? 'Manager' : 'Membre'}
@@ -125,7 +123,7 @@ export function Navbar({ activeTab, setActiveTab, registeredCount, connectedUser
                 {connectedUser.kyc?.status === 'VERIFIED' ? (
                   <span className="w-2 h-2 rounded-full bg-emerald-400" title="Vérifié" />
                 ) : (
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" title="À vérifier" />
+                  <span className="w-2 h-2 rounded-full bg-emerald-500/60 animate-pulse border border-emerald-400/40" title="À vérifier" />
                 )}
               </button>
             )}
@@ -166,17 +164,11 @@ export function Navbar({ activeTab, setActiveTab, registeredCount, connectedUser
                   className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all ${
                     activeTab === 'profile'
                       ? 'bg-slate-800 border-emerald-500/60 text-white shadow-xs'
-                      : 'bg-slate-950/80 border-slate-800 hover:border-slate-700 text-slate-200'
+                      : 'bg-slate-950/80 border-slate-800 hover:border-emerald-600/50 text-slate-200'
                   }`}
                   title="Accéder à mon Profil et Vérification KYC"
                 >
-                  <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
-                      isManager
-                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                        : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    }`}
-                  >
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                     {connectedUser.firstName.charAt(0)}
                     {connectedUser.lastName.charAt(0)}
                   </div>
@@ -186,12 +178,12 @@ export function Navbar({ activeTab, setActiveTab, registeredCount, connectedUser
                       {connectedUser.kyc?.status === 'VERIFIED' ? (
                         <span className="w-2 h-2 rounded-full bg-emerald-400" title="KYC Vérifié" />
                       ) : (
-                        <span className="w-2 h-2 rounded-full bg-amber-400" title="KYC requis" />
+                        <span className="w-2 h-2 rounded-full bg-emerald-500/60 border border-emerald-400/40" title="KYC requis" />
                       )}
                     </div>
                     <div className="text-[10px] text-slate-400 flex items-center gap-1">
                       {isManager ? (
-                        <span className="text-amber-400 font-semibold">Manager ({connectedUser.managerDetails?.planCode})</span>
+                        <span className="text-emerald-400 font-semibold">Manager ({connectedUser.managerDetails?.planCode})</span>
                       ) : (
                         <span className="text-emerald-400 font-semibold">Membre ({connectedUser.memberDetails?.paymentMethod})</span>
                       )}
@@ -202,7 +194,7 @@ export function Navbar({ activeTab, setActiveTab, registeredCount, connectedUser
                 {onLogout && (
                   <button
                     onClick={onLogout}
-                    className="p-2 rounded-xl bg-slate-950/80 hover:bg-red-500/10 text-slate-400 hover:text-red-400 border border-slate-800 hover:border-red-500/30 transition-colors cursor-pointer"
+                    className="p-2 rounded-xl bg-slate-950/80 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-200 border border-slate-800 hover:border-emerald-500/40 transition-colors cursor-pointer"
                     title="Se déconnecter"
                   >
                     <LogOut className="w-3.5 h-3.5" />

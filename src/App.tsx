@@ -742,8 +742,8 @@ export default function App() {
                     TONTINE
                   </h1>
                   {connectedUser && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 border border-emerald-400/30 font-semibold flex items-center gap-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full ${isManager ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/25 text-emerald-100 border border-emerald-400/40 font-semibold flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
                       {isManager ? 'Gestionnaire' : 'Membre'}
                     </span>
                   )}
@@ -755,12 +755,10 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('profile')}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-xs font-semibold text-white transition-all cursor-pointer"
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-800/40 hover:bg-emerald-700/50 border border-emerald-400/30 text-xs font-semibold text-white transition-all cursor-pointer"
                       title="Gérer mon profil"
                     >
-                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-black text-[10px] ${
-                        isManager ? 'bg-amber-400 text-stone-950' : 'bg-emerald-400 text-stone-950'
-                      }`}>
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center font-black text-[10px] bg-emerald-400 text-emerald-950">
                         {connectedUser.firstName.charAt(0)}{connectedUser.lastName.charAt(0)}
                       </div>
                       <span>{connectedUser.firstName} {connectedUser.lastName}</span>
@@ -770,7 +768,7 @@ export default function App() {
                           KYC
                         </span>
                       ) : (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/30 text-amber-200 font-bold">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-600/40 text-emerald-100 border border-emerald-400/30 font-bold">
                           KYC à vérifier
                         </span>
                       )}
@@ -779,7 +777,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('login')}
-                      className="text-xs font-medium text-emerald-100 hover:text-white px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                      className="text-xs font-medium text-emerald-100 hover:text-white px-2 py-1.5 rounded-lg hover:bg-emerald-700/40 transition-colors cursor-pointer"
                       title="Changer de profil"
                     >
                       Changer
@@ -788,7 +786,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="p-2 rounded-xl text-xs font-bold text-rose-200 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 transition-colors cursor-pointer"
+                      className="p-2 rounded-xl text-xs font-bold text-emerald-100 bg-emerald-700/50 hover:bg-emerald-700 border border-emerald-400/40 transition-colors cursor-pointer"
                       title="Se déconnecter"
                     >
                       <LogOut className="w-3.5 h-3.5" />
@@ -805,9 +803,9 @@ export default function App() {
           <div className="flex items-center justify-between gap-3">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-slate-800 font-bold text-xs shadow-xs border border-slate-200 transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-emerald-50 text-emerald-950 font-bold text-xs shadow-xs border border-emerald-200 hover:border-emerald-400 transition-all cursor-pointer"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4 text-emerald-700" />
               <span>Retour au Tableau de Bord</span>
             </button>
 
@@ -815,10 +813,10 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 transition-colors cursor-pointer"
                 title="Se déconnecter"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut className="w-3.5 h-3.5 text-emerald-700" />
                 <span>Déconnexion</span>
               </button>
             )}

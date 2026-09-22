@@ -67,33 +67,33 @@
   animation: ambientDrift3 24s ease-in-out infinite;
 }
 
-/* Layered subtle dot-matrix pattern with soft emerald tint */
+/* Layered subtle dot-matrix pattern with uniform emerald tint */
 .tontine-dot-grid {
-  background-image: radial-gradient(circle at 1.5px 1.5px, rgba(5, 150, 105, 0.11) 1.5px, transparent 0);
+  background-image: radial-gradient(circle at 1.5px 1.5px, rgba(5, 150, 105, 0.14) 1.5px, transparent 0);
   background-size: 26px 26px;
 }
 
 /* Fine geometric contour lines (modern fintech luxury) */
 .tontine-mesh-canvas {
-  background-color: #f8faf9;
+  background-color: #f7faf8;
   background-image:
-    radial-gradient(ellipse at 15% 10%, rgba(16, 185, 129, 0.12) 0%, transparent 45%),
-    radial-gradient(ellipse at 85% 15%, rgba(245, 158, 11, 0.09) 0%, transparent 45%),
-    radial-gradient(ellipse at 50% 60%, rgba(20, 184, 166, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 85% 85%, rgba(16, 185, 129, 0.1) 0%, transparent 45%),
-    radial-gradient(ellipse at 10% 90%, rgba(13, 148, 136, 0.07) 0%, transparent 50%);
+    radial-gradient(ellipse at 15% 10%, rgba(16, 185, 129, 0.15) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 15%, rgba(5, 150, 105, 0.12) 0%, transparent 45%),
+    radial-gradient(ellipse at 50% 60%, rgba(52, 211, 153, 0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 85%, rgba(16, 185, 129, 0.14) 0%, transparent 45%),
+    radial-gradient(ellipse at 10% 90%, rgba(4, 120, 87, 0.10) 0%, transparent 50%);
 }
 
 /* Glassmorphic panels with subtle green-tinted borders and depth */
 .tontine-glass-card {
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(16, 185, 129, 0.14);
-  box-shadow: 0 10px 30px -10px rgba(6, 78, 59, 0.05), 0 2px 6px -2px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(16, 185, 129, 0.22);
+  box-shadow: 0 10px 30px -10px rgba(6, 78, 59, 0.08), 0 2px 6px -2px rgba(5, 150, 105, 0.04);
 }
 
 .tontine-glass-card:hover {
-  border-color: rgba(16, 185, 129, 0.28);
+  border-color: rgba(16, 185, 129, 0.40);
 }
 

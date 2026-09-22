@@ -18,14 +18,14 @@ export interface ThemeConfig {
 export const THEMES: Record<BackgroundTheme, ThemeConfig> = {
   emerald: {
     id: 'emerald',
-    name: 'Émeraude & Or',
-    tagline: 'Prestige & Prospérité Africaine',
-    gradientBadge: 'from-emerald-600 to-amber-500',
-    dotColor: 'rgba(5, 150, 105, 0.12)',
-    glow1: 'rgba(16, 185, 129, 0.18)',
-    glow2: 'rgba(245, 158, 11, 0.13)',
-    glow3: 'rgba(20, 184, 166, 0.14)',
-    baseBg: '#f7faf8',
+    name: 'Émeraude Pure',
+    tagline: 'Harmonie & Sérénité Verte',
+    gradientBadge: 'from-emerald-600 to-teal-600',
+    dotColor: 'rgba(5, 150, 105, 0.14)',
+    glow1: 'rgba(16, 185, 129, 0.20)',
+    glow2: 'rgba(5, 150, 105, 0.18)',
+    glow3: 'rgba(52, 211, 153, 0.16)',
+    baseBg: '#f6fbf8',
     isDark: false,
   },
   ocean: {
