@@ -62,7 +62,22 @@ import {
 } from './components/AttractiveBackground';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'plans' | 'registration' | 'login' | 'profile' | 'whatsapp' | 'risk'>('dashboard');
+  const [connectedUser, setConnectedUser] = useState<RegisteredUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('tontine_connected_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'plans' | 'registration' | 'login' | 'profile' | 'whatsapp' | 'risk'>(() => {
+    try {
+      const saved = localStorage.getItem('tontine_connected_user');
+      return saved ? 'dashboard' : 'login';
+    } catch {
+      return 'login';
+    }
+  });
   const [showFooterTermsModal, setShowFooterTermsModal] = useState(false);
   const [bgTheme, setBgTheme] = useState<BackgroundTheme>(() => {
     try {
@@ -88,14 +103,6 @@ export default function App() {
       return saved ? JSON.parse(saved) : INITIAL_USERS;
     } catch {
       return INITIAL_USERS;
-    }
-  });
-  const [connectedUser, setConnectedUser] = useState<RegisteredUser | null>(() => {
-    try {
-      const saved = localStorage.getItem('tontine_connected_user');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
     }
   });
   const [tontines, setTontines] = useState<TontineRecord[]>(INITIAL_TONTINES);
@@ -154,6 +161,13 @@ export default function App() {
       console.error('Failed to sync session in localStorage', e);
     }
   }, [connectedUser]);
+
+  // Ensure non-connected users are kept on the official 'Bon retour' login interface
+  useEffect(() => {
+    if (!connectedUser && (activeTab === 'dashboard' || activeTab === 'profile' || activeTab === 'whatsapp' || activeTab === 'risk')) {
+      setActiveTab('login');
+    }
+  }, [connectedUser, activeTab]);
 
   // Official fixed rates:
   // Free: 1.5%
@@ -917,6 +931,7 @@ export default function App() {
               setSelectedPlanCode(code);
               setActiveTab('registration');
             }}
+            onOpenTerms={() => setShowFooterTermsModal(true)}
           />
         )}
 
@@ -969,18 +984,41 @@ export default function App() {
       )}
 
       {/* Modern, Clean Glassmorphic Footer */}
-      <footer className="border-t border-emerald-900/10 bg-white/80 backdrop-blur-md py-6 mt-16 relative z-10 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="font-bold text-slate-800">TONTINE</span>
-            <span>—</span>
-            <span>Plateforme d'épargne rotative et commissions transparentes.</span>
+      <footer className="border-t border-emerald-900/10 bg-white/80 dark:bg-stone-900/80 backdrop-blur-md py-6 mt-16 relative z-10 transition-colors">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-stone-500">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-center sm:text-left">
+            <span className="font-semibold text-stone-800 dark:text-stone-200">
+              © 2026 Tontine. Tous droits réservés.
+            </span>
+            <span className="hidden sm:inline text-stone-300 dark:text-stone-700">•</span>
+            <span className="font-medium text-emerald-700 dark:text-emerald-400">
+              Burkina Faso
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
             <button
               type="button"
               onClick={() => setShowFooterTermsModal(true)}
-              className="text-emerald-700 hover:text-emerald-800 font-bold hover:underline cursor-pointer"
+              className="text-stone-600 dark:text-stone-400 hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer transition-colors"
             >
-              Politique d'Utilisation
+              Mentions légales
+            </button>
+            <span className="text-stone-300 dark:text-stone-700">•</span>
+            <button
+              type="button"
+              onClick={() => setShowFooterTermsModal(true)}
+              className="text-stone-600 dark:text-stone-400 hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer transition-colors"
+            >
+              Politique de confidentialité
+            </button>
+            <span className="text-stone-300 dark:text-stone-700">•</span>
+            <button
+              type="button"
+              onClick={() => setShowFooterTermsModal(true)}
+              className="text-stone-600 dark:text-stone-400 hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer transition-colors"
+            >
+              CGV
             </button>
           </div>
         </div>

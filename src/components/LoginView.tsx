@@ -12,7 +12,6 @@ import {
   ArrowRight,
   Smartphone,
   Mail,
-  LogOut,
   AlertCircle,
   CheckCircle2,
 } from 'lucide-react';
@@ -23,10 +22,11 @@ interface LoginViewProps {
   users: RegisteredUser[];
   connectedUser: RegisteredUser | null;
   onLogin: (user: RegisteredUser) => void;
-  onLogout: () => void;
+  onLogout?: () => void;
   onNavigateToRegister: () => void;
   onNavigateToDashboard: () => void;
   onSelectPlan?: (planCode: string) => void;
+  onOpenTerms?: () => void;
 }
 
 export function LoginView({
@@ -37,6 +37,7 @@ export function LoginView({
   onNavigateToRegister,
   onNavigateToDashboard,
   onSelectPlan,
+  onOpenTerms,
 }: LoginViewProps) {
   const [loginMethod, setLoginMethod] = useState<'EMAIL' | 'PHONE'>('EMAIL');
   const [emailInput, setEmailInput] = useState('');
@@ -181,57 +182,6 @@ export function LoginView({
 
       {/* Main Form Content */}
       <div className="max-w-xl mx-auto px-4 py-8 sm:py-10 space-y-6">
-        {/* Active Session Notice if already logged in */}
-        {connectedUser && (
-          <div className={`rounded-2xl p-4 sm:p-5 border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs ${
-            isDarkMode ? 'bg-stone-900 border-stone-800' : 'bg-white border-stone-200'
-          }`}>
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm ${
-                connectedUser.role === 'MANAGER'
-                  ? 'bg-amber-500/20 text-amber-600 border border-amber-500/30'
-                  : 'bg-emerald-500/20 text-emerald-600 border border-emerald-500/30'
-              }`}>
-                {connectedUser.firstName.charAt(0)}{connectedUser.lastName.charAt(0)}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-semibold text-stone-500">
-                    Session connectée :
-                  </span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                    connectedUser.role === 'MANAGER' ? 'bg-amber-600 text-white' : 'bg-emerald-700 text-white'
-                  }`}>
-                    {connectedUser.role === 'MANAGER' ? 'Gestionnaire' : 'Membre'}
-                  </span>
-                </div>
-                <h3 className="text-sm font-bold text-stone-900 dark:text-white">
-                  {connectedUser.firstName} {connectedUser.lastName}
-                </h3>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={onNavigateToDashboard}
-                className="flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
-              >
-                Tableau de Bord
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={onLogout}
-                className="p-2 rounded-xl text-xs font-semibold bg-stone-100 hover:bg-red-50 text-stone-600 hover:text-red-700 border border-stone-200 transition-colors cursor-pointer"
-                title="Se déconnecter"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Hero Title: Bon retour 👋 */}
         <div className="text-center space-y-1.5">
           <h1 className={`text-2xl sm:text-3xl font-black tracking-tight flex items-center justify-center gap-2 ${
@@ -518,6 +468,40 @@ export function LoginView({
             <div className="w-5 h-5 rounded-full border-2 border-emerald-600 flex items-center justify-center">
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
             </div>
+          </div>
+        </div>
+
+        {/* Footer: Mentions légales, Politique, CGV, Burkina Faso */}
+        <div className="pt-8 pb-4 text-center text-xs text-stone-500 space-y-2.5 border-t border-stone-200/80 dark:border-stone-800/80">
+          <p className="font-semibold text-stone-700 dark:text-stone-300 tracking-wide">
+            © 2026 Tontine. Tous droits réservés.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-stone-500">
+            <span className="font-semibold text-emerald-700 dark:text-emerald-400">Burkina Faso</span>
+            <span className="text-stone-300 dark:text-stone-700">•</span>
+            <button
+              type="button"
+              onClick={onOpenTerms}
+              className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer transition-colors"
+            >
+              Mentions légales
+            </button>
+            <span className="text-stone-300 dark:text-stone-700">•</span>
+            <button
+              type="button"
+              onClick={onOpenTerms}
+              className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer transition-colors"
+            >
+              Politique de confidentialité
+            </button>
+            <span className="text-stone-300 dark:text-stone-700">•</span>
+            <button
+              type="button"
+              onClick={onOpenTerms}
+              className="hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer transition-colors"
+            >
+              CGV
+            </button>
           </div>
         </div>
       </div>

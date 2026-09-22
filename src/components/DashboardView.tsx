@@ -9,6 +9,7 @@ import {
 import { ManagerDashboard } from './ManagerDashboard';
 import { MemberDashboard } from './MemberDashboard';
 import { InstallAppModal } from './InstallAppModal';
+import { LoginView } from './LoginView';
 import {
   Briefcase,
   User,
@@ -79,40 +80,14 @@ export function DashboardView({
 
   if (!connectedUser) {
     return (
-      <div className="bg-white rounded-3xl border border-stone-200 p-8 sm:p-12 text-center max-w-xl mx-auto space-y-5 shadow-sm">
-        <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600 mx-auto">
-          <Lock className="w-8 h-8" />
-        </div>
-        <div className="space-y-2">
-          <h2 className="text-xl font-bold text-stone-900">
-            Accès Sécurisé & Données Protégées
-          </h2>
-          <p className="text-xs sm:text-sm text-stone-500 max-w-md mx-auto leading-relaxed">
-            Seul le gestionnaire ou membre connecté a accès exclusivement à ses propres tontines
-            (créées ou rejointes). Veuillez vous connecter pour accéder à votre espace sécurisé.
-          </p>
-        </div>
-        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-          {onNavigateToLogin && (
-            <button
-              type="button"
-              onClick={onNavigateToLogin}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-stone-950 transition-colors shadow-sm cursor-pointer"
-            >
-              Se connecter
-            </button>
-          )}
-          {onNavigateToRegister && (
-            <button
-              type="button"
-              onClick={onNavigateToRegister}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-semibold bg-stone-900 hover:bg-stone-800 text-white border border-stone-800 transition-colors cursor-pointer"
-            >
-              Créer un compte
-            </button>
-          )}
-        </div>
-      </div>
+      <LoginView
+        users={users}
+        connectedUser={null}
+        onLogin={onSelectConnectedUser}
+        onLogout={() => {}}
+        onNavigateToRegister={onNavigateToRegister}
+        onNavigateToDashboard={() => {}}
+      />
     );
   }
 

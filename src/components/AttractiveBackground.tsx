@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { Palette, Check, Sparkles, Sun, Moon } from 'lucide-react';
+import React from 'react';
 
 export type BackgroundTheme = 'emerald' | 'ocean' | 'ivory' | 'night';
 
@@ -69,14 +68,12 @@ export const THEMES: Record<BackgroundTheme, ThemeConfig> = {
 
 interface AttractiveBackgroundProps {
   currentTheme: BackgroundTheme;
-  onThemeChange: (theme: BackgroundTheme) => void;
+  onThemeChange?: (theme: BackgroundTheme) => void;
 }
 
 export function AttractiveBackground({
   currentTheme,
-  onThemeChange,
 }: AttractiveBackgroundProps) {
-  const [isOpenSelector, setIsOpenSelector] = useState(false);
   const active = THEMES[currentTheme] || THEMES.emerald;
 
   return (
@@ -153,83 +150,6 @@ export function AttractiveBackground({
 
         {/* Top subtle vignette light beam */}
         <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-white/30 via-white/10 to-transparent" />
-      </div>
-
-      {/* Floating Theme Selector Control Dock */}
-      <div className="fixed bottom-6 left-6 z-40">
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setIsOpenSelector(!isOpenSelector)}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/95 backdrop-blur-md hover:bg-white text-slate-800 text-xs font-bold border border-emerald-500/25 shadow-lg hover:shadow-xl hover:border-emerald-500/50 transition-all cursor-pointer group"
-            title="Personnaliser l'ambiance et le fond de la plateforme"
-          >
-            <div className={`w-3.5 h-3.5 rounded-full bg-gradient-to-tr ${active.gradientBadge} shadow-2xs group-hover:scale-110 transition-transform`} />
-            <span className="hidden sm:inline text-slate-700 font-semibold">Fond :</span>
-            <span className="text-emerald-800 font-bold">{active.name}</span>
-            <Palette className="w-3.5 h-3.5 text-emerald-600 ml-0.5" />
-          </button>
-
-          {/* Theme Dropdown Menu */}
-          {isOpenSelector && (
-            <div className="absolute bottom-full left-0 mb-3 w-72 p-3 rounded-2xl bg-white/98 backdrop-blur-xl border border-emerald-500/30 shadow-2xl space-y-2 animate-in fade-in slide-in-from-bottom-3 duration-200">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100 px-1">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Ambiance & Design du Fond</span>
-                </div>
-                <span className="text-[10px] text-slate-400 font-medium">4 Styles</span>
-              </div>
-
-              <div className="space-y-1.5 pt-1">
-                {(Object.values(THEMES) as ThemeConfig[]).map((thm) => {
-                  const isSelected = thm.id === currentTheme;
-                  return (
-                    <button
-                      key={thm.id}
-                      type="button"
-                      onClick={() => {
-                        onThemeChange(thm.id);
-                        setIsOpenSelector(false);
-                      }}
-                      className={`w-full p-2.5 rounded-xl text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${
-                        isSelected
-                          ? 'bg-emerald-50/90 border border-emerald-300 text-emerald-950 font-bold shadow-2xs'
-                          : 'hover:bg-slate-50 text-slate-700 border border-transparent'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div
-                          className={`w-5 h-5 rounded-lg bg-gradient-to-tr ${thm.gradientBadge} shadow-xs shrink-0 flex items-center justify-center`}
-                        >
-                          {thm.isDark ? (
-                            <Moon className="w-2.5 h-2.5 text-emerald-300" />
-                          ) : (
-                            <Sun className="w-2.5 h-2.5 text-white" />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold truncate">{thm.name}</div>
-                          <div className="text-[10px] text-slate-500 font-normal truncate">
-                            {thm.tagline}
-                          </div>
-                        </div>
-                      </div>
-
-                      {isSelected && (
-                        <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-500 text-center">
-                Design fluide avec micro-grille et lueurs ambiantes
-              </div>
-            </div>
-          )}
-        </div>
       </div>
     </>
   );
