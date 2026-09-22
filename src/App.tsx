@@ -714,78 +714,80 @@ export default function App() {
       <AttractiveBackground currentTheme={bgTheme} onThemeChange={handleThemeChange} />
 
       {/* Main Container */}
-      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6">
+      <main className={`relative z-10 flex-1 max-w-7xl w-full mx-auto ${activeTab === 'login' ? 'px-0 py-0 space-y-0 max-w-none' : 'px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6'}`}>
         {/* =========================================================================
             HEADER - Clean, Compact & Slim (Contained Length)
             ========================================================================= */}
-        <div className="flex justify-center w-full">
-          <div className="w-fit max-w-full relative overflow-hidden rounded-xl border border-emerald-500/30 animated-green-gradient px-5 py-2 sm:px-6 sm:py-2.5 shadow-sm text-white">
-            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-5 relative z-10">
-              {/* Brand & Role */}
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-lg sm:text-xl font-black tracking-tight text-white">
-                  TONTINE
-                </h1>
-                {connectedUser && (
-                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 border border-emerald-400/30 font-semibold flex items-center gap-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full ${isManager ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-                    {isManager ? 'Gestionnaire' : 'Membre'}
-                  </span>
-                )}
-              </div>
-
-              {/* Profile & Quick Actions */}
-              {connectedUser ? (
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('profile')}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-xs font-semibold text-white transition-all cursor-pointer"
-                    title="Gérer mon profil"
-                  >
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-black text-[10px] ${
-                      isManager ? 'bg-amber-400 text-stone-950' : 'bg-emerald-400 text-stone-950'
-                    }`}>
-                      {connectedUser.firstName.charAt(0)}{connectedUser.lastName.charAt(0)}
-                    </div>
-                    <span>{connectedUser.firstName} {connectedUser.lastName}</span>
-                    {connectedUser.kyc?.status === 'VERIFIED' ? (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/30 text-emerald-200 font-bold flex items-center gap-1">
-                        <ShieldCheck className="w-3 h-3 text-emerald-300" />
-                        KYC
-                      </span>
-                    ) : (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/30 text-amber-200 font-bold">
-                        KYC à vérifier
-                      </span>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('login')}
-                    className="text-xs font-medium text-emerald-100 hover:text-white px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
-                    title="Changer de profil"
-                  >
-                    Changer
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="p-2 rounded-xl text-xs font-bold text-rose-200 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 transition-colors cursor-pointer"
-                    title="Se déconnecter"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                  </button>
+        {activeTab !== 'login' && (
+          <div className="flex justify-center w-full">
+            <div className="w-fit max-w-full relative overflow-hidden rounded-xl border border-emerald-500/30 animated-green-gradient px-5 py-2 sm:px-6 sm:py-2.5 shadow-sm text-white">
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-5 relative z-10">
+                {/* Brand & Role */}
+                <div className="flex items-center gap-2.5">
+                  <h1 className="text-lg sm:text-xl font-black tracking-tight text-white">
+                    TONTINE
+                  </h1>
+                  {connectedUser && (
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 border border-emerald-400/30 font-semibold flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${isManager ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                      {isManager ? 'Gestionnaire' : 'Membre'}
+                    </span>
+                  )}
                 </div>
-              ) : null}
+
+                {/* Profile & Quick Actions */}
+                {connectedUser ? (
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('profile')}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-xs font-semibold text-white transition-all cursor-pointer"
+                      title="Gérer mon profil"
+                    >
+                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-black text-[10px] ${
+                        isManager ? 'bg-amber-400 text-stone-950' : 'bg-emerald-400 text-stone-950'
+                      }`}>
+                        {connectedUser.firstName.charAt(0)}{connectedUser.lastName.charAt(0)}
+                      </div>
+                      <span>{connectedUser.firstName} {connectedUser.lastName}</span>
+                      {connectedUser.kyc?.status === 'VERIFIED' ? (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/30 text-emerald-200 font-bold flex items-center gap-1">
+                          <ShieldCheck className="w-3 h-3 text-emerald-300" />
+                          KYC
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/30 text-amber-200 font-bold">
+                          KYC à vérifier
+                        </span>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('login')}
+                      className="text-xs font-medium text-emerald-100 hover:text-white px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                      title="Changer de profil"
+                    >
+                      Changer
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="p-2 rounded-xl text-xs font-bold text-rose-200 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 transition-colors cursor-pointer"
+                      title="Se déconnecter"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Navigation Return bar (only shown when not on the main dashboard) */}
-        {activeTab !== 'dashboard' && (
+        {/* Navigation Return bar (only shown when not on the main dashboard and not on login) */}
+        {activeTab !== 'dashboard' && activeTab !== 'login' && (
           <div className="flex items-center justify-between gap-3">
             <button
               onClick={() => setActiveTab('dashboard')}
@@ -911,6 +913,10 @@ export default function App() {
             onLogout={handleLogout}
             onNavigateToRegister={() => setActiveTab('registration')}
             onNavigateToDashboard={() => setActiveTab('dashboard')}
+            onSelectPlan={(code) => {
+              setSelectedPlanCode(code);
+              setActiveTab('registration');
+            }}
           />
         )}
 
