@@ -97,3 +97,37 @@
   border-color: rgba(16, 185, 129, 0.40);
 }
 
+/* =========================================================================
+   FORM INPUTS READABILITY & HIGH CONTRAST (Never greyed-out when typing)
+   ========================================================================= */
+
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  color: #0f172a !important;
+  background-color: #ffffff;
+  -webkit-text-fill-color: #0f172a !important;
+  font-weight: 500;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8 !important;
+  -webkit-text-fill-color: #94a3b8 !important;
+  opacity: 1;
+  font-weight: 400;
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark select,
+.dark textarea {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+}
+

@@ -981,47 +981,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Modern, Clean Glassmorphic Footer */}
-      <footer className="border-t border-emerald-900/10 bg-white/80 dark:bg-stone-900/80 backdrop-blur-md py-6 mt-16 relative z-10 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-stone-500">
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-center sm:text-left">
-            <span className="font-semibold text-stone-800 dark:text-stone-200">
-              © 2026 Tontine. Tous droits réservés.
-            </span>
-            <span className="hidden sm:inline text-stone-300 dark:text-stone-700">•</span>
-            <span className="font-medium text-emerald-700 dark:text-emerald-400">
-              Burkina Faso
-            </span>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
-            <button
-              type="button"
-              onClick={() => setShowFooterTermsModal(true)}
-              className="text-stone-600 dark:text-stone-400 hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer transition-colors"
-            >
-              Mentions légales
-            </button>
-            <span className="text-stone-300 dark:text-stone-700">•</span>
-            <button
-              type="button"
-              onClick={() => setShowFooterTermsModal(true)}
-              className="text-stone-600 dark:text-stone-400 hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer transition-colors"
-            >
-              Politique de confidentialité
-            </button>
-            <span className="text-stone-300 dark:text-stone-700">•</span>
-            <button
-              type="button"
-              onClick={() => setShowFooterTermsModal(true)}
-              className="text-stone-600 dark:text-stone-400 hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer transition-colors"
-            >
-              CGV
-            </button>
-          </div>
-        </div>
-      </footer>
-
       {/* Global Terms of Use Modal */}
       <TermsModal
         isOpen={showFooterTermsModal}

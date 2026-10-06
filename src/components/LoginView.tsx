@@ -4,7 +4,6 @@ import {
   Sun,
   Menu,
   AlertTriangle,
-  Sparkles,
   Eye,
   EyeOff,
   Check,
@@ -200,28 +199,6 @@ export function LoginView({
               : 'bg-white border-emerald-300/80'
           }`}
         >
-          {/* Notice Card 1: Uniform Emerald Styling */}
-          <div className={`border rounded-2xl p-3.5 flex items-start gap-3 transition-colors ${
-            isDarkMode ? 'border-emerald-800/50 bg-emerald-950/30 text-emerald-200' : 'border-emerald-300/90 bg-emerald-50/70 text-emerald-900'
-          }`}>
-            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-            <p className="text-xs leading-relaxed text-emerald-900 dark:text-emerald-200">
-              Les cycles de tontine respectent des échéances strictes. Pensez à vérifier votre solde Mobile Money avant chaque tour de versement.
-            </p>
-          </div>
-
-          {/* Notice Card 2: Green soft tint style */}
-          <div className={`border rounded-2xl p-3.5 flex items-start gap-3 ${
-            isDarkMode
-              ? 'border-emerald-800/50 bg-emerald-950/30 text-emerald-200'
-              : 'border-emerald-300/90 bg-emerald-50/70 text-emerald-900'
-          }`}>
-            <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-            <p className="text-xs leading-relaxed text-emerald-900 dark:text-emerald-200">
-              Versements et retraits automatisés Mobile Money (Wave, Orange, MTN, Moov) avec traçabilité intégrale et sans frais cachés.
-            </p>
-          </div>
-
           {/* Section Header: CONNEXION & Link */}
           <div className="flex items-center justify-between pt-1">
             <span className={`text-xs font-black tracking-wider uppercase ${
@@ -464,42 +441,6 @@ export function LoginView({
             <div className="w-5 h-5 rounded-full border-2 border-emerald-600 flex items-center justify-center">
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
             </div>
-          </div>
-        </div>
-
-        {/* Footer: Mentions légales, Politique, CGV, Burkina Faso */}
-        <div className="pt-8 pb-4 text-center text-xs text-emerald-800 dark:text-emerald-300 space-y-2.5 border-t border-emerald-300/80 dark:border-emerald-800/80">
-          <p className="font-semibold text-emerald-950 dark:text-emerald-100 tracking-wide">
-            © 2026 Tontine. Tous droits réservés.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-emerald-700 dark:text-emerald-400">
-            <span className="font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-300 dark:border-emerald-800">
-              Burkina Faso
-            </span>
-            <span className="text-emerald-400 dark:text-emerald-600">•</span>
-            <button
-              type="button"
-              onClick={onOpenTerms}
-              className="hover:text-emerald-950 dark:hover:text-emerald-100 hover:underline cursor-pointer transition-colors font-semibold"
-            >
-              Mentions légales
-            </button>
-            <span className="text-emerald-400 dark:text-emerald-600">•</span>
-            <button
-              type="button"
-              onClick={onOpenTerms}
-              className="hover:text-emerald-950 dark:hover:text-emerald-100 hover:underline cursor-pointer transition-colors font-semibold"
-            >
-              Politique de confidentialité
-            </button>
-            <span className="text-emerald-400 dark:text-emerald-600">•</span>
-            <button
-              type="button"
-              onClick={onOpenTerms}
-              className="hover:text-emerald-950 dark:hover:text-emerald-100 hover:underline cursor-pointer transition-colors font-semibold"
-            >
-              CGV
-            </button>
           </div>
         </div>
       </div>

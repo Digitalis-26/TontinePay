@@ -366,8 +366,8 @@ const newMember = await prisma.$transaction(async (tx) => {
       {viewMode === 'form' && (
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Role Switcher Cards */}
-            <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-4">
-              <label className="text-xs font-bold uppercase tracking-wider text-stone-500 block">
+            <div className="bg-white p-6 rounded-2xl border border-emerald-200 shadow-sm space-y-4">
+              <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 block">
                 1. Choisissez le profil du compte à inscrire
               </label>
 
@@ -378,16 +378,16 @@ const newMember = await prisma.$transaction(async (tx) => {
                   onClick={() => setSelectedRole('MANAGER')}
                   className={`p-4 rounded-xl border text-left transition-all relative ${
                     selectedRole === 'MANAGER'
-                      ? 'border-amber-500 bg-amber-50/40 ring-2 ring-amber-500/20'
-                      : 'border-stone-200 hover:border-stone-300 bg-stone-50/50'
+                      ? 'border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-500/30 shadow-xs'
+                      : 'border-emerald-200 hover:border-emerald-300 bg-emerald-50/20'
                   }`}
                 >
                   <div className="flex items-start justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-700">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-700">
                       <Briefcase className="w-5 h-5" />
                     </div>
                     {selectedRole === 'MANAGER' && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-stone-950">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white">
                         Sélectionné
                       </span>
                     )}
@@ -396,8 +396,8 @@ const newMember = await prisma.$transaction(async (tx) => {
                   <p className="text-xs text-stone-600 mt-1 leading-relaxed">
                     Crée et administre des tontines, perçoit des commissions (Free 1,5%, Starter 2,5%, Premium 3%, Business 3,5%) et gère le grand livre.
                   </p>
-                  <div className="mt-3 pt-3 border-t border-stone-200/80 flex items-center gap-2 text-[11px] font-medium text-amber-800">
-                    <Coins className="w-3.5 h-3.5" />
+                  <div className="mt-3 pt-3 border-t border-emerald-200/80 flex items-center gap-2 text-[11px] font-semibold text-emerald-800">
+                    <Coins className="w-3.5 h-3.5 text-emerald-600" />
                     Bénéficiaire des commissions
                   </div>
                 </button>
@@ -408,16 +408,16 @@ const newMember = await prisma.$transaction(async (tx) => {
                   onClick={() => setSelectedRole('MEMBER')}
                   className={`p-4 rounded-xl border text-left transition-all relative ${
                     selectedRole === 'MEMBER'
-                      ? 'border-amber-500 bg-amber-50/40 ring-2 ring-amber-500/20'
-                      : 'border-stone-200 hover:border-stone-300 bg-stone-50/50'
+                      ? 'border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-500/30 shadow-xs'
+                      : 'border-emerald-200 hover:border-emerald-300 bg-emerald-50/20'
                   }`}
                 >
                   <div className="flex items-start justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-700">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-700">
                       <UserCheck className="w-5 h-5" />
                     </div>
                     {selectedRole === 'MEMBER' && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-stone-950">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white">
                         Sélectionné
                       </span>
                     )}
@@ -426,8 +426,8 @@ const newMember = await prisma.$transaction(async (tx) => {
                   <p className="text-xs text-stone-600 mt-1 leading-relaxed">
                     Participe aux cagnottes, verse ses cotisations par Mobile Money (Wave, Orange, MTN, Moov) et reçoit les versements de rotation.
                   </p>
-                  <div className="mt-3 pt-3 border-t border-stone-200/80 flex items-center gap-2 text-[11px] font-medium text-emerald-800">
-                    <CreditCard className="w-3.5 h-3.5" />
+                  <div className="mt-3 pt-3 border-t border-emerald-200/80 flex items-center gap-2 text-[11px] font-semibold text-emerald-800">
+                    <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
                     Cotisations & Réceptions de cagnottes
                   </div>
                 </button>
@@ -435,9 +435,9 @@ const newMember = await prisma.$transaction(async (tx) => {
             </div>
 
             {/* Inscription Form */}
-            <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-6">
-              <div className="border-b border-stone-100 pb-4">
-                <h3 className="text-base font-bold text-stone-900">
+            <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-emerald-200 shadow-sm space-y-6">
+              <div className="border-b border-emerald-100 pb-4">
+                <h3 className="text-base font-bold text-emerald-950">
                   {selectedRole === 'MANAGER'
                     ? '2. Informations du Gestionnaire & de la Structure'
                     : '2. Informations du Membre Cotisant'}
@@ -451,7 +451,7 @@ const newMember = await prisma.$transaction(async (tx) => {
               {selectedRole === 'MANAGER' && (
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-stone-700 flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-stone-500" />
+                    <Building2 className="w-3.5 h-3.5 text-emerald-600" />
                     Nom de l'organisation ou de la tontine *
                   </label>
                   <input
@@ -459,7 +459,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
                     placeholder="Ex: GIE Solidarité Plateau, Cercle d'Épargne Teranga..."
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/30 ${
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25 ${
                       formErrors.businessName ? 'border-red-400 bg-red-50/20' : 'border-stone-300'
                     }`}
                   />
@@ -481,7 +481,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="Ex: Awa, Ibrahim, Koffi..."
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/30 ${
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25 ${
                       formErrors.firstName ? 'border-red-400 bg-red-50/20' : 'border-stone-300'
                     }`}
                   />
@@ -500,7 +500,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="Ex: Diop, Konan, Traoré..."
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/30 ${
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25 ${
                       formErrors.lastName ? 'border-red-400 bg-red-50/20' : 'border-stone-300'
                     }`}
                   />
@@ -517,13 +517,13 @@ const newMember = await prisma.$transaction(async (tx) => {
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
                 <div className="sm:col-span-5 space-y-1.5">
                   <label className="text-xs font-semibold text-stone-700 flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-stone-500" />
+                    <MapPin className="w-3.5 h-3.5 text-emerald-600" />
                     Pays de résidence *
                   </label>
                   <select
                     value={selectedCountryCode}
                     onChange={(e) => handleCountryChange(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                   >
                     {SUPPORTED_COUNTRIES.map((c) => (
                       <option key={c.code} value={c.code}>
@@ -535,11 +535,11 @@ const newMember = await prisma.$transaction(async (tx) => {
 
                 <div className="sm:col-span-7 space-y-1.5">
                   <label className="text-xs font-semibold text-stone-700 flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-stone-500" />
+                    <Phone className="w-3.5 h-3.5 text-emerald-600" />
                     Numéro de Téléphone (Mobile Money) *
                   </label>
                   <div className="flex">
-                    <span className="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-stone-300 bg-stone-100 text-stone-600 text-xs font-mono">
+                    <span className="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-stone-300 bg-emerald-50 text-emerald-900 text-xs font-mono font-semibold">
                       {selectedCountry.dialCode}
                     </span>
                     <input
@@ -547,7 +547,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="07 88 12 34 56"
-                      className={`flex-1 px-3.5 py-2.5 rounded-r-xl border text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/30 ${
+                      className={`flex-1 px-3.5 py-2.5 rounded-r-xl border text-xs font-mono focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25 ${
                         formErrors.phone ? 'border-red-400 bg-red-50/20' : 'border-stone-300'
                       }`}
                     />
@@ -570,13 +570,13 @@ const newMember = await prisma.$transaction(async (tx) => {
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     placeholder={selectedCountry.defaultCity}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-stone-700 flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-stone-500" />
+                    <Mail className="w-3.5 h-3.5 text-emerald-600" />
                     Adresse Email (optionnel)
                   </label>
                   <input
@@ -584,7 +584,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="contact@exemple.com"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                   />
                 </div>
               </div>
@@ -592,11 +592,11 @@ const newMember = await prisma.$transaction(async (tx) => {
               {/* ROLE SPECIFIC SECTION */}
               {selectedRole === 'MANAGER' ? (
                 /* Manager Section: Plan, Commission, Payout */
-                <div className="space-y-5 pt-4 border-t border-stone-200">
+                <div className="space-y-5 pt-4 border-t border-emerald-100">
                   <div>
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold uppercase tracking-wider text-stone-900 flex items-center gap-1.5">
-                        <Coins className="w-4 h-4 text-amber-600" />
+                      <label className="text-xs font-bold uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
+                        <Coins className="w-4 h-4 text-emerald-600" />
                         3. Plan d'abonnement & Plafond de commission
                       </label>
                     </div>
@@ -616,20 +616,20 @@ const newMember = await prisma.$transaction(async (tx) => {
                           onClick={() => handleSelectPlan(plan.code)}
                           className={`p-3.5 rounded-xl border cursor-pointer transition-all text-left flex flex-col justify-between ${
                             isSelected
-                              ? 'border-amber-500 bg-amber-50/50 shadow-sm ring-2 ring-amber-500/20'
-                              : 'border-stone-200 hover:border-stone-300 bg-white'
+                              ? 'border-emerald-600 bg-emerald-50/60 shadow-sm ring-2 ring-emerald-500/30'
+                              : 'border-emerald-200/80 hover:border-emerald-300 bg-white'
                           }`}
                         >
                           <div>
                             <div className="flex items-center justify-between">
                               <span className="text-xs font-bold text-stone-900">{plan.name}</span>
                               {plan.popular && (
-                                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500 text-stone-950">
+                                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-600 text-white">
                                   Top
                                 </span>
                               )}
                             </div>
-                            <div className="text-base font-extrabold text-stone-900 mt-1">
+                            <div className="text-base font-extrabold text-emerald-950 mt-1">
                               {plan.monthlyPrice === 0 ? 'Gratuit' : formatXOF(plan.monthlyPrice)}
                               {plan.monthlyPrice > 0 && (
                                 <span className="text-[10px] font-normal text-stone-500"> /mois</span>
@@ -637,10 +637,10 @@ const newMember = await prisma.$transaction(async (tx) => {
                             </div>
                           </div>
 
-                          <div className="mt-3 pt-2.5 border-t border-stone-200/70 text-[11px] space-y-1">
+                          <div className="mt-3 pt-2.5 border-t border-emerald-100 text-[11px] space-y-1">
                             <div className="flex items-center justify-between font-medium">
                               <span className="text-stone-600">Commission :</span>
-                              <span className="font-bold text-amber-700">{formatPercent(rate)}</span>
+                              <span className="font-bold text-emerald-700">{formatPercent(rate)}</span>
                             </div>
                             <div className="text-[10px] text-stone-500">
                               {plan.maxTontines === null ? 'Tontines illimitées' : `${plan.maxTontines} tontine max`}
@@ -652,10 +652,10 @@ const newMember = await prisma.$transaction(async (tx) => {
                   </div>
 
                   {/* Commission applied details */}
-                  <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-3">
+                  <div className="p-4 rounded-xl bg-emerald-50/40 border border-emerald-200/80 space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
-                        <span className="text-xs font-bold text-stone-900">
+                        <span className="text-xs font-bold text-emerald-950">
                           Taux de commission appliqué aux tontines créées
                         </span>
                         <p className="text-[11px] text-stone-500">
@@ -663,10 +663,10 @@ const newMember = await prisma.$transaction(async (tx) => {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-lg font-black text-amber-700 font-mono">
+                        <span className="text-lg font-black text-emerald-700 font-mono">
                           {formatPercent(managerCommissionRate)}
                         </span>
-                        <span className="text-[10px] text-stone-500 bg-white px-2 py-0.5 rounded border border-stone-200">
+                        <span className="text-[10px] text-stone-600 bg-white px-2 py-0.5 rounded border border-emerald-200">
                           {(managerCommissionRate).toFixed(4)}
                         </span>
                       </div>
@@ -678,7 +678,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                         id="enable-commissions"
                         checked={commissionEnabled}
                         onChange={(e) => setCommissionEnabled(e.target.checked)}
-                        className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-stone-300"
+                        className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-stone-300"
                       />
                       <label htmlFor="enable-commissions" className="text-stone-700 select-none">
                         Activer automatiquement la retenue des commissions dans le Grand Livre
@@ -688,8 +688,8 @@ const newMember = await prisma.$transaction(async (tx) => {
 
                   {/* Payout Wallet */}
                   <div className="space-y-3 pt-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-stone-900 flex items-center gap-1.5">
-                      <Wallet className="w-4 h-4 text-stone-600" />
+                    <label className="text-xs font-bold uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
+                      <Wallet className="w-4 h-4 text-emerald-700" />
                       4. Compte de Versement des Commissions (Portefeuille)
                     </label>
 
@@ -699,7 +699,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                         <select
                           value={payoutProvider}
                           onChange={(e) => setPayoutProvider(e.target.value as any)}
-                          className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                          className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                         >
                           <option value="WAVE">Wave Mobile Money (Recommandé - 0% ou 1%)</option>
                           <option value="ORANGE_MONEY">Orange Money</option>
@@ -717,7 +717,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                           value={payoutAccount}
                           onChange={(e) => setPayoutAccount(e.target.value)}
                           placeholder="Ex: +225 07 88 14 23 90 ou IBAN CI06..."
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                         />
                       </div>
                     </div>
@@ -725,9 +725,9 @@ const newMember = await prisma.$transaction(async (tx) => {
                 </div>
               ) : (
                 /* Member Section: Payment Method, Invitation code, CNI */
-                <div className="space-y-5 pt-4 border-t border-stone-200">
+                <div className="space-y-5 pt-4 border-t border-emerald-100">
                   <div>
-                    <label className="text-xs font-bold uppercase tracking-wider text-stone-900 flex items-center gap-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
                       <CreditCard className="w-4 h-4 text-emerald-600" />
                       3. Préférences de Cotisation & Tontines
                     </label>
@@ -744,7 +744,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                       <select
                         value={memberPaymentMethod}
                         onChange={(e) => setMemberPaymentMethod(e.target.value as any)}
-                        className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                        className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                       >
                         <option value="WAVE">Wave (Instantané & sans frais cachés)</option>
                         <option value="ORANGE_MONEY">Orange Money</option>
@@ -763,7 +763,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                         value={tontineInvitationCode}
                         onChange={(e) => setTontineInvitationCode(e.target.value.toUpperCase())}
                         placeholder="Ex: TERANGA-2025, ADJAME-VIP..."
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono uppercase focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono uppercase focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                       />
                     </div>
                   </div>
@@ -777,16 +777,16 @@ const newMember = await prisma.$transaction(async (tx) => {
                       value={identityNumber}
                       onChange={(e) => setIdentityNumber(e.target.value)}
                       placeholder="Ex: CNI SN-1988-1204 ou CI-00293810"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                     />
                   </div>
                 </div>
               )}
 
               {/* Password Section */}
-              <div className="pt-4 border-t border-stone-200 space-y-4">
-                <label className="text-xs font-bold uppercase tracking-wider text-stone-900 flex items-center gap-1.5">
-                  <Lock className="w-4 h-4 text-stone-600" />
+              <div className="pt-4 border-t border-emerald-100 space-y-4">
+                <label className="text-xs font-bold uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
+                  <Lock className="w-4 h-4 text-emerald-700" />
                   {selectedRole === 'MANAGER' ? '5. Sécurité du Compte' : '4. Sécurité & Accès'}
                 </label>
 
@@ -800,7 +800,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className={`w-full px-3.5 py-2.5 rounded-xl border text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/30 ${
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25 ${
                         formErrors.password ? 'border-red-400 bg-red-50/20' : 'border-stone-300'
                       }`}
                     />
@@ -818,7 +818,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••"
-                      className={`w-full px-3.5 py-2.5 rounded-xl border text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/30 ${
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25 ${
                         formErrors.confirmPassword ? 'border-red-400 bg-red-50/20' : 'border-stone-300'
                       }`}
                     />
@@ -830,9 +830,9 @@ const newMember = await prisma.$transaction(async (tx) => {
               </div>
 
               {/* Terms of Use & Platform Trust Policy Acceptance */}
-              <div className="pt-4 border-t border-stone-200 space-y-3">
+              <div className="pt-4 border-t border-emerald-100 space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-stone-900 flex items-center gap-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
                     <Scale className="w-4 h-4 text-emerald-600" />
                     {selectedRole === 'MANAGER' ? '6. Politique d\'Utilisation & Charte de Gestion' : '5. Politique d\'Utilisation & Engagement'}
                   </label>
@@ -847,14 +847,10 @@ const newMember = await prisma.$transaction(async (tx) => {
                 </div>
 
                 {/* Key commitments summary box based on selected role */}
-                <div className={`p-4 rounded-2xl border text-xs space-y-2.5 ${
-                  selectedRole === 'MANAGER'
-                    ? 'bg-amber-50/60 border-amber-200/90 text-amber-950'
-                    : 'bg-emerald-50/60 border-emerald-200/90 text-emerald-950'
-                }`}>
+                <div className="p-4 rounded-2xl border text-xs space-y-2.5 bg-emerald-50/60 border-emerald-200/90 text-emerald-950">
                   <div className="font-bold flex items-center gap-1.5 text-xs">
                     {selectedRole === 'MANAGER' ? (
-                      <Briefcase className="w-3.5 h-3.5 text-amber-700" />
+                      <Briefcase className="w-3.5 h-3.5 text-emerald-700" />
                     ) : (
                       <Users className="w-3.5 h-3.5 text-emerald-700" />
                     )}
@@ -869,19 +865,19 @@ const newMember = await prisma.$transaction(async (tx) => {
                     {selectedRole === 'MANAGER' ? (
                       <>
                         <li className="flex items-start gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
                           <span>Plafond de commission strict : maximum <strong>{formatPercent(currentRates[selectedPlanCode])}</strong> (Plan {selectedPlanCode}). Aucune retenue occulte.</span>
                         </li>
                         <li className="flex items-start gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
                           <span>Reversement sous <strong>24h ouvrées</strong> de la cagnotte intégrale au membre bénéficiaire dès réception des cotisations.</span>
                         </li>
                         <li className="flex items-start gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
                           <span>Gestion rigoureuse et transparente des fonds avec traçabilité de chaque opération.</span>
                         </li>
                         <li className="flex items-start gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
                           <span><strong>Liberté de participation</strong> : vous n'êtes pas tenu de cotiser ni de participer aux cagnottes pour créer et administrer vos cercles.</span>
                         </li>
                       </>
@@ -956,7 +952,7 @@ const newMember = await prisma.$transaction(async (tx) => {
               <div className="pt-4 flex items-center justify-end">
                 <button
                   type="submit"
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <UserCheck className="w-4 h-4" />
                   {selectedRole === 'MANAGER'
@@ -981,7 +977,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Rechercher par nom, téléphone, structure..."
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-stone-200 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-stone-200 text-xs focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
               />
             </div>
 
@@ -991,8 +987,8 @@ const newMember = await prisma.$transaction(async (tx) => {
                 onClick={() => setRoleFilter('ALL')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                   roleFilter === 'ALL'
-                    ? 'bg-stone-900 text-white'
-                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                    ? 'bg-emerald-800 text-white'
+                    : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200/50'
                 }`}
               >
                 Tous ({users.length})
@@ -1001,8 +997,8 @@ const newMember = await prisma.$transaction(async (tx) => {
                 onClick={() => setRoleFilter('MANAGER')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                   roleFilter === 'MANAGER'
-                    ? 'bg-amber-500 text-stone-950'
-                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200/50'
                 }`}
               >
                 <Briefcase className="w-3.5 h-3.5" />
@@ -1013,7 +1009,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                   roleFilter === 'MEMBER'
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                    : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200/50'
                 }`}
               >
                 <UserCheck className="w-3.5 h-3.5" />
@@ -1031,7 +1027,7 @@ const newMember = await prisma.$transaction(async (tx) => {
               return (
                 <div
                   key={user.id}
-                  className="bg-white rounded-2xl border border-stone-200 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4"
+                  className="bg-white rounded-2xl border border-emerald-200/80 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4"
                 >
                   <div>
                     {/* Top Row: Role Badge + Status */}
@@ -1039,8 +1035,8 @@ const newMember = await prisma.$transaction(async (tx) => {
                       <span
                         className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                           isManager
-                            ? 'bg-amber-100 text-amber-900 border border-amber-200'
-                            : 'bg-emerald-100 text-emerald-900 border border-emerald-200'
+                            ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                            : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                         }`}
                       >
                         {isManager ? (
@@ -1071,7 +1067,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                         {user.firstName} {user.lastName}
                       </h3>
                       {isManager && user.managerDetails && (
-                        <p className="text-xs font-semibold text-amber-800 mt-0.5">
+                        <p className="text-xs font-semibold text-emerald-800 mt-0.5">
                           {user.managerDetails.businessName}
                         </p>
                       )}
@@ -1099,7 +1095,7 @@ const newMember = await prisma.$transaction(async (tx) => {
 
                     {/* Specific Details Box */}
                     {isManager && user.managerDetails && (
-                      <div className="mt-3 p-3 rounded-xl bg-amber-50/50 border border-amber-200/70 text-xs space-y-1.5">
+                      <div className="mt-3 p-3 rounded-xl bg-emerald-50/50 border border-emerald-200/70 text-xs space-y-1.5">
                         <div className="flex items-center justify-between">
                           <span className="text-stone-600 font-medium">Plan d'abonnement :</span>
                           <span className="font-bold text-stone-900">
@@ -1108,7 +1104,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-stone-600 font-medium">Commission retenue :</span>
-                          <span className="font-black text-amber-700 font-mono">
+                          <span className="font-black text-emerald-700 font-mono">
                             {formatPercent(user.managerDetails.commissionRate)}
                           </span>
                         </div>
@@ -1116,7 +1112,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                           <span className="text-stone-600 font-medium">Reversement :</span>
                           <span className="text-stone-800">{user.managerDetails.payoutProvider}</span>
                         </div>
-                        <div className="flex items-center justify-between pt-1 border-t border-amber-200/50">
+                        <div className="flex items-center justify-between pt-1 border-t border-emerald-200/50">
                           <span className="text-stone-600 font-medium">Solde portefeuille :</span>
                           <span className="font-bold text-stone-900 font-mono">
                             {formatXOF(user.managerDetails.walletBalance)}
@@ -1156,11 +1152,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                     {onLoginAsUser ? (
                       <button
                         onClick={() => onLoginAsUser(user)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs ${
-                          isManager
-                            ? 'bg-amber-500 hover:bg-amber-400 text-stone-950'
-                            : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                        }`}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs bg-emerald-600 hover:bg-emerald-500 text-white"
                       >
                         <LayoutDashboard className="w-3.5 h-3.5" />
                         Ouvrir Dashboard
@@ -1172,7 +1164,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                     {isManager && onSelectManagerForSimulation && user.managerDetails && (
                       <button
                         onClick={() => onSelectManagerForSimulation(user.managerDetails!.planCode)}
-                        className="text-amber-800 hover:text-amber-950 font-bold flex items-center gap-1 hover:underline text-[11px]"
+                        className="text-emerald-800 hover:text-emerald-950 font-bold flex items-center gap-1 hover:underline text-[11px]"
                       >
                         Simuler tontine
                         <ArrowRight className="w-3 h-3" />
@@ -1193,7 +1185,7 @@ const newMember = await prisma.$transaction(async (tx) => {
               </p>
               <button
                 onClick={() => setViewMode('form')}
-                className="mt-4 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs"
+                className="mt-4 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs"
               >
                 Inscrire un compte
               </button>

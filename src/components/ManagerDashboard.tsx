@@ -915,7 +915,7 @@ export function ManagerDashboard({
                     step={1000}
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                   <div className="flex gap-2 pt-1">
                     {[25000, 50000, 100000, walletBalance].map((preset) => (
@@ -936,7 +936,7 @@ export function ManagerDashboard({
                   <select
                     value={withdrawProvider}
                     onChange={(e) => setWithdrawProvider(e.target.value as any)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs font-semibold text-stone-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   >
                     <option value="WAVE">Wave Mobile Money (Frais 0%)</option>
                     <option value="ORANGE_MONEY">Orange Money</option>
@@ -954,7 +954,7 @@ export function ManagerDashboard({
                     value={withdrawAccount}
                     onChange={(e) => setWithdrawAccount(e.target.value)}
                     placeholder="+221 77 452 89 12"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-semibold text-stone-900 bg-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                 </div>
 
@@ -1014,7 +1014,7 @@ export function ManagerDashboard({
                   value={newTontineName}
                   onChange={(e) => setNewTontineName(e.target.value)}
                   placeholder="Ex: Tontine des Femmes Entrepreneures, Cercle Épargne Auto..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-semibold text-stone-900 bg-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                 />
               </div>
 
@@ -1060,7 +1060,7 @@ export function ManagerDashboard({
                         value={newContributionAmount}
                         onChange={(e) => setNewContributionAmount(Math.max(0, Number(e.target.value)))}
                         placeholder="Montant libre..."
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 pr-16"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-900 bg-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 pr-16"
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-stone-500 font-mono pointer-events-none">
                         FCFA
@@ -1078,7 +1078,7 @@ export function ManagerDashboard({
                       max={50}
                       value={newTotalRounds}
                       onChange={(e) => setNewTotalRounds(Number(e.target.value))}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-900 bg-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                     />
                     <span className="text-[10px] text-stone-500 block">
                       Nombre de participants cotisants (3 à 50 membres).
@@ -1093,7 +1093,7 @@ export function ManagerDashboard({
                   <select
                     value={newPeriodicity}
                     onChange={(e) => setNewPeriodicity(e.target.value as any)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs font-semibold text-stone-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   >
                     <option value="MONTHLY">Mensuelle (Chaque mois)</option>
                     <option value="WEEKLY">Hebdomadaire (Chaque semaine)</option>
@@ -1111,7 +1111,7 @@ export function ManagerDashboard({
                     step={0.001}
                     value={newCommissionRate}
                     onChange={(e) => setNewCommissionRate(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-900 bg-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                 </div>
               </div>
@@ -1191,7 +1191,7 @@ export function ManagerDashboard({
                     <select
                       value={managerPreferredTurn}
                       onChange={(e) => setManagerPreferredTurn(Number(e.target.value))}
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs font-semibold text-stone-900 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
                     >
                       {Array.from({ length: newTotalRounds }, (_, i) => i + 1).map((n) => (
                         <option key={n} value={n}>
@@ -1334,7 +1334,7 @@ export function ManagerDashboard({
                     step={500}
                     value={editAmountValue}
                     onChange={(e) => setEditAmountValue(Math.max(0, Number(e.target.value)))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 pr-16"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 pr-16"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400 font-mono pointer-events-none">
                     FCFA
