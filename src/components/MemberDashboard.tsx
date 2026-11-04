@@ -124,7 +124,10 @@ export function MemberDashboard({
     setIsProcessingPayment(true);
     setTimeout(() => {
       onPayContribution(selectedTontineToPay.id, selectedTontineToPay.contributionAmount, paymentProvider);
-      const receiptRef = `${paymentProvider.slice(0, 2)}-TX-${Math.floor(100000 + Math.random() * 900000)}`;
+      const receiptRef =
+        paymentProvider === 'SASPAY'
+          ? `SAS-CHK-${Math.floor(100000 + Math.random() * 900000)}`
+          : `${paymentProvider.slice(0, 2)}-TX-${Math.floor(100000 + Math.random() * 900000)}`;
       setPaymentReceipt({
         tontineName: selectedTontineToPay.name,
         amount: selectedTontineToPay.contributionAmount,
@@ -209,7 +212,7 @@ export function MemberDashboard({
               onClick={() => setShowJoinModal(true)}
               className="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-all"
             >
-              <PlusCircle className="w-4 h-4 text-amber-400" />
+              <PlusCircle className="w-4 h-4 text-emerald-400" />
               Rejoindre une Tontine par Code
             </button>
           </div>
@@ -243,9 +246,9 @@ export function MemberDashboard({
           <div>
             <div className="flex items-center justify-between text-xs text-stone-500">
               <span className="font-medium">Prochaine Échéance</span>
-              <Calendar className="w-4 h-4 text-amber-600" />
+              <Calendar className="w-4 h-4 text-emerald-600" />
             </div>
-            <div className="text-2xl font-black text-amber-700 mt-2 font-mono">
+            <div className="text-2xl font-black text-emerald-700 mt-2 font-mono">
               {formatXOF(nextDueAmount)}
             </div>
             <p className="text-[11px] text-stone-500 mt-1">
@@ -257,7 +260,7 @@ export function MemberDashboard({
           {unpaidCurrentTontines.length > 0 ? (
             <button
               onClick={() => handleStartPayment(unpaidCurrentTontines[0])}
-              className="mt-4 w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+              className="mt-4 w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs"
             >
               <CreditCard className="w-3.5 h-3.5" />
               Régler maintenant
@@ -274,11 +277,11 @@ export function MemberDashboard({
           <div>
             <div className="flex items-center justify-between text-xs text-stone-400">
               <span className="font-medium">Votre Tour de Réception</span>
-              <Gift className="w-4 h-4 text-amber-400" />
+              <Gift className="w-4 h-4 text-emerald-400" />
             </div>
             {beneficiaryTontines.length > 0 ? (
               <div className="mt-2">
-                <div className="text-xl font-black text-amber-400">
+                <div className="text-xl font-black text-emerald-400">
                   🎉 C'est votre tour !
                 </div>
                 <p className="text-[11px] text-stone-300 mt-1">
@@ -327,9 +330,9 @@ export function MemberDashboard({
       </div>
 
       {/* Risk Shield & Escrow Status for Member */}
-      <div className="bg-white p-5 rounded-2xl border border-amber-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-5 rounded-2xl border border-emerald-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start sm:items-center gap-3.5">
-          <div className="w-11 h-11 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-700 shrink-0">
+          <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-700 shrink-0">
             <ShieldAlert className="w-6 h-6" />
           </div>
           <div>
@@ -351,7 +354,7 @@ export function MemberDashboard({
           <button
             type="button"
             onClick={onNavigateToRisk}
-            className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 shadow-2xs"
+            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 shadow-2xs"
           >
             <ShieldAlert className="w-3.5 h-3.5" />
             <span>Voir Détails Cautions & Scores</span>
@@ -421,12 +424,12 @@ export function MemberDashboard({
 
                     {/* Beneficiary Banner */}
                     {isTurnBeneficiary && (
-                      <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-amber-400/10 to-amber-500/20 border border-amber-500/30 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 text-xs font-bold text-amber-950">
-                          <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                      <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-500/20 via-emerald-400/10 to-emerald-500/20 border border-emerald-500/30 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 text-xs font-bold text-emerald-950">
+                          <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
                           <div>
                             <div>C'est votre tour ce mois-ci ! (Tour {tontine.currentRound})</div>
-                            <div className="text-[11px] font-normal text-amber-800">
+                            <div className="text-[11px] font-normal text-emerald-800">
                               Cagnotte nette à percevoir : <strong>{formatXOF(netPayout)}</strong>
                             </div>
                           </div>
@@ -698,7 +701,7 @@ export function MemberDashboard({
                   </div>
                   <div className="flex justify-between text-stone-500 text-[11px]">
                     <span>Commission de gestionnaire incluse :</span>
-                    <span className="font-mono text-amber-800 font-semibold">
+                    <span className="font-mono text-emerald-800 font-semibold">
                       {formatPercent(selectedTontineToPay.commissionRate)}
                     </span>
                   </div>
@@ -711,23 +714,31 @@ export function MemberDashboard({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-stone-700">Choisir le compte Mobile Money</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-stone-700">Choisir le moyen de paiement (API Connectée)</label>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                      Saspay Pris en Charge
+                    </span>
+                  </div>
                   <select
                     value={paymentProvider}
                     onChange={(e) => setPaymentProvider(e.target.value as any)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 font-medium"
+                    className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25 font-bold text-stone-950"
                   >
-                    <option value="WAVE">Wave Mobile Money ({member.phone})</option>
-                    <option value="ORANGE_MONEY">Orange Money ({member.phone})</option>
-                    <option value="MTN_MOMO">MTN MoMo ({member.phone})</option>
-                    <option value="MOOV_MONEY">MoMo Moov Africa ({member.phone})</option>
+                    <option value="SASPAY">Saspay - Passerelle Multi-Opérateurs (Wave / OM / MoMo / Carte)</option>
+                    <option value="WAVE">Wave Mobile Money API ({member.phone}) - Instantané</option>
+                    <option value="ORANGE_MONEY">Orange Money Web Payment ({member.phone})</option>
+                    <option value="MTN_MOMO">MTN MoMo API ({member.phone})</option>
+                    <option value="MOOV_MONEY">Moov Money / Flooz ({member.phone})</option>
                   </select>
                 </div>
 
-                <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-900 flex items-start gap-2">
-                  <Lock className="w-3.5 h-3.5 text-amber-700 shrink-0 mt-0.5" />
+                <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-[11px] text-emerald-900 flex items-start gap-2">
+                  <Lock className="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5" />
                   <span>
-                    Un push USSD / notification de confirmation sera envoyé instantanément sur votre téléphone ({member.phone}).
+                    {paymentProvider === 'SASPAY'
+                      ? `Paiement sécurisé via le guichet Saspay Panafricain. Une confirmation instantanée avec notification push / USSD sera envoyée sur votre téléphone (${member.phone}).`
+                      : `Transaction sécurisée par l'API de paiement ${paymentProvider}. Un push USSD / invite de validation sera envoyé instantanément sur votre téléphone (${member.phone}).`}
                   </span>
                 </div>
 
@@ -799,7 +810,7 @@ export function MemberDashboard({
               </div>
               <div className="flex justify-between">
                 <span className="text-stone-500 font-sans">Réf Transaction :</span>
-                <span className="text-amber-800 font-bold">{paymentReceipt.ref}</span>
+                <span className="text-emerald-800 font-bold">{paymentReceipt.ref}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-stone-500 font-sans">Date :</span>

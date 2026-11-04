@@ -86,7 +86,7 @@ export interface RegisteredUser {
   kyc?: KycVerificationData;
   // Specific to member
   memberDetails?: {
-    paymentMethod: 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'MOOV_MONEY' | 'CASH';
+    paymentMethod: 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'MOOV_MONEY' | 'SASPAY' | 'CASH';
     identityNumber?: string;
     tontineInvitationCode?: string;
     joinedTontinesCount: number;
@@ -97,7 +97,7 @@ export interface RegisteredUser {
     planCode: 'FREE' | 'STARTER' | 'PREMIUM' | 'BUSINESS';
     commissionRate: number; // e.g. 0.015, 0.025, 0.03, 0.035
     commissionEnabled: boolean;
-    payoutProvider: 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'BANK_TRANSFER';
+    payoutProvider: 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'SASPAY' | 'BANK_TRANSFER';
     payoutAccount: string;
     activeTontinesCount: number;
     walletBalance: number; // in XOF
@@ -160,10 +160,36 @@ export interface MemberContributionPayment {
   roundNumber: number;
   amount: number;
   commissionAmount: number;
-  paymentMethod: 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'MOOV_MONEY' | 'CASH';
+  paymentMethod: 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'MOOV_MONEY' | 'SASPAY' | 'CASH';
   status: 'PAID' | 'PENDING' | 'LATE';
   transactionRef: string;
   paidAt: string;
+}
+
+export interface SaspayConfig {
+  merchantCode: string;
+  clientId: string;
+  clientSecret: string;
+  environment: 'sandbox' | 'live';
+  currency: 'XOF' | 'KES' | 'USD';
+  webhookSecret: string;
+  autoSettleTontineRound: boolean;
+  status: 'ACTIVE' | 'CONFIGURING' | 'INACTIVE';
+}
+
+export interface SaspayWebhookPayload {
+  MerchantCode: string;
+  CheckoutRequestID: string;
+  ResultCode: number;
+  ResultDesc: string;
+  Amount: number;
+  Msisdn: string;
+  BillRefNumber?: string;
+  AccountReference?: string;
+  TransactionDate?: string;
+  tontineId?: string;
+  memberUserId?: string;
+  roundNumber?: number;
 }
 
 export interface ManagerWalletTransaction {

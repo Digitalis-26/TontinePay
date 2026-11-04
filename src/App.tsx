@@ -9,6 +9,7 @@ import { ProfileView } from './components/ProfileView';
 import { TermsModal } from './components/TermsModal';
 import { WhatsAppBotCenter } from './components/WhatsAppBotCenter';
 import { RiskManagementCenter } from './components/RiskManagementCenter';
+import { PaymentApiCenter } from './components/PaymentApiCenter';
 import { apiClient } from './utils/apiClient';
 import {
   acquireFinancialLock,
@@ -52,6 +53,7 @@ import {
   MessageSquare,
   ShieldAlert,
   LogOut,
+  Zap,
 } from 'lucide-react';
 import { PWAInstallButton } from './components/PWAInstallButton.tsx';
 import { OfflineIndicator } from './components/OfflineIndicator.tsx';
@@ -182,6 +184,7 @@ export default function App() {
   };
 
   const [selectedPlanCode, setSelectedPlanCode] = useState<PlanConfig['code']>('STARTER');
+  const [showPaymentApiCenter, setShowPaymentApiCenter] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -502,9 +505,9 @@ export default function App() {
       return;
     }
 
-    const validMethod = (['WAVE', 'ORANGE_MONEY', 'MTN_MOMO', 'MOOV_MONEY', 'CASH'].includes(paymentMethod)
+    const validMethod = (['SASPAY', 'WAVE', 'ORANGE_MONEY', 'MTN_MOMO', 'MOOV_MONEY', 'CASH'].includes(paymentMethod)
       ? paymentMethod
-      : 'WAVE') as 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'MOOV_MONEY' | 'CASH';
+      : 'SASPAY') as 'SASPAY' | 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'MOOV_MONEY' | 'CASH';
 
     const commAmount = Math.round(amount * tontine.commissionRate);
 
@@ -776,6 +779,17 @@ export default function App() {
 
                     <button
                       type="button"
+                      onClick={() => setShowPaymentApiCenter(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-850/60 hover:bg-emerald-700/60 border border-emerald-400/40 text-xs font-semibold text-white transition-all cursor-pointer shadow-2xs"
+                      title="Passerelle Saspay & Webhooks API de Paiement"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                      <Zap className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>Saspay & API</span>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => setActiveTab('login')}
                       className="text-xs font-medium text-emerald-100 hover:text-white px-2 py-1.5 rounded-lg hover:bg-emerald-700/40 transition-colors cursor-pointer"
                       title="Changer de profil"
@@ -848,6 +862,7 @@ export default function App() {
             onNavigateToLogin={() => setActiveTab('login')}
             onNavigateToProfile={() => setActiveTab('profile')}
             onNavigateToRisk={() => setActiveTab('risk')}
+            onOpenPaymentApi={() => setShowPaymentApiCenter(true)}
           />
         )}
 
@@ -987,6 +1002,18 @@ export default function App() {
         onClose={() => setShowFooterTermsModal(false)}
         highlightRole={connectedUser?.role}
         alreadyAccepted={!!connectedUser?.acceptedTerms}
+      />
+
+      {/* Payment API & Webhooks Center Modal */}
+      <PaymentApiCenter
+        isOpen={showPaymentApiCenter}
+        onClose={() => setShowPaymentApiCenter(false)}
+        tontines={tontines}
+        currentUser={connectedUser}
+        onPaymentSuccess={(tontineId, _memberUserId, paymentData) => {
+          handlePayContribution(tontineId, paymentData.amount, paymentData.paymentMethod);
+        }}
+        showToast={showToast}
       />
 
       {/* PWA Offline Connectivity Indicator */}

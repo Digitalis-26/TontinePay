@@ -49,6 +49,7 @@ interface DashboardViewProps {
   onNavigateToLogin?: () => void;
   onNavigateToProfile?: () => void;
   onNavigateToRisk?: () => void;
+  onOpenPaymentApi?: () => void;
 }
 
 export function DashboardView({
@@ -72,6 +73,7 @@ export function DashboardView({
   onNavigateToLogin,
   onNavigateToProfile,
   onNavigateToRisk,
+  onOpenPaymentApi,
 }: DashboardViewProps) {
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [installPlatform, setInstallPlatform] = useState<'android' | 'ios'>('android');
@@ -105,6 +107,7 @@ export function DashboardView({
         <ManagerDashboard
           manager={connectedUser}
           tontines={accessibleTontines}
+          payments={payments}
           walletTransactions={walletTransactions}
           currentRates={currentRates}
           onWithdraw={onWithdraw}
@@ -114,6 +117,7 @@ export function DashboardView({
           onUpdateMemberTurn={onUpdateMemberTurn}
           onNavigateToSimulate={onNavigateToSimulate}
           onNavigateToRisk={onNavigateToRisk}
+          onOpenPaymentApi={onOpenPaymentApi}
         />
       ) : (
         <MemberDashboard

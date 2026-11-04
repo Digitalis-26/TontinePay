@@ -1,7 +1,21 @@
 import React, { useState } from 'react';
-import { RegisteredUser, TontineRecord, ManagerWalletTransaction, PlanConfig } from '../types';
+import {
+  RegisteredUser,
+  TontineRecord,
+  ManagerWalletTransaction,
+  PlanConfig,
+  MemberContributionPayment,
+} from '../types';
 import { formatPercent, formatXOF } from '../data/plans';
 import { TurnSelectionModal } from './TurnSelectionModal';
+import {
+  exportTontineToCSV,
+  exportTontineToPDF,
+  exportWalletTransactionsToCSV,
+  exportWalletTransactionsToPDF,
+  exportAllTontinesToCSV,
+  exportAllTontinesToPDF,
+} from '../utils/exportUtils';
 import {
   Briefcase,
   Wallet,
@@ -30,11 +44,17 @@ import {
   Pencil,
   SlidersHorizontal,
   ShieldAlert,
+  Zap,
+  Server,
+  FileText,
+  FileSpreadsheet,
+  Check,
 } from 'lucide-react';
 
 interface ManagerDashboardProps {
   manager: RegisteredUser;
   tontines: TontineRecord[];
+  payments?: MemberContributionPayment[];
   walletTransactions: ManagerWalletTransaction[];
   currentRates: Record<PlanConfig['code'], number>;
   onWithdraw: (amount: number, provider: string, account: string) => void;
@@ -44,11 +64,13 @@ interface ManagerDashboardProps {
   onUpdateMemberTurn?: (tontineId: string, memberUserId: string, newTurnNumber: number) => void;
   onNavigateToSimulate?: (planCode: PlanConfig['code']) => void;
   onNavigateToRisk?: () => void;
+  onOpenPaymentApi?: () => void;
 }
 
 export function ManagerDashboard({
   manager,
   tontines,
+  payments = [],
   walletTransactions,
   currentRates,
   onWithdraw,
@@ -58,6 +80,7 @@ export function ManagerDashboard({
   onUpdateMemberTurn,
   onNavigateToSimulate,
   onNavigateToRisk,
+  onOpenPaymentApi,
 }: ManagerDashboardProps) {
   const managerDetails = manager.managerDetails;
   const planCode = managerDetails?.planCode || 'STARTER';
@@ -111,6 +134,100 @@ export function ManagerDashboard({
     0
   );
   const totalMembersCount = myTontines.reduce((acc, t) => acc + t.members.length, 0);
+
+  // Export Modal & Feedback
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportTarget, setExportTarget] = useState<string>('all'); // 'all' | 'wallet' | tontine.id
+  const [exportFormat, setExportFormat] = useState<'pdf' | 'csv'>('pdf');
+  const [activeDropdownTontineId, setActiveDropdownTontineId] = useState<string | null>(null);
+  const [exportNotification, setExportNotification] = useState<string | null>(null);
+
+  const notifyExport = (msg: string) => {
+    setExportNotification(msg);
+    setTimeout(() => {
+      setExportNotification(null);
+    }, 4500);
+  };
+
+  const handleExportTontinePDF = (tontine: TontineRecord) => {
+    try {
+      exportTontineToPDF(tontine, payments);
+      notifyExport(`Relevé financier de "${tontine.name}" téléchargé en PDF.`);
+    } catch (err) {
+      console.error(err);
+      notifyExport('Erreur lors de la génération du PDF.');
+    }
+  };
+
+  const handleExportTontineCSV = (tontine: TontineRecord) => {
+    try {
+      exportTontineToCSV(tontine, payments);
+      notifyExport(`Historique des transactions de "${tontine.name}" téléchargé en CSV.`);
+    } catch (err) {
+      console.error(err);
+      notifyExport('Erreur lors de la génération du CSV.');
+    }
+  };
+
+  const handleExportWalletPDF = () => {
+    try {
+      exportWalletTransactionsToPDF(
+        myWalletTransactions,
+        `${manager.firstName} ${manager.lastName}`,
+        walletBalance
+      );
+      notifyExport('Registre des commissions téléchargé en PDF.');
+    } catch (err) {
+      console.error(err);
+      notifyExport('Erreur lors de la génération du PDF.');
+    }
+  };
+
+  const handleExportWalletCSV = () => {
+    try {
+      exportWalletTransactionsToCSV(
+        myWalletTransactions,
+        `${manager.firstName} ${manager.lastName}`
+      );
+      notifyExport('Historique des commissions téléchargé en CSV.');
+    } catch (err) {
+      console.error(err);
+      notifyExport('Erreur lors de la génération du CSV.');
+    }
+  };
+
+  const handleModalExportSubmit = () => {
+    const managerName = `${manager.firstName} ${manager.lastName}`;
+    if (exportTarget === 'all') {
+      if (exportFormat === 'pdf') {
+        exportAllTontinesToPDF(myTontines, payments, managerName);
+        notifyExport('Rapport consolidé de toutes les tontines téléchargé en PDF.');
+      } else {
+        exportAllTontinesToCSV(myTontines, payments, managerName);
+        notifyExport('Rapport consolidé de toutes les tontines téléchargé en CSV.');
+      }
+    } else if (exportTarget === 'wallet') {
+      if (exportFormat === 'pdf') {
+        exportWalletTransactionsToPDF(myWalletTransactions, managerName, walletBalance);
+        notifyExport('Registre des commissions & retraits téléchargé en PDF.');
+      } else {
+        exportWalletTransactionsToCSV(myWalletTransactions, managerName);
+        notifyExport('Historique du wallet & commissions téléchargé en CSV.');
+      }
+    } else {
+      const selectedTontine = myTontines.find((t) => t.id === exportTarget);
+      if (selectedTontine) {
+        if (exportFormat === 'pdf') {
+          exportTontineToPDF(selectedTontine, payments);
+          notifyExport(`Relevé financier de "${selectedTontine.name}" téléchargé en PDF.`);
+        } else {
+          exportTontineToCSV(selectedTontine, payments);
+          notifyExport(`Transactions de "${selectedTontine.name}" téléchargées en CSV.`);
+        }
+      }
+    }
+    setShowExportModal(false);
+  };
 
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -208,6 +325,38 @@ export function ManagerDashboard({
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Payment API Linked Quick Banner */}
+      <div className="p-3.5 sm:p-4 rounded-2xl bg-emerald-950/85 text-white border border-emerald-500/30 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
+            <Zap className="w-5 h-5 text-emerald-400" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs sm:text-sm font-bold text-white">
+                API de Paiement Liée (Wave, Orange Money, MTN MoMo, CinetPay)
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 font-mono">
+                ✓ Connectée
+              </span>
+            </div>
+            <p className="text-[11px] text-emerald-200/80">
+              Synchronisation instantanée des cotisations et décaissements via webhooks sécurisés.
+            </p>
+          </div>
+        </div>
+        {onOpenPaymentApi && (
+          <button
+            type="button"
+            onClick={onOpenPaymentApi}
+            className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto shrink-0 shadow-xs"
+          >
+            <Server className="w-3.5 h-3.5" />
+            <span>Passerelle & Webhooks</span>
+          </button>
+        )}
+      </div>
+
       {/* 4 Main KPI Cards - Compact & Fluid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Wallet Balance */}
@@ -217,7 +366,7 @@ export function ManagerDashboard({
               <span className="font-medium">Solde Portefeuille</span>
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             </div>
-            <div className="text-xl sm:text-2xl font-black text-amber-400 mt-2 font-mono">
+            <div className="text-xl sm:text-2xl font-black text-emerald-400 mt-2 font-mono">
               {formatXOF(walletBalance)}
             </div>
           </div>
@@ -225,7 +374,7 @@ export function ManagerDashboard({
             type="button"
             onClick={() => setShowWithdrawModal(true)}
             disabled={walletBalance <= 0}
-            className="mt-3 w-full py-1.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:bg-stone-800 disabled:text-stone-600 text-stone-950 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            className="mt-3 w-full py-1.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:bg-stone-800 disabled:text-stone-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
           >
             <ArrowUpRight className="w-3.5 h-3.5" />
             <span>Retirer</span>
@@ -237,7 +386,7 @@ export function ManagerDashboard({
           <div>
             <div className="flex items-center justify-between text-xs text-stone-500">
               <span className="font-medium">Commissions</span>
-              <Coins className="w-4 h-4 text-amber-600" />
+              <Coins className="w-4 h-4 text-emerald-600" />
             </div>
             <div className="text-xl sm:text-2xl font-black text-stone-900 mt-2 font-mono">
               {formatXOF(totalCommissionsEarned)}
@@ -245,7 +394,7 @@ export function ManagerDashboard({
           </div>
           <div className="mt-3 pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
             <span>Taux max :</span>
-            <span className="font-bold text-amber-700">{formatPercent(effectiveMaxRate)}</span>
+            <span className="font-bold text-emerald-700">{formatPercent(effectiveMaxRate)}</span>
           </div>
         </div>
 
@@ -271,7 +420,7 @@ export function ManagerDashboard({
           <div>
             <div className="flex items-center justify-between text-xs text-stone-500">
               <span className="font-medium">Tontines Actives</span>
-              <Users className="w-4 h-4 text-purple-600" />
+              <Users className="w-4 h-4 text-emerald-700" />
             </div>
             <div className="text-xl sm:text-2xl font-black text-stone-900 mt-2 font-mono">
               {myTontines.length}
@@ -286,7 +435,7 @@ export function ManagerDashboard({
 
       {/* TONTINES MANAGEMENT LIST */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between gap-3 pt-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
           <div className="flex items-center gap-2.5">
             <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
               Tontines gérées
@@ -295,12 +444,31 @@ export function ManagerDashboard({
               {myTontines.length}
             </span>
           </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowExportModal(true)}
+              className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-2 transition-all backdrop-blur-sm border border-white/20 cursor-pointer shadow-xs"
+              title="Centre d'exportation PDF & CSV de l'historique complet"
+            >
+              <Download className="w-4 h-4 text-emerald-300" />
+              <span>Exporter en PDF/CSV</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowCreateModal(true)}
+              className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Créer une Tontine</span>
+            </button>
+          </div>
         </div>
 
         {/* Tontine Cards List */}
         {myTontines.length === 0 ? (
           <div className="p-8 sm:p-10 text-center bg-white/95 backdrop-blur-sm rounded-2xl border border-white/20 shadow-sm space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-600 mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-emerald-600 mx-auto">
               <Building2 className="w-6 h-6" />
             </div>
             <div className="space-y-1">
@@ -314,7 +482,7 @@ export function ManagerDashboard({
             <button
               type="button"
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs shadow-sm transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Créer ma première tontine</span>
@@ -372,6 +540,64 @@ export function ManagerDashboard({
                         {copiedCode === tontine.code && (
                           <span className="text-[10px] text-emerald-600 font-semibold">Copié !</span>
                         )}
+
+                        {/* Bouton Exporter en PDF/CSV pour cette tontine */}
+                        <div className="relative inline-block">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveDropdownTontineId(
+                                activeDropdownTontineId === tontine.id ? null : tontine.id
+                              )
+                            }
+                            className="px-2.5 py-1 rounded-lg bg-emerald-700/10 hover:bg-emerald-700/20 text-emerald-900 border border-emerald-300 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                            title="Télécharger l'historique des transactions et paiements de cette tontine"
+                          >
+                            <Download className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>Exporter en PDF/CSV</span>
+                            <ChevronDown className="w-3 h-3 text-emerald-700" />
+                          </button>
+
+                          {activeDropdownTontineId === tontine.id && (
+                            <div className="absolute left-0 sm:right-0 sm:left-auto mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-stone-200 py-1.5 z-30 animate-in fade-in zoom-in-95">
+                              <div className="px-3 py-1 border-b border-stone-100 text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+                                Télécharger l'historique complet
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleExportTontinePDF(tontine);
+                                  setActiveDropdownTontineId(null);
+                                }}
+                                className="w-full text-left px-3 py-2 text-xs font-semibold text-stone-800 hover:bg-emerald-50 hover:text-emerald-900 flex items-center gap-2.5 transition-colors cursor-pointer"
+                              >
+                                <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
+                                <div>
+                                  <div className="font-bold">Exporter en PDF</div>
+                                  <div className="text-[10px] text-stone-500 font-normal">
+                                    Relevé officiel A4 avec statut des tours
+                                  </div>
+                                </div>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleExportTontineCSV(tontine);
+                                  setActiveDropdownTontineId(null);
+                                }}
+                                className="w-full text-left px-3 py-2 text-xs font-semibold text-stone-800 hover:bg-emerald-50 hover:text-emerald-900 flex items-center gap-2.5 transition-colors cursor-pointer"
+                              >
+                                <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
+                                <div>
+                                  <div className="font-bold">Exporter en CSV</div>
+                                  <div className="text-[10px] text-stone-500 font-normal">
+                                    Tableau Excel UTF-8 avec toutes transactions
+                                  </div>
+                                </div>
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-4 text-xs text-stone-500">
@@ -608,6 +834,34 @@ export function ManagerDashboard({
                         </div>
                       </div>
 
+                      {/* Bar d'export direct pour cette tontine */}
+                      <div className="p-3 bg-stone-50 rounded-xl border border-stone-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2 text-stone-700">
+                          <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>
+                            Historique des cotisations & relevé de <strong>{tontine.name}</strong>
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleExportTontinePDF(tontine)}
+                            className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>Exporter en PDF</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleExportTontineCSV(tontine)}
+                            className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-stone-100 text-stone-800 border border-stone-300 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                          >
+                            <FileSpreadsheet className="w-3.5 h-3.5 text-stone-600" />
+                            <span>Exporter en CSV</span>
+                          </button>
+                        </div>
+                      </div>
+
                       <div className="overflow-x-auto rounded-xl border border-stone-200">
                         <table className="w-full text-left text-xs">
                           <thead className="bg-stone-50 border-b border-stone-200 text-stone-600 font-semibold">
@@ -803,11 +1057,31 @@ export function ManagerDashboard({
 
       {/* WALLET TRANSACTIONS & COMMISSION LOG */}
       <div className="bg-white/95 backdrop-blur-sm p-5 sm:p-6 rounded-2xl border border-white/20 shadow-sm space-y-4">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h3 className="text-sm sm:text-base font-bold text-stone-900 flex items-center gap-2">
             <Coins className="w-4 h-4 text-amber-600" />
             <span>Historique des Commissions & Retraits</span>
           </h3>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExportWalletPDF}
+              className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              title="Télécharger le registre complet des commissions et retraits en PDF"
+            >
+              <FileText className="w-3.5 h-3.5 text-amber-700" />
+              <span>Exporter en PDF</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleExportWalletCSV}
+              className="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              title="Télécharger l'historique en CSV (Excel)"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-stone-700" />
+              <span>Exporter en CSV</span>
+            </button>
+          </div>
         </div>
 
         {/* Transactions Table */}
@@ -873,7 +1147,7 @@ export function ManagerDashboard({
           <div className="bg-white rounded-2xl border border-stone-200 shadow-xl max-w-md w-full p-6 space-y-5 animate-scale-in">
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-700">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-700">
                   <ArrowUpRight className="w-4 h-4" />
                 </div>
                 <div>
@@ -901,7 +1175,7 @@ export function ManagerDashboard({
               <form onSubmit={handleWithdrawSubmit} className="space-y-4">
                 <div className="p-3.5 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between text-xs">
                   <span className="text-stone-600">Solde disponible :</span>
-                  <span className="text-base font-black text-amber-700 font-mono">
+                  <span className="text-base font-black text-emerald-700 font-mono">
                     {formatXOF(walletBalance)}
                   </span>
                 </div>
@@ -915,7 +1189,7 @@ export function ManagerDashboard({
                     step={1000}
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-950 bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                   />
                   <div className="flex gap-2 pt-1">
                     {[25000, 50000, 100000, walletBalance].map((preset) => (
@@ -923,7 +1197,7 @@ export function ManagerDashboard({
                         key={preset}
                         type="button"
                         onClick={() => setWithdrawAmount(preset)}
-                        className="px-2 py-0.5 rounded bg-stone-100 hover:bg-stone-200 text-[10px] font-mono text-stone-700"
+                        className="px-2 py-0.5 rounded bg-stone-100 hover:bg-emerald-50 text-[10px] font-mono text-stone-700 hover:text-emerald-800"
                       >
                         {formatXOF(preset)}
                       </button>
@@ -932,12 +1206,18 @@ export function ManagerDashboard({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-stone-700">Opérateur de destination *</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-stone-700">Opérateur de destination *</label>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                      Saspay B2C Actif
+                    </span>
+                  </div>
                   <select
                     value={withdrawProvider}
                     onChange={(e) => setWithdrawProvider(e.target.value as any)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs font-semibold text-stone-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs font-bold text-stone-950 bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                   >
+                    <option value="SASPAY">Saspay B2C (Virement Mobile Money Panafricain Instantané)</option>
                     <option value="WAVE">Wave Mobile Money (Frais 0%)</option>
                     <option value="ORANGE_MONEY">Orange Money</option>
                     <option value="MTN_MOMO">MTN MoMo</option>
@@ -954,7 +1234,7 @@ export function ManagerDashboard({
                     value={withdrawAccount}
                     onChange={(e) => setWithdrawAccount(e.target.value)}
                     placeholder="+221 77 452 89 12"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-semibold text-stone-900 bg-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-semibold text-stone-950 bg-white placeholder:text-stone-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                   />
                 </div>
 
@@ -969,7 +1249,7 @@ export function ManagerDashboard({
                   <button
                     type="submit"
                     disabled={withdrawAmount <= 0 || withdrawAmount > walletBalance}
-                    className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-stone-950 font-bold text-xs shadow-sm flex items-center gap-1.5"
+                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
                   >
                     <ArrowUpRight className="w-4 h-4" />
                     Valider le virement
@@ -987,7 +1267,7 @@ export function ManagerDashboard({
           <div className="bg-white rounded-2xl border border-stone-200 shadow-xl max-w-lg w-full p-6 space-y-5 animate-scale-in max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-700">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-700">
                   <Plus className="w-4 h-4" />
                 </div>
                 <div>
@@ -1014,17 +1294,17 @@ export function ManagerDashboard({
                   value={newTontineName}
                   onChange={(e) => setNewTontineName(e.target.value)}
                   placeholder="Ex: Tontine des Femmes Entrepreneures, Cercle Épargne Auto..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-semibold text-stone-900 bg-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-bold text-stone-950 bg-white placeholder:text-stone-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                 />
               </div>
 
-              <div className="space-y-2 p-3.5 rounded-xl bg-amber-50/40 border border-amber-200/60">
+              <div className="space-y-2 p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-200/70">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
-                    <Coins className="w-3.5 h-3.5 text-amber-600" />
+                    <Coins className="w-3.5 h-3.5 text-emerald-600" />
                     Montant de la cotisation (Fixé par le Manager) *
                   </label>
-                  <span className="text-xs font-bold font-mono text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                  <span className="text-xs font-bold font-mono text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-md">
                     {formatXOF(newContributionAmount)} / tour
                   </span>
                 </div>
@@ -1039,7 +1319,7 @@ export function ManagerDashboard({
                       onClick={() => setNewContributionAmount(preset)}
                       className={`px-2 py-1 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
                         newContributionAmount === preset
-                          ? 'bg-amber-600 text-white shadow-xs ring-1 ring-amber-600'
+                          ? 'bg-emerald-600 text-white shadow-xs ring-1 ring-emerald-600'
                           : 'bg-white border border-stone-200 text-stone-700 hover:bg-stone-50'
                       }`}
                     >
@@ -1060,7 +1340,7 @@ export function ManagerDashboard({
                         value={newContributionAmount}
                         onChange={(e) => setNewContributionAmount(Math.max(0, Number(e.target.value)))}
                         placeholder="Montant libre..."
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-900 bg-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 pr-16"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-950 bg-white placeholder:text-stone-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25 pr-16"
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-stone-500 font-mono pointer-events-none">
                         FCFA
@@ -1078,7 +1358,7 @@ export function ManagerDashboard({
                       max={50}
                       value={newTotalRounds}
                       onChange={(e) => setNewTotalRounds(Number(e.target.value))}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-900 bg-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-950 bg-white placeholder:text-stone-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                     />
                     <span className="text-[10px] text-stone-500 block">
                       Nombre de participants cotisants (3 à 50 membres).
@@ -1093,7 +1373,7 @@ export function ManagerDashboard({
                   <select
                     value={newPeriodicity}
                     onChange={(e) => setNewPeriodicity(e.target.value as any)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs font-semibold text-stone-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs font-bold text-stone-950 bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                   >
                     <option value="MONTHLY">Mensuelle (Chaque mois)</option>
                     <option value="WEEKLY">Hebdomadaire (Chaque semaine)</option>
@@ -1111,7 +1391,7 @@ export function ManagerDashboard({
                     step={0.001}
                     value={newCommissionRate}
                     onChange={(e) => setNewCommissionRate(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-900 bg-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-950 bg-white placeholder:text-stone-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                   />
                 </div>
               </div>
@@ -1120,7 +1400,7 @@ export function ManagerDashboard({
               <div className="space-y-2.5 p-3.5 rounded-xl bg-stone-50 border border-stone-200">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-amber-600" />
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
                     Participation du Gestionnaire aux cagnottes
                   </label>
                   <span className="text-[10px] text-stone-500 font-medium">Optionnel</span>
@@ -1136,13 +1416,13 @@ export function ManagerDashboard({
                     onClick={() => setManagerParticipates(false)}
                     className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                       !managerParticipates
-                        ? 'border-amber-500 bg-amber-50/80 ring-2 ring-amber-500/20'
+                        ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20'
                         : 'border-stone-200 bg-white hover:bg-stone-50'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-stone-900 flex items-center gap-1">
-                        <Briefcase className="w-3.5 h-3.5 text-amber-700" />
+                        <Briefcase className="w-3.5 h-3.5 text-emerald-700" />
                         Superviseur uniquement
                       </span>
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
@@ -1160,13 +1440,13 @@ export function ManagerDashboard({
                     onClick={() => setManagerParticipates(true)}
                     className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                       managerParticipates
-                        ? 'border-amber-500 bg-amber-50/80 ring-2 ring-amber-500/20'
+                        ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20'
                         : 'border-stone-200 bg-white hover:bg-stone-50'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-stone-900 flex items-center gap-1">
-                        <Users className="w-3.5 h-3.5 text-purple-700" />
+                        <Users className="w-3.5 h-3.5 text-emerald-700" />
                         Participer aussi
                       </span>
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 font-medium">
@@ -1184,14 +1464,14 @@ export function ManagerDashboard({
                   <div className="p-2.5 rounded-lg bg-white border border-stone-200 space-y-1.5 mt-2">
                     <label className="text-[11px] font-semibold text-stone-700 flex items-center justify-between">
                       <span>Votre tour de cagnotte souhaité :</span>
-                      <span className="font-mono text-xs font-bold text-amber-700">
+                      <span className="font-mono text-xs font-bold text-emerald-700">
                         Tour #{managerPreferredTurn} sur {newTotalRounds}
                       </span>
                     </label>
                     <select
                       value={managerPreferredTurn}
                       onChange={(e) => setManagerPreferredTurn(Number(e.target.value))}
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs font-semibold text-stone-900 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs font-bold text-stone-950 bg-white focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500"
                     >
                       {Array.from({ length: newTotalRounds }, (_, i) => i + 1).map((n) => (
                         <option key={n} value={n}>
@@ -1208,7 +1488,7 @@ export function ManagerDashboard({
                     type="checkbox"
                     checked={seedDemoMembers}
                     onChange={(e) => setSeedDemoMembers(e.target.checked)}
-                    className="mt-0.5 rounded border-stone-300 text-amber-600 focus:ring-amber-500"
+                    className="mt-0.5 rounded border-stone-300 text-emerald-600 focus:ring-emerald-500"
                   />
                   <div className="text-[11px]">
                     <span className="font-semibold text-stone-800 block">
@@ -1222,8 +1502,8 @@ export function ManagerDashboard({
               </div>
 
               {/* Live Preview of Economics */}
-              <div className="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200/80 text-xs space-y-2">
-                <div className="font-bold text-amber-950">Aperçu financier par tour :</div>
+              <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200/80 text-xs space-y-2">
+                <div className="font-bold text-emerald-950">Aperçu financier par tour :</div>
                 <div className="grid grid-cols-3 gap-2 text-[11px]">
                   <div>
                     <span className="text-stone-500 block">Cagnotte Brute :</span>
@@ -1233,7 +1513,7 @@ export function ManagerDashboard({
                   </div>
                   <div>
                     <span className="text-stone-500 block">Votre Commission :</span>
-                    <span className="font-bold text-amber-800 font-mono">
+                    <span className="font-bold text-emerald-800 font-mono">
                       {formatXOF(newContributionAmount * newTotalRounds * newCommissionRate)}
                     </span>
                   </div>
@@ -1258,7 +1538,7 @@ export function ManagerDashboard({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs shadow-sm flex items-center gap-1.5"
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   Créer et générer le code
@@ -1275,7 +1555,7 @@ export function ManagerDashboard({
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-stone-200 space-y-5 animate-scale-up">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-700">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-700">
                   <Coins className="w-5 h-5" />
                 </div>
                 <div>
@@ -1318,7 +1598,7 @@ export function ManagerDashboard({
                       onClick={() => setEditAmountValue(preset)}
                       className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                         editAmountValue === preset
-                          ? 'bg-amber-600 text-white shadow-xs ring-1 ring-amber-600'
+                          ? 'bg-emerald-600 text-white shadow-xs ring-1 ring-emerald-600'
                           : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
                       }`}
                     >
@@ -1334,7 +1614,7 @@ export function ManagerDashboard({
                     step={500}
                     value={editAmountValue}
                     onChange={(e) => setEditAmountValue(Math.max(0, Number(e.target.value)))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 pr-16"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-mono font-bold text-stone-950 bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25 pr-16"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400 font-mono pointer-events-none">
                     FCFA
@@ -1343,14 +1623,14 @@ export function ManagerDashboard({
               </div>
 
               {/* Simulation recalculée */}
-              <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-xs space-y-2">
-                <div className="font-bold text-amber-950 flex items-center justify-between">
+              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-xs space-y-2">
+                <div className="font-bold text-emerald-950 flex items-center justify-between">
                   <span>Impact financier par tour :</span>
                   <span className="text-[10px] font-normal text-stone-600">
                     {editingAmountTontine.members.length} participants
                   </span>
                 </div>
-                <div className="grid grid-cols-3 gap-2 pt-1 border-t border-amber-200/60 text-[11px]">
+                <div className="grid grid-cols-3 gap-2 pt-1 border-t border-emerald-200/60 text-[11px]">
                   <div>
                     <span className="text-stone-500 block">Cagnotte Brute :</span>
                     <span className="font-bold text-stone-900 font-mono">
@@ -1361,7 +1641,7 @@ export function ManagerDashboard({
                     <span className="text-stone-500 block">
                       Commission ({formatPercent(editingAmountTontine.commissionRate)}) :
                     </span>
-                    <span className="font-bold text-amber-800 font-mono">
+                    <span className="font-bold text-emerald-800 font-mono">
                       {formatXOF(
                         editAmountValue *
                           editingAmountTontine.members.length *
@@ -1404,7 +1684,7 @@ export function ManagerDashboard({
                   }
                 }}
                 disabled={editAmountValue < 500}
-                className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 Fixer ce Montant
@@ -1427,6 +1707,175 @@ export function ManagerDashboard({
             }
           }}
         />
+      )}
+      {/* MODAL: CENTRE D'EXPORTATION PDF / CSV */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-stone-200 space-y-5 animate-scale-up">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-700">
+                  <Download className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-stone-900">
+                    Exporter l'Historique des Transactions
+                  </h3>
+                  <p className="text-[11px] text-stone-500">
+                    Téléchargez les états financiers au format PDF certifié ou tableur CSV
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowExportModal(false)}
+                className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Choix du périmètre d'exportation */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-stone-700 block">
+                  Périmètre des données à exporter :
+                </label>
+                <select
+                  value={exportTarget}
+                  onChange={(e) => setExportTarget(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-medium text-stone-900 bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25 cursor-pointer"
+                >
+                  <optgroup label="Toutes les Tontines">
+                    <option value="all">
+                      Consolidé : Toutes les {myTontines.length} tontines gérées
+                    </option>
+                  </optgroup>
+                  {myTontines.length > 0 && (
+                    <optgroup label="Par Tontine Spécifique">
+                      {myTontines.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name} ({t.code}) • Tour {t.currentRound}/{t.totalRounds} ({t.members.length} membres)
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  <optgroup label="Gestion & Finances">
+                    <option value="wallet">
+                      Historique du Wallet Manager ({myWalletTransactions.length} commissions & retraits)
+                    </option>
+                  </optgroup>
+                </select>
+              </div>
+
+              {/* Choix du Format (PDF vs CSV) */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-stone-700 block">
+                  Format de téléchargement :
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setExportFormat('pdf')}
+                    className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      exportFormat === 'pdf'
+                        ? 'border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-500/25 shadow-xs'
+                        : 'border-stone-200 bg-stone-50/50 hover:bg-stone-50 text-stone-600'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <FileText className={`w-5 h-5 ${exportFormat === 'pdf' ? 'text-emerald-700' : 'text-stone-400'}`} />
+                      {exportFormat === 'pdf' && (
+                        <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                      )}
+                    </div>
+                    <div className="mt-2.5">
+                      <div className="font-bold text-xs text-stone-900">Document PDF</div>
+                      <div className="text-[10px] text-stone-500 mt-0.5">
+                        Relevé officiel imprimable A4 avec totaux et signatures
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setExportFormat('csv')}
+                    className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      exportFormat === 'csv'
+                        ? 'border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-500/25 shadow-xs'
+                        : 'border-stone-200 bg-stone-50/50 hover:bg-stone-50 text-stone-600'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <FileSpreadsheet className={`w-5 h-5 ${exportFormat === 'csv' ? 'text-emerald-700' : 'text-stone-400'}`} />
+                      {exportFormat === 'csv' && (
+                        <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                      )}
+                    </div>
+                    <div className="mt-2.5">
+                      <div className="font-bold text-xs text-stone-900">Tableur CSV (Excel)</div>
+                      <div className="text-[10px] text-stone-500 mt-0.5">
+                        Données brutes, encodage UTF-8, séparateur point-virgule
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Aperçu du contenu exporté */}
+              <div className="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/80 text-xs space-y-1.5 text-stone-600">
+                <div className="font-bold text-stone-800 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Données incluses dans le rapport :</span>
+                </div>
+                <ul className="text-[11px] list-disc list-inside space-y-0.5 text-stone-500">
+                  <li>Historique horodaté des versements et cotisations par tour</li>
+                  <li>Méthodes de paiement Mobile Money (Saspay, Wave, Orange, MTN, Moov)</li>
+                  <li>Décomposition financière : Part brute, Commission manager, Net bénéficiaire</li>
+                  <li>Registre nominatif des membres, contacts et statut des cautions séquestrées</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-stone-100">
+              <button
+                type="button"
+                onClick={() => setShowExportModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-100 transition-colors cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleModalExportSubmit}
+                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm transition-all cursor-pointer flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                <span>Télécharger en {exportFormat.toUpperCase()}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Export Toast Notification */}
+      {exportNotification && (
+        <div className="fixed bottom-5 right-5 z-50 p-4 rounded-2xl bg-stone-900 text-white shadow-2xl border border-emerald-500/40 flex items-center gap-3 animate-fade-in max-w-md">
+          <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div className="text-xs">
+            <div className="font-bold text-emerald-300">Téléchargement Réussi</div>
+            <p className="text-stone-300 text-[11px] mt-0.5">{exportNotification}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setExportNotification(null)}
+            className="ml-auto text-stone-400 hover:text-white text-xs font-bold p-1 cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
       )}
     </div>
   );
