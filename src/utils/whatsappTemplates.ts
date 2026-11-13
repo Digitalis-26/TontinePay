@@ -12,7 +12,7 @@ export const WHATSAPP_OFFICIAL_TEMPLATES: WhatsAppNotificationTemplate[] = [
     category: 'UTILITY',
     description: 'Envoyé automatiquement 48h avant la date limite de cotisation du tour.',
     sampleBody:
-      'Bonjour {{1}} 👋, Rappel pour la {{2}} : le Tour #{{3}} arrive à échéance le {{4}}.\n\nMontant : *{{5}}*.\n👉 Réglez en 1 clic via Wave ou Orange Money : {{6}}\n\nMerci de votre ponctualité !',
+      'Bonjour {{1}} 👋, Rappel pour la {{2}} : le Tour #{{3}} arrive à échéance le {{4}}.\n\nMontant : *{{5}}*.\n👉 Réglez en 1 clic via Moov Money ou Orange Money : {{6}}\n\nMerci de votre ponctualité !',
   },
   {
     id: 'tmpl_02',
@@ -95,7 +95,7 @@ Rappel bienveillant de votre tontine *"${tontine.name}"* :
 👉 *Réglez directement en 1 clic via Mobile Money* :
 ${paymentLink}
 
-(Accepte Wave, Orange Money, MTN MoMo & Moov).
+(Accepte Moov Money & Orange Money).
 Merci pour votre ponctualité et votre engagement solidaire ! ✨`;
 }
 
@@ -240,21 +240,21 @@ export function processWhatsAppBotMessage(
     };
   }
 
-  // Option 2: Payment link Wave / Orange Money
+  // Option 2: Payment link Moov Money / Orange Money
   if (
     normalized === '2' ||
     normalized.includes('payer') ||
     normalized.includes('cotiser') ||
-    normalized.includes('wave') ||
+    normalized.includes('moov') ||
     normalized.includes('orange') ||
     normalized.includes('lien')
   ) {
     const payUrl = `https://pay.tontine.africa/${currentTontine.code}?amount=${currentTontine.contributionAmount}`;
     return {
-      replyText: `💳 *Paiement Sécurisé - Tour #${currentTontine.currentRound}*\n\nMontant : *${formatXOF(currentTontine.contributionAmount)}*\nCercle : *${currentTontine.name}*\n\nCliquez sur ce lien direct pour valider votre cotisation sans frais :\n👉 ${payUrl}\n\n📲 *Moyens acceptés :*\n• Wave Côte d'Ivoire & Sénégal (0% frais)\n• Orange Money Web & QR\n• MTN MoMo\n• Moov Money\n\nUn reçu numérique horodaté vous sera immédiatement envoyé ici dès confirmation !`,
+      replyText: `💳 *Paiement Sécurisé - Tour #${currentTontine.currentRound}*\n\nMontant : *${formatXOF(currentTontine.contributionAmount)}*\nCercle : *${currentTontine.name}*\n\nCliquez sur ce lien direct pour valider votre cotisation sans frais :\n👉 ${payUrl}\n\n📲 *Moyens acceptés :*\n• Orange Money Web & QR\n• Moov Money\n\nUn reçu numérique horodaté vous sera immédiatement envoyé ici dès confirmation !`,
       suggestedAction: 'SHOW_PAYMENT',
       paymentLink: {
-        provider: 'Wave & Orange Money',
+        provider: 'Moov Money & Orange Money',
         url: payUrl,
         amount: currentTontine.contributionAmount,
       },
@@ -290,6 +290,6 @@ export function processWhatsAppBotMessage(
 
   // Default fallback with conversational menu
   return {
-    replyText: `Bonjour *${memberName}* 👋\nBienvenue sur l'assistant WhatsApp de la tontine *"${currentTontine.name}"* !\n\nComment puis-je vous aider aujourd'hui ?\n\n👉 *1* : Connaître mon tour et ma date de cotisation\n👉 *2* : Obtenir mon lien direct de paiement Wave / Orange Money\n👉 *3* : Voir le montant de la cagnotte et l'état du groupe\n👉 *4* : Recevoir le relevé complet du cercle certifié\n\n_Répondez simplement par 1, 2, 3 ou 4._`,
+    replyText: `Bonjour *${memberName}* 👋\nBienvenue sur l'assistant WhatsApp de la tontine *"${currentTontine.name}"* !\n\nComment puis-je vous aider aujourd'hui ?\n\n👉 *1* : Connaître mon tour et ma date de cotisation\n👉 *2* : Obtenir mon lien direct de paiement Moov Money / Orange Money\n👉 *3* : Voir le montant de la cagnotte et l'état du groupe\n👉 *4* : Recevoir le relevé complet du cercle certifié\n\n_Répondez simplement par 1, 2, 3 ou 4._`,
   };
 }

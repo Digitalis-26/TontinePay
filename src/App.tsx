@@ -9,8 +9,7 @@ import { ProfileView } from './components/ProfileView';
 import { TermsModal } from './components/TermsModal';
 import { WhatsAppBotCenter } from './components/WhatsAppBotCenter';
 import { RiskManagementCenter } from './components/RiskManagementCenter';
-import { PaymentApiCenter } from './components/PaymentApiCenter';
-import { apiClient } from './utils/apiClient';
+import { apiClient, getAuthToken } from './utils/apiClient';
 import {
   acquireFinancialLock,
   releaseFinancialLock,
@@ -53,7 +52,6 @@ import {
   MessageSquare,
   ShieldAlert,
   LogOut,
-  Zap,
 } from 'lucide-react';
 import { PWAInstallButton } from './components/PWAInstallButton.tsx';
 import { OfflineIndicator } from './components/OfflineIndicator.tsx';
@@ -115,16 +113,39 @@ export default function App() {
 
   const [cloudSqlConnected, setCloudSqlConnected] = useState<boolean>(true);
 
-  // Synchronize users and connectedUser to localStorage
+  // Synchronize sanitized users (never store passwords or pins) to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('tontine_users', JSON.stringify(users));
+      const sanitized = users.map(({ password: _p, pinCode: _pin, ...rest }) => rest);
+      localStorage.setItem('tontine_users', JSON.stringify(sanitized));
     } catch (e) {
       console.error('Failed to save users in localStorage', e);
     }
   }, [users]);
 
-  // Load from Cloud SQL on mount
+  const syncAuthenticatedDataFromServer = async () => {
+    try {
+      const [remoteTontines, remoteUsers] = await Promise.all([
+        apiClient.getTontines(),
+        apiClient.getUsers(),
+      ]);
+      if (remoteTontines && remoteTontines.length > 0) {
+        setTontines(remoteTontines);
+      }
+      if (remoteUsers && remoteUsers.length > 0) {
+        setUsers((prev) => {
+          const map = new Map();
+          prev.forEach((u) => map.set(u.id, u));
+          remoteUsers.forEach((u) => map.set(u.id, u));
+          return Array.from(map.values());
+        });
+      }
+    } catch (err) {
+      console.warn('Cloud SQL authenticated sync:', err);
+    }
+  };
+
+  // Load & validate session token + Cloud SQL data on mount
   useEffect(() => {
     async function loadCloudSqlData() {
       try {
@@ -132,18 +153,20 @@ export default function App() {
         if (health && health.status === 'ok') {
           setCloudSqlConnected(true);
         }
-        const remoteTontines = await apiClient.getTontines();
-        if (remoteTontines && remoteTontines.length > 0) {
-          setTontines(remoteTontines);
-        }
-        const remoteUsers = await apiClient.getUsers();
-        if (remoteUsers && remoteUsers.length > 0) {
-          setUsers((prev) => {
-            const map = new Map();
-            prev.forEach((u) => map.set(u.id, u));
-            remoteUsers.forEach((u) => map.set(u.id, u));
-            return Array.from(map.values());
-          });
+        const token = getAuthToken();
+        if (token) {
+          const verifiedUser = await apiClient.getCurrentUser();
+          if (verifiedUser) {
+            setConnectedUser((prev) => (prev ? { ...prev, ...verifiedUser } : verifiedUser));
+            await syncAuthenticatedDataFromServer();
+          } else {
+            setConnectedUser(null);
+            setActiveTab('login');
+          }
+        } else if (connectedUser) {
+          // No valid server token present -> require clean login
+          setConnectedUser(null);
+          setActiveTab('login');
         }
       } catch (err) {
         console.warn('Cloud SQL initial sync:', err);
@@ -155,7 +178,8 @@ export default function App() {
   useEffect(() => {
     try {
       if (connectedUser) {
-        localStorage.setItem('tontine_connected_user', JSON.stringify(connectedUser));
+        const { password: _p, pinCode: _pin, ...safeUser } = connectedUser;
+        localStorage.setItem('tontine_connected_user', JSON.stringify(safeUser));
       } else {
         localStorage.removeItem('tontine_connected_user');
       }
@@ -184,7 +208,6 @@ export default function App() {
   };
 
   const [selectedPlanCode, setSelectedPlanCode] = useState<PlanConfig['code']>('STARTER');
-  const [showPaymentApiCenter, setShowPaymentApiCenter] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -200,7 +223,7 @@ export default function App() {
   const handleAddUser = (newUser: RegisteredUser) => {
     setUsers((prev) => [newUser, ...prev.filter((u) => u.id !== newUser.id)]);
     setConnectedUser(newUser);
-    apiClient.syncUser(newUser);
+    syncAuthenticatedDataFromServer();
     setActiveTab('dashboard');
     showToast(
       newUser.role === 'MANAGER'
@@ -211,6 +234,7 @@ export default function App() {
 
   const handleLoginAsUser = (user: RegisteredUser) => {
     setConnectedUser(user);
+    syncAuthenticatedDataFromServer();
     setActiveTab('dashboard');
     showToast(
       `Connexion réussie : ${user.firstName} ${user.lastName} (${
@@ -221,6 +245,7 @@ export default function App() {
 
   const handleLogout = () => {
     const prevUser = connectedUser;
+    apiClient.clearSessionToken();
     setConnectedUser(null);
     try {
       localStorage.removeItem('tontine_connected_user');
@@ -505,9 +530,9 @@ export default function App() {
       return;
     }
 
-    const validMethod = (['SASPAY', 'WAVE', 'ORANGE_MONEY', 'MTN_MOMO', 'MOOV_MONEY', 'CASH'].includes(paymentMethod)
+    const validMethod = (['MOOV_MONEY', 'ORANGE_MONEY'].includes(paymentMethod)
       ? paymentMethod
-      : 'SASPAY') as 'SASPAY' | 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'MOOV_MONEY' | 'CASH';
+      : 'ORANGE_MONEY') as 'MOOV_MONEY' | 'ORANGE_MONEY';
 
     const commAmount = Math.round(amount * tontine.commissionRate);
 
@@ -604,7 +629,7 @@ export default function App() {
       turnNumber: assignedTurn,
       hasPaidCurrentRound: false,
       isCurrentBeneficiary: assignedTurn === tontine.currentRound,
-      paymentMethod: connectedUser.memberDetails?.paymentMethod || 'WAVE',
+      paymentMethod: connectedUser.memberDetails?.paymentMethod || 'ORANGE_MONEY',
     };
 
     setTontines((prev) =>
@@ -733,83 +758,80 @@ export default function App() {
       {/* Main Container */}
       <main className={`relative z-10 flex-1 max-w-7xl w-full mx-auto ${activeTab === 'login' ? 'px-0 py-0 space-y-0 max-w-none' : 'px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6'}`}>
         {/* =========================================================================
-            HEADER - Clean, Compact & Slim (Contained Length)
+            HEADER - Clean, Light & Executive Navigation Bar
             ========================================================================= */}
         {activeTab !== 'login' && (
-          <div className="flex justify-center w-full">
-            <div className="w-fit max-w-full relative overflow-hidden rounded-xl border border-emerald-500/30 animated-green-gradient px-5 py-2 sm:px-6 sm:py-2.5 shadow-sm text-white">
-              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-5 relative z-10">
-                {/* Brand & Role */}
-                <div className="flex items-center gap-2.5">
-                  <h1 className="text-lg sm:text-xl font-black tracking-tight text-white">
-                    TONTINE
-                  </h1>
-                  {connectedUser && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/25 text-emerald-100 border border-emerald-400/40 font-semibold flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
-                      {isManager ? 'Gestionnaire' : 'Membre'}
-                    </span>
-                  )}
+          <header className="w-full bg-white/90 backdrop-blur-md border border-emerald-200/80 rounded-2xl px-4 sm:px-6 py-3 shadow-xs flex flex-wrap items-center justify-between gap-3">
+            {/* Left: Brand & Role */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setActiveTab(connectedUser ? 'dashboard' : 'login')}
+                className="flex items-center gap-2.5 cursor-pointer group"
+              >
+                <div className="w-8 h-8 rounded-full border-2 border-emerald-600 bg-emerald-50 flex items-center justify-center text-emerald-700 font-black text-sm">
+                  T
                 </div>
-
-                {/* Profile & Quick Actions */}
-                {connectedUser ? (
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('profile')}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-800/40 hover:bg-emerald-700/50 border border-emerald-400/30 text-xs font-semibold text-white transition-all cursor-pointer"
-                      title="Gérer mon profil"
-                    >
-                      <div className="w-6 h-6 rounded-lg flex items-center justify-center font-black text-[10px] bg-emerald-400 text-emerald-950">
-                        {connectedUser.firstName.charAt(0)}{connectedUser.lastName.charAt(0)}
-                      </div>
-                      <span>{connectedUser.firstName} {connectedUser.lastName}</span>
-                      {connectedUser.kyc?.status === 'VERIFIED' ? (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/30 text-emerald-200 font-bold flex items-center gap-1">
-                          <ShieldCheck className="w-3 h-3 text-emerald-300" />
-                          KYC
-                        </span>
-                      ) : (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-600/40 text-emerald-100 border border-emerald-400/30 font-bold">
-                          KYC à vérifier
-                        </span>
-                      )}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowPaymentApiCenter(true)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-850/60 hover:bg-emerald-700/60 border border-emerald-400/40 text-xs font-semibold text-white transition-all cursor-pointer shadow-2xs"
-                      title="Passerelle Saspay & Webhooks API de Paiement"
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
-                      <Zap className="w-3.5 h-3.5 text-emerald-300" />
-                      <span>Saspay & API</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('login')}
-                      className="text-xs font-medium text-emerald-100 hover:text-white px-2 py-1.5 rounded-lg hover:bg-emerald-700/40 transition-colors cursor-pointer"
-                      title="Changer de profil"
-                    >
-                      Changer
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="p-2 rounded-xl text-xs font-bold text-emerald-100 bg-emerald-700/50 hover:bg-emerald-700 border border-emerald-400/40 transition-colors cursor-pointer"
-                      title="Se déconnecter"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ) : null}
-              </div>
+                <span className="text-base sm:text-lg font-black tracking-tight text-emerald-950">
+                  TONTINE
+                </span>
+              </button>
+              {connectedUser && (
+                <>
+                  <span className="text-stone-300" aria-hidden="true">·</span>
+                  <span className="text-xs font-semibold text-emerald-800">
+                    {isManager ? 'Espace Gestionnaire' : 'Espace Membre'}
+                  </span>
+                </>
+              )}
             </div>
-          </div>
+
+            {/* Right: Clean Navigation & Account Actions */}
+            {connectedUser && (
+              <div className="flex items-center gap-2 sm:gap-4">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('dashboard')}
+                  className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                    activeTab === 'dashboard'
+                      ? 'text-emerald-900 bg-emerald-50 font-bold'
+                      : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                  }`}
+                >
+                  Tableau de bord
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('profile')}
+                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                    activeTab === 'profile'
+                      ? 'text-emerald-900 bg-emerald-50 font-bold'
+                      : 'text-stone-700 hover:text-stone-900 hover:bg-stone-100'
+                  }`}
+                  title="Mon profil et vérification KYC"
+                >
+                  <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-[10px]">
+                    {connectedUser.firstName.charAt(0)}{connectedUser.lastName.charAt(0)}
+                  </div>
+                  <span className="hidden sm:inline">{connectedUser.firstName} {connectedUser.lastName}</span>
+                  {connectedUser.kyc?.status === 'VERIFIED' && (
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-600 hover:text-rose-700 hover:bg-rose-50 border border-stone-200 transition-colors cursor-pointer"
+                  title="Se déconnecter"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Déconnexion</span>
+                </button>
+              </div>
+            )}
+          </header>
         )}
 
         {/* Navigation Return bar (only shown when not on the main dashboard and not on login) */}
@@ -862,7 +884,6 @@ export default function App() {
             onNavigateToLogin={() => setActiveTab('login')}
             onNavigateToProfile={() => setActiveTab('profile')}
             onNavigateToRisk={() => setActiveTab('risk')}
-            onOpenPaymentApi={() => setShowPaymentApiCenter(true)}
           />
         )}
 
@@ -1002,18 +1023,6 @@ export default function App() {
         onClose={() => setShowFooterTermsModal(false)}
         highlightRole={connectedUser?.role}
         alreadyAccepted={!!connectedUser?.acceptedTerms}
-      />
-
-      {/* Payment API & Webhooks Center Modal */}
-      <PaymentApiCenter
-        isOpen={showPaymentApiCenter}
-        onClose={() => setShowPaymentApiCenter(false)}
-        tontines={tontines}
-        currentUser={connectedUser}
-        onPaymentSuccess={(tontineId, _memberUserId, paymentData) => {
-          handlePayContribution(tontineId, paymentData.amount, paymentData.paymentMethod);
-        }}
-        showToast={showToast}
       />
 
       {/* PWA Offline Connectivity Indicator */}

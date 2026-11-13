@@ -31,7 +31,7 @@ export const TERMS_SECTIONS: TermsSection[] = [
       {
         num: 'Article 1.1',
         title: 'Nature du Service',
-        content: "TONTINE est une plateforme technologique sécurisée d'administration, de traçabilité et d'automatisation des tontines rotatives traditionnelles (Djangui, Pari, Esusu, Susu). La plateforme agit en qualité de tiers facilitateur et fournit le grand livre comptable, les alertes de paiement et les protocoles d'intégration Mobile Money (Wave, Orange Money, MTN MoMo, Moov Money).",
+        content: "TONTINE est une plateforme technologique sécurisée d'administration, de traçabilité et d'automatisation des tontines rotatives traditionnelles (Djangui, Pari, Esusu, Susu). La plateforme agit en qualité de tiers facilitateur et fournit le grand livre comptable, les alertes de paiement et les protocoles d'intégration Mobile Money (Moov Money, Orange Money).",
       },
       {
         num: 'Article 1.2',
@@ -107,7 +107,7 @@ export const TERMS_SECTIONS: TermsSection[] = [
         bulletPoints: [
           "Paiement obligatoire à chaque date d'échéance fixée par le calendrier du groupe.",
           "Interdiction d'abandonner le groupe ou de cesser ses paiements après avoir été bénéficiaire.",
-          "Maintien impératif d'un solde suffisant sur son compte Mobile Money (Wave, Orange, MTN, Moov) aux dates d'échéance.",
+          "Maintien impératif d'un solde suffisant sur son compte Mobile Money (Moov Money, Orange Money) aux dates d'échéance.",
         ],
       },
       {

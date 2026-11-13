@@ -3,6 +3,7 @@ import { RegisteredUser, UserRoleType, PlanConfig } from '../types';
 import { SUPPORTED_COUNTRIES } from '../data/users';
 import { formatPercent, formatXOF } from '../data/plans';
 import { verifyOtpRequestGuard } from '../utils/security';
+import { apiClient } from '../utils/apiClient';
 import {
   UserCheck,
   Briefcase,
@@ -71,12 +72,12 @@ export function RegistrationView({
   const [businessName, setBusinessName] = useState('');
   const [selectedPlanCode, setSelectedPlanCode] = useState<PlanConfig['code']>('STARTER');
   const [managerCommissionRate, setManagerCommissionRate] = useState<number>(0.025);
-  const [payoutProvider, setPayoutProvider] = useState<'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'BANK_TRANSFER'>('WAVE');
+  const [payoutProvider, setPayoutProvider] = useState<'MOOV_MONEY' | 'ORANGE_MONEY'>('ORANGE_MONEY');
   const [payoutAccount, setPayoutAccount] = useState('');
   const [commissionEnabled, setCommissionEnabled] = useState(true);
 
   // Member-specific fields
-  const [memberPaymentMethod, setMemberPaymentMethod] = useState<'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'MOOV_MONEY' | 'CASH'>('WAVE');
+  const [memberPaymentMethod, setMemberPaymentMethod] = useState<'MOOV_MONEY' | 'ORANGE_MONEY'>('ORANGE_MONEY');
   const [identityNumber, setIdentityNumber] = useState('');
   const [tontineInvitationCode, setTontineInvitationCode] = useState('');
 
@@ -86,6 +87,7 @@ export function RegistrationView({
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'ALL' | 'MANAGER' | 'MEMBER'>('ALL');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isRegistering, setIsRegistering] = useState(false);
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -121,11 +123,11 @@ export function RegistrationView({
       }
     }
 
-    if (password && password.length < 6) {
-      errors.password = 'Le mot de passe doit contenir au moins 6 caractères';
+    if (!password || password.length < 6) {
+      errors.password = 'Le mot de passe sécurisé est requis (minimum 6 caractères).';
     }
-    if (password && confirmPassword && password !== confirmPassword) {
-      errors.confirmPassword = 'Les mots de passe ne correspondent pas';
+    if (confirmPassword !== password) {
+      errors.confirmPassword = 'Les mots de passe ne correspondent pas.';
     }
 
     if (!termsAccepted) {
@@ -144,76 +146,92 @@ export function RegistrationView({
     }
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     const fullPhone = phone.startsWith('+') ? phone : `${selectedCountry.dialCode} ${phone}`;
-    const newId = `usr-${selectedRole.toLowerCase()}-${Date.now().toString().slice(-4)}`;
+    setIsRegistering(true);
+    setFormErrors((prev) => {
+      const next = { ...prev };
+      delete next.submit;
+      return next;
+    });
 
-    const newUser: RegisteredUser = {
-      id: newId,
-      role: selectedRole,
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      phone: fullPhone,
-      email: email.trim() || undefined,
-      city: city.trim() || selectedCountry.defaultCity,
-      countryCode: selectedCountry.code,
-      countryName: selectedCountry.name,
-      status: 'ACTIVE',
-      createdAt: new Date().toISOString(),
-      acceptedTerms: true,
-      acceptedTermsAt: new Date().toISOString(),
-      ...(selectedRole === 'MANAGER'
-        ? {
-            managerDetails: {
-              businessName: businessName.trim(),
-              planCode: selectedPlanCode,
-              commissionRate: managerCommissionRate,
-              commissionEnabled,
-              payoutProvider,
-              payoutAccount: payoutAccount.trim() || fullPhone,
-              activeTontinesCount: 0,
-              walletBalance: 0,
-            },
-          }
-        : {
-            memberDetails: {
-              paymentMethod: memberPaymentMethod,
-              identityNumber: identityNumber.trim() || undefined,
-              tontineInvitationCode: tontineInvitationCode.trim() || undefined,
-              joinedTontinesCount: tontineInvitationCode.trim() ? 1 : 0,
-            },
-          }),
-    };
+    try {
+      const { user: serverUser } = await apiClient.register({
+        email: email.trim() || undefined,
+        phone: fullPhone,
+        password,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        role: selectedRole,
+        managerPlanCode: selectedRole === 'MANAGER' ? selectedPlanCode : undefined,
+        memberPaymentMethod: selectedRole === 'MEMBER' ? memberPaymentMethod : undefined,
+      });
 
-    onAddUser(newUser);
+      const newUser: RegisteredUser = {
+        ...serverUser,
+        city: city.trim() || selectedCountry.defaultCity,
+        countryCode: selectedCountry.code,
+        countryName: selectedCountry.name,
+        acceptedTerms: true,
+        acceptedTermsAt: new Date().toISOString(),
+        ...(selectedRole === 'MANAGER'
+          ? {
+              managerDetails: {
+                businessName: businessName.trim(),
+                planCode: selectedPlanCode,
+                commissionRate: managerCommissionRate,
+                commissionEnabled,
+                payoutProvider,
+                payoutAccount: payoutAccount.trim() || fullPhone,
+                activeTontinesCount: 0,
+                walletBalance: serverUser.managerDetails?.walletBalance || 0,
+              },
+            }
+          : {
+              memberDetails: {
+                paymentMethod: memberPaymentMethod,
+                identityNumber: identityNumber.trim() || undefined,
+                tontineInvitationCode: tontineInvitationCode.trim() || undefined,
+                joinedTontinesCount: tontineInvitationCode.trim() ? 1 : 0,
+              },
+            }),
+      };
 
-    setSuccessBanner(
-      selectedRole === 'MANAGER'
-        ? `Le gestionnaire "${businessName}" (${firstName} ${lastName}) a été enregistré avec le plan ${selectedPlanCode} (taux de commission : ${formatPercent(managerCommissionRate)}).`
-        : `Le membre cotisant "${firstName} ${lastName}" a été enregistré avec succès (paiement : ${memberPaymentMethod}).`
-    );
+      onAddUser(newUser);
 
-    // Reset form
-    setFirstName('');
-    setLastName('');
-    setPhone('');
-    setEmail('');
-    setPassword('');
-    setConfirmPassword('');
-    setBusinessName('');
-    setPayoutAccount('');
-    setIdentityNumber('');
-    setTontineInvitationCode('');
-    setTermsAccepted(false);
-    setFormErrors({});
+      setSuccessBanner(
+        selectedRole === 'MANAGER'
+          ? `Le gestionnaire "${businessName}" (${firstName} ${lastName}) a été enregistré avec le plan ${selectedPlanCode} (taux de commission : ${formatPercent(managerCommissionRate)}).`
+          : `Le membre cotisant "${firstName} ${lastName}" a été enregistré avec succès (paiement : ${memberPaymentMethod}).`
+      );
 
-    // Switch to directory after short delay to show result
-    setTimeout(() => {
-      setViewMode('directory');
-    }, 1200);
+      setFirstName('');
+      setLastName('');
+      setPhone('');
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setBusinessName('');
+      setPayoutAccount('');
+      setIdentityNumber('');
+      setTontineInvitationCode('');
+      setTermsAccepted(false);
+      setFormErrors({});
+
+      setTimeout(() => {
+        setViewMode('directory');
+      }, 1200);
+    } catch (err: any) {
+      setFormErrors((prev) => ({
+        ...prev,
+        submit: err?.message || 'Erreur lors de la création sécurisée du compte.',
+      }));
+    } finally {
+      setIsRegistering(false);
+    }
   };
 
   // Generate Prisma snippet based on current inputs
@@ -424,7 +442,7 @@ const newMember = await prisma.$transaction(async (tx) => {
                   </div>
                   <h3 className="font-bold text-stone-900 text-sm mt-3">Membre (Cotisant)</h3>
                   <p className="text-xs text-stone-600 mt-1 leading-relaxed">
-                    Participe aux cagnottes, verse ses cotisations par Mobile Money (Wave, Orange, MTN, Moov) et reçoit les versements de rotation.
+                    Participe aux cagnottes, verse ses cotisations par Mobile Money (Moov Money, Orange Money) et reçoit les versements de rotation.
                   </p>
                   <div className="mt-3 pt-3 border-t border-emerald-200/80 flex items-center gap-2 text-[11px] font-semibold text-emerald-800">
                     <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
@@ -699,12 +717,10 @@ const newMember = await prisma.$transaction(async (tx) => {
                         <select
                           value={payoutProvider}
                           onChange={(e) => setPayoutProvider(e.target.value as any)}
-                          className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
+                          className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs bg-white text-stone-900 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                         >
-                          <option value="WAVE">Wave Mobile Money (Recommandé - 0% ou 1%)</option>
                           <option value="ORANGE_MONEY">Orange Money</option>
-                          <option value="MTN_MOMO">MTN Mobile Money</option>
-                          <option value="BANK_TRANSFER">Virement Bancaire (RIB / IBAN)</option>
+                          <option value="MOOV_MONEY">Moov Money</option>
                         </select>
                       </div>
 
@@ -744,13 +760,10 @@ const newMember = await prisma.$transaction(async (tx) => {
                       <select
                         value={memberPaymentMethod}
                         onChange={(e) => setMemberPaymentMethod(e.target.value as any)}
-                        className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
+                        className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs bg-white text-stone-900 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                       >
-                        <option value="WAVE">Wave (Instantané & sans frais cachés)</option>
                         <option value="ORANGE_MONEY">Orange Money</option>
-                        <option value="MTN_MOMO">MTN Mobile Money</option>
-                        <option value="MOOV_MONEY">Moov Money / Flooz</option>
-                        <option value="CASH">Espèces / Versement direct au gestionnaire</option>
+                        <option value="MOOV_MONEY">Moov Money</option>
                       </select>
                     </div>
 
@@ -948,16 +961,26 @@ const newMember = await prisma.$transaction(async (tx) => {
                 </div>
               </div>
 
+              {formErrors.submit && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{formErrors.submit}</span>
+                </div>
+              )}
+
               {/* Submit Buttons */}
               <div className="pt-4 flex items-center justify-end">
                 <button
                   type="submit"
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  disabled={isRegistering}
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <UserCheck className="w-4 h-4" />
-                  {selectedRole === 'MANAGER'
-                    ? "Finaliser l'inscription du Gestionnaire"
-                    : "Finaliser l'inscription du Membre"}
+                  {isRegistering
+                    ? 'Chiffrement & enregistrement...'
+                    : selectedRole === 'MANAGER'
+                      ? "Finaliser l'inscription du Gestionnaire"
+                      : "Finaliser l'inscription du Membre"}
                 </button>
               </div>
             </form>

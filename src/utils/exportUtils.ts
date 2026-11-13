@@ -108,7 +108,7 @@ export function exportTontineToCSV(
             tontine.contributionAmount,
             comm,
             netPool,
-            m.paymentMethod || 'WAVE',
+            m.paymentMethod || 'ORANGE_MONEY',
             'PAYÉ (Cycle en cours)',
           ]
             .map(escapeCSV)
@@ -140,7 +140,7 @@ export function exportTontineToCSV(
         `Tour #${m.turnNumber}`,
         m.name,
         m.phone,
-        m.paymentMethod || 'WAVE',
+        m.paymentMethod || 'ORANGE_MONEY',
         m.hasPaidCurrentRound ? 'Cotisation réglée' : 'Non réglée (En attente)',
         m.isCurrentBeneficiary ? 'OUI (Cagnotte perçue)' : 'Non',
         m.cautionAmount ?? tontine.contributionAmount,
@@ -274,7 +274,7 @@ export function exportTontineToPDF(
         m.name,
         formatXOF(tontine.contributionAmount),
         formatXOF(comm),
-        m.paymentMethod || 'WAVE',
+        m.paymentMethod || 'ORANGE_MONEY',
         m.hasPaidCurrentRound ? 'PAYÉ ✓' : 'EN ATTENTE',
       ]);
     });
@@ -352,7 +352,7 @@ export function exportTontineToPDF(
   doc.setFontSize(8);
   doc.setTextColor(...textMuted);
   doc.text(
-    `Document officiel Tontine 2.0 • Traçabilité Mobile Money (Saspay, Wave, Orange, MTN, Moov) • Page ${doc.getNumberOfPages()}`,
+    `Document officiel Tontine 2.0 • Traçabilité Mobile Money (Moov Money & Orange Money) • Page ${doc.getNumberOfPages()}`,
     14,
     pageHeight - 10
   );
@@ -396,7 +396,7 @@ export function exportWalletTransactionsToCSV(
         tx.date ? new Date(tx.date).toLocaleString('fr-FR') : 'N/A',
         tx.type === 'COMMISSION_CREDIT' ? 'COMMISSION PERÇUE' : 'RETRAIT EFFECTUÉ',
         tx.description,
-        tx.provider || 'WAVE',
+        tx.provider || 'ORANGE_MONEY',
         tx.account || 'Compte Manager',
         tx.type === 'COMMISSION_CREDIT' ? `+${tx.amount}` : `-${tx.amount}`,
         tx.balanceAfter,

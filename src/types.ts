@@ -86,7 +86,7 @@ export interface RegisteredUser {
   kyc?: KycVerificationData;
   // Specific to member
   memberDetails?: {
-    paymentMethod: 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'MOOV_MONEY' | 'SASPAY' | 'CASH';
+    paymentMethod: 'MOOV_MONEY' | 'ORANGE_MONEY';
     identityNumber?: string;
     tontineInvitationCode?: string;
     joinedTontinesCount: number;
@@ -97,7 +97,7 @@ export interface RegisteredUser {
     planCode: 'FREE' | 'STARTER' | 'PREMIUM' | 'BUSINESS';
     commissionRate: number; // e.g. 0.015, 0.025, 0.03, 0.035
     commissionEnabled: boolean;
-    payoutProvider: 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'SASPAY' | 'BANK_TRANSFER';
+    payoutProvider: 'MOOV_MONEY' | 'ORANGE_MONEY';
     payoutAccount: string;
     activeTontinesCount: number;
     walletBalance: number; // in XOF
@@ -160,7 +160,7 @@ export interface MemberContributionPayment {
   roundNumber: number;
   amount: number;
   commissionAmount: number;
-  paymentMethod: 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'MOOV_MONEY' | 'SASPAY' | 'CASH';
+  paymentMethod: 'MOOV_MONEY' | 'ORANGE_MONEY';
   status: 'PAID' | 'PENDING' | 'LATE';
   transactionRef: string;
   paidAt: string;

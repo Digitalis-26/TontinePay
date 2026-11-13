@@ -1,4 +1,6 @@
 import { SaspayConfig, SaspayWebhookPayload } from '../types';
+import { getAuthHeaders } from '../utils/apiClient';
+import { computeHmacSha256 } from '../utils/security';
 
 export const DEFAULT_SASPAY_CONFIG: SaspayConfig = {
   merchantCode: 'SAS-TONTINE-88210',
@@ -42,7 +44,7 @@ export interface SaspayInitiateParams {
   tontineName: string;
   memberUserId: string;
   roundNumber: number;
-  channel?: 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'MOOV_MONEY' | 'CARD' | 'ALL';
+  channel?: 'MOOV_MONEY' | 'ORANGE_MONEY' | 'ALL';
 }
 
 export interface SaspayInitiateResponse {
@@ -66,7 +68,7 @@ export async function initiateSaspayPayment(
 
   const response = await fetch('/api/payments/saspay/initiate', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       ...params,
       merchantCode: config.merchantCode,
@@ -84,33 +86,38 @@ export async function initiateSaspayPayment(
 }
 
 /**
- * Sends a simulated or test webhook to the Saspay webhook endpoint
+ * Sends a cryptographically signed sandbox webhook to the Saspay webhook endpoint
  */
 export async function simulateSaspayWebhook(payload: Partial<SaspayWebhookPayload>) {
   const config = getStoredSaspayConfig();
+  const timestampMs = Date.now();
 
   const fullPayload: SaspayWebhookPayload = {
     MerchantCode: config.merchantCode,
-    CheckoutRequestID: payload.CheckoutRequestID || `SAS-CHK-${Date.now()}`,
+    CheckoutRequestID: payload.CheckoutRequestID || `SAS-CHK-${timestampMs}`,
     ResultCode: 0,
     ResultDesc: 'Transaction completed successfully via Saspay Multi-Operator Aggregator',
     Amount: payload.Amount || 50000,
     Msisdn: payload.Msisdn || '22670000000',
-    BillRefNumber: payload.BillRefNumber || `BILL-${Date.now()}`,
+    BillRefNumber: payload.BillRefNumber || `BILL-${timestampMs}`,
     AccountReference: payload.AccountReference || 'TONTINE-COTISATION',
-    TransactionDate: new Date().toISOString(),
+    TransactionDate: new Date(timestampMs).toISOString(),
     tontineId: payload.tontineId,
     memberUserId: payload.memberUserId,
     roundNumber: payload.roundNumber || 1,
   };
 
+  const rawBody = JSON.stringify(fullPayload);
+  const hmacHex = await computeHmacSha256(config.webhookSecret, `${timestampMs}.${rawBody}`);
+
   const response = await fetch('/api/payments/saspay/webhook', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-saspay-signature': `sha256=${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
+      'x-webhook-timestamp': String(timestampMs),
+      'x-saspay-signature': `sha256=${hmacHex}`,
     },
-    body: JSON.stringify(fullPayload),
+    body: rawBody,
   });
 
   return response.json();
@@ -130,7 +137,7 @@ export async function disburseSaspayPayout(params: {
   const config = getStoredSaspayConfig();
   const response = await fetch('/api/payments/saspay/disburse', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       ...params,
       merchantCode: config.merchantCode,

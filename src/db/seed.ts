@@ -1,9 +1,21 @@
+import { eq, and, isNull } from 'drizzle-orm';
 import { db } from './index.ts';
 import { users, tontines, tontineMembers, contributionPayments, walletTransactions } from './schema.ts';
 import { INITIAL_TONTINES, INITIAL_CONTRIBUTION_PAYMENTS, INITIAL_WALLET_TRANSACTIONS } from '../data/tontines.ts';
+import { hashPassword } from '../server/security.ts';
 
 export async function seedInitialDataIfEmpty() {
   try {
+    const defaultSeedPasswordHash = hashPassword(process.env.SEED_DEMO_PASSWORD || 'Tontine2026!');
+
+    // Ensure seeded accounts have a scrypt password hash if migrated from pre-hardening schema
+    for (const seedUid of ['usr-mgr-001', 'usr-mbr-001', 'usr-mbr-002']) {
+      await db
+        .update(users)
+        .set({ passwordHash: defaultSeedPasswordHash })
+        .where(and(eq(users.uid, seedUid), isNull(users.passwordHash)));
+    }
+
     const existing = await db.select().from(tontines).limit(1);
     if (existing.length > 0) {
       return; // Already seeded
@@ -17,6 +29,7 @@ export async function seedInitialDataIfEmpty() {
         uid: 'usr-mgr-001',
         email: 'awa.diop@teranga.sn',
         phone: '+221 77 123 45 67',
+        passwordHash: defaultSeedPasswordHash,
         firstName: 'Awa',
         lastName: 'Diop',
         role: 'MANAGER',
@@ -29,17 +42,19 @@ export async function seedInitialDataIfEmpty() {
         uid: 'usr-mbr-001',
         email: 'fatou.ndiaye@gmail.com',
         phone: '+221 70 890 12 34',
+        passwordHash: defaultSeedPasswordHash,
         firstName: 'Fatou',
         lastName: 'Ndiaye',
         role: 'MEMBER',
         kycStatus: 'VERIFIED',
         kycDocumentType: 'CNI',
-        memberPaymentMethod: 'WAVE',
+        memberPaymentMethod: 'MOOV_MONEY',
       },
       {
         uid: 'usr-mbr-002',
         email: 'koffi.kouame@gmail.com',
         phone: '+225 07 45 67 89',
+        passwordHash: defaultSeedPasswordHash,
         firstName: 'Koffi',
         lastName: 'Kouamé',
         role: 'MEMBER',

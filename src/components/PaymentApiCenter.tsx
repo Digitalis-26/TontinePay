@@ -31,6 +31,8 @@ import {
   simulateSaspayWebhook,
   disburseSaspayPayout,
 } from '../services/saspay';
+import { getAuthHeaders } from '../utils/apiClient';
+import { computeHmacSha256 } from '../utils/security';
 
 interface PaymentApiCenterProps {
   isOpen: boolean;
@@ -73,7 +75,7 @@ export function PaymentApiCenter({
   // Simulation state
   const [selectedTontineId, setSelectedTontineId] = useState<string>(tontines[0]?.id || '');
   const [selectedMemberUserId, setSelectedMemberUserId] = useState<string>('');
-  const [testProvider, setTestProvider] = useState<'SASPAY' | 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'CINETPAY'>('SASPAY');
+  const [testProvider, setTestProvider] = useState<'ORANGE_MONEY' | 'MOOV_MONEY'>('ORANGE_MONEY');
   const [isSimulating, setIsSimulating] = useState(false);
   const [isTestingB2C, setIsTestingB2C] = useState(false);
 
@@ -105,8 +107,8 @@ export function PaymentApiCenter({
     {
       id: 'wh-init-03',
       timestamp: new Date(Date.now() - 1000 * 60 * 35).toISOString(),
-      provider: 'WAVE DIRECT',
-      transactionRef: 'WAVE-TX-883921',
+      provider: 'MOOV MONEY',
+      transactionRef: 'MOOV-TX-883921',
       amount: 50000,
       tontineName: tontines[0]?.name || 'Tontine Solidarité',
       memberName: 'Kadiatou Touré',
@@ -152,7 +154,7 @@ export function PaymentApiCenter({
       saveStoredSaspayConfig(saspayConfig);
       await fetch('/api/payments/saspay/config', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(saspayConfig),
       });
       showToast('Configuration Saspay enregistrée et active sur le serveur !');
@@ -203,7 +205,7 @@ export function PaymentApiCenter({
       const newLogItem: WebhookLogItem = {
         id: `sas-${Date.now()}`,
         timestamp: new Date().toISOString(),
-        provider: 'SASPAY (Wave / OM / MoMo)',
+        provider: 'SASPAY (Moov Money / Orange Money)',
         transactionRef: initRes.checkoutRequestId,
         amount: selectedTontine.contributionAmount,
         tontineName: selectedTontine.name,
@@ -297,7 +299,7 @@ export function PaymentApiCenter({
                 </span>
               </div>
               <p className="text-xs text-stone-600 mt-0.5 font-medium">
-                Agrégateur panafricain unifié : Wave, Orange Money, MTN MoMo, Moov Flooz, Airtel & Cartes bancaires
+                Agrégateur unifié : Moov Money & Orange Money
               </p>
             </div>
           </div>
@@ -607,29 +609,14 @@ export function PaymentApiCenter({
             </div>
 
             {/* Supported Gateways Badges */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-center space-y-1">
-                <span className="text-xs font-bold text-stone-900 block">Saspay Gateway</span>
-                <span className="text-[10px] font-semibold text-emerald-700 block">Agrégateur Panafricain</span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-600 text-white font-bold">Primaire</span>
-              </div>
-              <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 text-center space-y-1">
-                <span className="text-xs font-bold text-stone-900 block">Wave API</span>
-                <span className="text-[10px] font-semibold text-emerald-600 block">Checkout Direct</span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Actif</span>
-              </div>
+            <div className="grid grid-cols-2 gap-2.5">
               <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 text-center space-y-1">
                 <span className="text-xs font-bold text-stone-900 block">Orange Money</span>
                 <span className="text-[10px] font-semibold text-orange-600 block">Web Payment</span>
                 <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Actif</span>
               </div>
               <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 text-center space-y-1">
-                <span className="text-xs font-bold text-stone-900 block">MTN MoMo</span>
-                <span className="text-[10px] font-semibold text-amber-600 block">Open API</span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Actif</span>
-              </div>
-              <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 text-center space-y-1">
-                <span className="text-xs font-bold text-stone-900 block">Moov Flooz</span>
+                <span className="text-xs font-bold text-stone-900 block">Moov Money</span>
                 <span className="text-[10px] font-semibold text-blue-600 block">Direct Push</span>
                 <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Actif</span>
               </div>
@@ -688,11 +675,8 @@ export function PaymentApiCenter({
                     onChange={(e) => setTestProvider(e.target.value as any)}
                     className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs font-bold text-stone-950 bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                   >
-                    <option value="SASPAY">Saspay (Multi-Opérateur)</option>
-                    <option value="WAVE">Wave Mobile Money</option>
                     <option value="ORANGE_MONEY">Orange Money</option>
-                    <option value="MTN_MOMO">MTN Mobile Money</option>
-                    <option value="CINETPAY">CinetPay Gateway</option>
+                    <option value="MOOV_MONEY">Moov Money</option>
                   </select>
                 </div>
               </div>
@@ -705,27 +689,34 @@ export function PaymentApiCenter({
 
                 <button
                   type="button"
-                  onClick={testProvider === 'SASPAY' ? handleTestSaspayPayment : async () => {
+                  onClick={async () => {
                     if (!selectedTontine) return;
                     const member = selectedTontine.members.find((m) => m.userId === selectedMemberUserId) || selectedTontine.members[0];
                     if (!member) return;
                     setIsSimulating(true);
                     try {
                       const generatedRef = `${testProvider.slice(0, 2)}-API-${Math.floor(100000 + Math.random() * 900000)}`;
+                      const timestampMs = Date.now();
+                      const rawBody = JSON.stringify({
+                        event: 'payment.success',
+                        tontineId: selectedTontine.id,
+                        memberUserId: member.userId,
+                        memberName: member.name,
+                        amount: selectedTontine.contributionAmount,
+                        provider: testProvider,
+                        transactionRef: generatedRef,
+                        roundNumber: selectedTontine.currentRound,
+                        timestamp: new Date(timestampMs).toISOString(),
+                      });
+                      const hmacHex = await computeHmacSha256(saspayConfig.webhookSecret, `${timestampMs}.${rawBody}`);
                       await fetch('/api/payments/webhook', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'x-webhook-signature': 'sha256=test' },
-                        body: JSON.stringify({
-                          event: 'payment.success',
-                          tontineId: selectedTontine.id,
-                          memberUserId: member.userId,
-                          memberName: member.name,
-                          amount: selectedTontine.contributionAmount,
-                          provider: testProvider,
-                          transactionRef: generatedRef,
-                          roundNumber: selectedTontine.currentRound,
-                          timestamp: new Date().toISOString(),
-                        }),
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'x-webhook-timestamp': String(timestampMs),
+                          'x-webhook-signature': `sha256=${hmacHex}`,
+                        },
+                        body: rawBody,
                       });
                       if (onPaymentSuccess) {
                         onPaymentSuccess(selectedTontine.id, member.userId, {

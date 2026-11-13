@@ -44,7 +44,7 @@ export function MemberDashboard({
   onNavigateToRisk,
 }: MemberDashboardProps) {
   const memberDetails = member.memberDetails;
-  const defaultMethod = memberDetails?.paymentMethod || 'WAVE';
+  const defaultMethod = memberDetails?.paymentMethod === 'MOOV_MONEY' ? 'MOOV_MONEY' : 'ORANGE_MONEY';
 
   // Modals
   const [selectedTontineToPay, setSelectedTontineToPay] = useState<TontineRecord | null>(null);
@@ -124,10 +124,7 @@ export function MemberDashboard({
     setIsProcessingPayment(true);
     setTimeout(() => {
       onPayContribution(selectedTontineToPay.id, selectedTontineToPay.contributionAmount, paymentProvider);
-      const receiptRef =
-        paymentProvider === 'SASPAY'
-          ? `SAS-CHK-${Math.floor(100000 + Math.random() * 900000)}`
-          : `${paymentProvider.slice(0, 2)}-TX-${Math.floor(100000 + Math.random() * 900000)}`;
+      const receiptRef = `${paymentProvider === 'MOOV_MONEY' ? 'MOOV' : 'OM'}-TX-${Math.floor(100000 + Math.random() * 900000)}`;
       setPaymentReceipt({
         tontineName: selectedTontineToPay.name,
         amount: selectedTontineToPay.contributionAmount,
@@ -178,28 +175,20 @@ export function MemberDashboard({
                 <h1 className="text-xl sm:text-2xl font-black text-stone-900">
                   {member.firstName} {member.lastName}
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500 text-stone-950 flex items-center gap-1">
-                  <User className="w-3 h-3" />
-                  Membre Cotisant
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-stone-100 text-stone-700 border border-stone-200">
-                  {member.countryName} ({member.city})
-                </span>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 text-xs text-stone-600">
-                <span className="font-mono text-stone-700 flex items-center gap-1">
-                  <Smartphone className="w-3.5 h-3.5 text-stone-400" />
-                  {member.phone}
+              <div className="flex flex-wrap items-center gap-2.5 text-xs text-stone-600">
+                <span className="font-semibold text-emerald-700">Membre Cotisant</span>
+                <span aria-hidden="true">·</span>
+                <span>{member.countryName} ({member.city})</span>
+                <span aria-hidden="true">·</span>
+                <span className="font-mono text-stone-700">{member.phone}</span>
+                <span aria-hidden="true">·</span>
+                <span className="font-medium text-emerald-800">
+                  Paiement : {memberDetails?.paymentMethod === 'MOOV_MONEY' ? 'Moov Money' : 'Orange Money'}
                 </span>
-                <span>•</span>
-                <span className="font-semibold text-emerald-800 flex items-center gap-1">
-                  <Wallet className="w-3.5 h-3.5 text-emerald-600" />
-                  Paiement favori : {memberDetails?.paymentMethod || 'WAVE'}
-                </span>
-                <span>•</span>
-                <span className="text-emerald-700 font-medium flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span aria-hidden="true">·</span>
+                <span className="text-emerald-700 font-medium">
                   KYC : {member.status}
                 </span>
               </div>
@@ -338,14 +327,15 @@ export function MemberDashboard({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-sm font-bold text-stone-900">
-                Garantie Anti-Défaut & Solvabilité Personnelle
+                Garantie Anti-Défaut & Solvabilité
               </h3>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+              <span className="text-xs text-stone-400" aria-hidden="true">·</span>
+              <span className="text-xs font-semibold text-emerald-700">
                 Score Tontine : {myAverageTontineScore}/100 (Palier A)
               </span>
             </div>
             <p className="text-xs text-stone-500 mt-0.5">
-              Caution sous séquestre : <strong className="text-stone-900 font-mono">{formatXOF(myTotalEscrow)}</strong> (débloquée et restituée au dernier tour) • Co-cautionnement solidaire actif.
+              Caution sous séquestre : <strong className="text-stone-900 font-mono">{formatXOF(myTotalEscrow)}</strong> (débloquée au dernier tour) · Co-cautionnement solidaire actif.
             </p>
           </div>
         </div>
@@ -370,7 +360,7 @@ export function MemberDashboard({
               Mes Tontines Actives ({myParticipations.length})
             </h2>
             <p className="text-xs text-stone-500">
-              Cotisez en toute sécurité avec vos portefeuilles Wave, Orange Money ou MTN MoMo.
+              Cotisez en toute sécurité avec vos portefeuilles Moov Money ou Orange Money.
             </p>
           </div>
         </div>
@@ -715,30 +705,22 @@ export function MemberDashboard({
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-stone-700">Choisir le moyen de paiement (API Connectée)</label>
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                      Saspay Pris en Charge
-                    </span>
+                    <label className="text-xs font-semibold text-stone-700">Choisir le moyen de paiement</label>
                   </div>
                   <select
                     value={paymentProvider}
                     onChange={(e) => setPaymentProvider(e.target.value as any)}
                     className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25 font-bold text-stone-950"
                   >
-                    <option value="SASPAY">Saspay - Passerelle Multi-Opérateurs (Wave / OM / MoMo / Carte)</option>
-                    <option value="WAVE">Wave Mobile Money API ({member.phone}) - Instantané</option>
-                    <option value="ORANGE_MONEY">Orange Money Web Payment ({member.phone})</option>
-                    <option value="MTN_MOMO">MTN MoMo API ({member.phone})</option>
-                    <option value="MOOV_MONEY">Moov Money / Flooz ({member.phone})</option>
+                    <option value="ORANGE_MONEY">Orange Money ({member.phone})</option>
+                    <option value="MOOV_MONEY">Moov Money ({member.phone})</option>
                   </select>
                 </div>
 
                 <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-[11px] text-emerald-900 flex items-start gap-2">
                   <Lock className="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5" />
                   <span>
-                    {paymentProvider === 'SASPAY'
-                      ? `Paiement sécurisé via le guichet Saspay Panafricain. Une confirmation instantanée avec notification push / USSD sera envoyée sur votre téléphone (${member.phone}).`
-                      : `Transaction sécurisée par l'API de paiement ${paymentProvider}. Un push USSD / invite de validation sera envoyé instantanément sur votre téléphone (${member.phone}).`}
+                    {`Transaction sécurisée via ${paymentProvider === 'MOOV_MONEY' ? 'Moov Money' : 'Orange Money'}. Une demande de validation sera envoyée instantanément sur votre téléphone (${member.phone}).`}
                   </span>
                 </div>
 

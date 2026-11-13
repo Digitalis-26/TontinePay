@@ -122,7 +122,7 @@ export function generateLedgerEntries(
   return [
     {
       accountCode: '411_PAYMENT_GATEWAY',
-      accountName: 'Fournisseur Paiement (Mobile Money / CinetPay)',
+      accountName: 'Fournisseur Paiement (Moov Money / Orange Money)',
       entryType: 'CONTRIBUTION',
       debit: contributionAmount,
       credit: 0,

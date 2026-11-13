@@ -62,7 +62,7 @@ export function WhatsAppBotCenter({
     tontines.find((t) => t.id === selectedTontineId) || tontines[0];
 
   // Active sub-tab
-  const [activeTab, setActiveTab] = useState<'bot' | 'reminders' | 'reports' | 'apiConfig'>('bot');
+  const [activeTab, setActiveTab] = useState<'bot' | 'reminders' | 'reports'>('bot');
 
   // Interactive Bot Simulator State
   const [selectedMemberIndex, setSelectedMemberIndex] = useState<number>(0);
@@ -74,7 +74,7 @@ export function WhatsAppBotCenter({
     {
       id: 'msg_welcome',
       sender: 'BOT',
-      text: `Bonjour *${activeSimMember?.name || 'Fatou'}* 👋\nBienvenue sur l'assistant officiel de la *"${activeTontine?.name}"*.\n\nComment puis-je vous aider aujourd'hui ?\n\n👉 *1* : Connaître mon tour et ma date de cotisation\n👉 *2* : Obtenir mon lien direct de paiement Wave / Orange Money\n👉 *3* : Voir le montant de la cagnotte et l'état du groupe\n👉 *4* : Recevoir le relevé complet du cercle certifié`,
+      text: `Bonjour *${activeSimMember?.name || 'Fatou'}* 👋\nBienvenue sur l'assistant officiel de la *"${activeTontine?.name}"*.\n\nComment puis-je vous aider aujourd'hui ?\n\n👉 *1* : Connaître mon tour et ma date de cotisation\n👉 *2* : Obtenir mon lien direct de paiement Moov Money / Orange Money\n👉 *3* : Voir le montant de la cagnotte et l'état du groupe\n👉 *4* : Recevoir le relevé complet du cercle certifié`,
       timestamp: '09:42',
       buttons: [
         { id: 'btn_1', title: '1. Mon Tour & Date', action: '1' },
@@ -127,7 +127,7 @@ export function WhatsAppBotCenter({
       {
         id: `msg_welcome_${Date.now()}`,
         sender: 'BOT',
-        text: `Bonjour *${activeSimMember?.name || 'Fatou'}* 👋\nBienvenue sur l'assistant officiel de la *"${activeTontine?.name}"*.\n\n👉 *1* : Mon tour & date d'échéance\n👉 *2* : Payer via Wave / Orange Money\n👉 *3* : Montant de la cagnotte\n👉 *4* : Bilan complet du cercle`,
+        text: `Bonjour *${activeSimMember?.name || 'Fatou'}* 👋\nBienvenue sur l'assistant officiel de la *"${activeTontine?.name}"*.\n\n👉 *1* : Mon tour & date d'échéance\n👉 *2* : Payer via Moov Money / Orange Money\n👉 *3* : Montant de la cagnotte\n👉 *4* : Bilan complet du cercle`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         buttons: [
           { id: 'btn_1', title: '1. Mon Tour & Date', action: '1' },
@@ -158,7 +158,7 @@ export function WhatsAppBotCenter({
               WhatsApp Commerce & Bot FinTech
             </h2>
             <p className="text-xs sm:text-sm text-emerald-100/80 leading-relaxed">
-              Transformez WhatsApp en guichet de tontine automatisé : consultation instantanée des tours, relances automatiques à J-2, encaissement direct Wave/Orange Money et diffusion des rapports de groupe.
+              Transformez WhatsApp en guichet de tontine automatisé : consultation instantanée des tours, relances automatiques à J-2, encaissement direct Moov Money / Orange Money et diffusion des rapports de groupe.
             </p>
           </div>
 
@@ -201,8 +201,7 @@ export function WhatsAppBotCenter({
           }`}
         >
           <Bot className="w-3.5 h-3.5" />
-          <span>Simulateur Bot WhatsApp (En Direct)</span>
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>Assistant WhatsApp</span>
         </button>
 
         <button
@@ -214,7 +213,7 @@ export function WhatsAppBotCenter({
           }`}
         >
           <Bell className="w-3.5 h-3.5" />
-          <span>Moteur de Relances & Quittances</span>
+          <span>Relances & Quittances</span>
         </button>
 
         <button
@@ -227,18 +226,6 @@ export function WhatsAppBotCenter({
         >
           <FileText className="w-3.5 h-3.5" />
           <span>Bilan & Relevé de Cercle</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('apiConfig')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeTab === 'apiConfig'
-              ? 'bg-emerald-600 text-white shadow-xs'
-              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
-          }`}
-        >
-          <Settings className="w-3.5 h-3.5" />
-          <span>Spécification WhatsApp Cloud API</span>
         </button>
       </div>
 
@@ -332,7 +319,7 @@ export function WhatsAppBotCenter({
                     className="p-2.5 rounded-xl border border-stone-200 bg-stone-50 hover:bg-emerald-50 hover:border-emerald-300 text-left text-xs font-semibold transition-colors cursor-pointer group"
                   >
                     <span className="text-[10px] font-bold text-emerald-700 uppercase block">Taper 2</span>
-                    <span className="text-stone-800 group-hover:text-emerald-950">Lien Wave / OM direct</span>
+                    <span className="text-stone-800 group-hover:text-emerald-950">Lien Moov / Orange Money</span>
                   </button>
 
                   <button
@@ -363,7 +350,7 @@ export function WhatsAppBotCenter({
                 <div className="flex flex-wrap gap-1.5">
                   {[
                     'Quand est mon tour ?',
-                    'Je veux payer par Wave',
+                    'Je veux payer par Orange Money',
                     'Combien touche le bénéficiaire ?',
                     'Donne-moi le bilan du groupe',
                   ].map((phrase, idx) => (
@@ -465,14 +452,14 @@ export function WhatsAppBotCenter({
                               type="button"
                               onClick={() => {
                                 if (onPayContribution && activeTontine) {
-                                  onPayContribution(activeTontine.id, msg.paymentLink!.amount, 'WAVE');
+                                  onPayContribution(activeTontine.id, msg.paymentLink!.amount, 'ORANGE_MONEY');
                                 }
-                                handleSendMessage('Paiement effectué via Wave !');
+                                handleSendMessage('Paiement effectué via Orange Money !');
                               }}
                               className="w-full py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                             >
                               <CreditCard className="w-3.5 h-3.5" />
-                              <span>Payer {formatXOF(msg.paymentLink.amount)} via Wave</span>
+                              <span>Payer {formatXOF(msg.paymentLink.amount)} via Orange Money</span>
                             </button>
                           </div>
                         )}
@@ -572,7 +559,7 @@ export function WhatsAppBotCenter({
                       activeTontine,
                       member,
                       `WAV-${Date.now().toString().slice(-6)}`,
-                      member.paymentMethod || 'WAVE'
+                      member.paymentMethod || 'ORANGE_MONEY'
                     );
 
                     return (
@@ -762,86 +749,6 @@ export function WhatsAppBotCenter({
         </div>
       )}
 
-      {/* =========================================================================
-          TAB 4: WHATSAPP CLOUD API CONFIGURATION & WEBHOOK SPEC
-          ========================================================================= */}
-      {activeTab === 'apiConfig' && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-3xl p-6 border border-stone-200 shadow-xs space-y-4">
-            <h3 className="text-base font-bold text-stone-900">
-              Architecture Backend WhatsApp Cloud API & Webhooks
-            </h3>
-            <p className="text-xs text-stone-500 leading-relaxed">
-              Pour connecter un numéro WhatsApp Business officiel (Meta for Developers), l'infrastructure SaaS écoute les événements sur le point d'entrée `/api/whatsapp/webhook`.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-1.5">
-                <span className="text-[10px] font-bold text-stone-400 uppercase">1. Webhook URL</span>
-                <span className="font-mono text-xs font-bold text-stone-800 block truncate">
-                  https://api.tontine.africa/webhook
-                </span>
-                <span className="text-[10px] text-emerald-700 font-bold block">Status : Prêt (200 OK)</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-1.5">
-                <span className="text-[10px] font-bold text-stone-400 uppercase">2. Verify Token</span>
-                <span className="font-mono text-xs font-bold text-stone-800 block truncate">
-                  tontine_saas_sec_token_9821
-                </span>
-                <span className="text-[10px] text-stone-500 block">Jeton pour hub.challenge</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-1.5">
-                <span className="text-[10px] font-bold text-stone-400 uppercase">3. Chiffrement Payload</span>
-                <span className="font-mono text-xs font-bold text-stone-800 block">
-                  X-Hub-Signature-256
-                </span>
-                <span className="text-[10px] text-emerald-700 font-bold block">Vérification HMAC Active</span>
-              </div>
-            </div>
-
-            {/* Code Snippet for Server Webhook Route */}
-            <div className="space-y-2 pt-2">
-              <span className="text-xs font-bold text-stone-800 block">
-                Extrait d'Implémentation Serveur (Node.js / Express Webhook Handler) :
-              </span>
-              <pre className="p-4 rounded-2xl bg-stone-900 text-stone-200 font-mono text-xs overflow-x-auto leading-relaxed">
-{`// Route de vérification Meta Webhook (GET)
-app.get('/api/whatsapp/webhook', (req, res) => {
-  const mode = req.query['hub.mode'];
-  const token = req.query['hub.verify_token'];
-  const challenge = req.query['hub.challenge'];
-
-  if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
-    return res.status(200).send(challenge);
-  }
-  return res.sendStatus(403);
-});
-
-// Traitement des messages entrants WhatsApp (POST)
-app.post('/api/whatsapp/webhook', async (req, res) => {
-  const message = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-  if (!message) return res.sendStatus(200);
-
-  const senderPhone = message.from;
-  const userText = message.text?.body || '';
-
-  // 1. Recherche du membre et de sa tontine active
-  const member = await prisma.member.findFirst({ where: { user: { phone: senderPhone } } });
-  
-  // 2. Traitement conversationnel
-  const botReply = processWhatsAppBotMessage(userText, member.tontine, member.user);
-
-  // 3. Envoi de la réponse via WhatsApp Cloud API
-  await sendWhatsAppMessage(senderPhone, botReply.replyText);
-  return res.sendStatus(200);
-});`}
-              </pre>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

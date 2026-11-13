@@ -44,8 +44,6 @@ import {
   Pencil,
   SlidersHorizontal,
   ShieldAlert,
-  Zap,
-  Server,
   FileText,
   FileSpreadsheet,
   Check,
@@ -64,7 +62,6 @@ interface ManagerDashboardProps {
   onUpdateMemberTurn?: (tontineId: string, memberUserId: string, newTurnNumber: number) => void;
   onNavigateToSimulate?: (planCode: PlanConfig['code']) => void;
   onNavigateToRisk?: () => void;
-  onOpenPaymentApi?: () => void;
 }
 
 export function ManagerDashboard({
@@ -80,7 +77,6 @@ export function ManagerDashboard({
   onUpdateMemberTurn,
   onNavigateToSimulate,
   onNavigateToRisk,
-  onOpenPaymentApi,
 }: ManagerDashboardProps) {
   const managerDetails = manager.managerDetails;
   const planCode = managerDetails?.planCode || 'STARTER';
@@ -97,8 +93,8 @@ export function ManagerDashboard({
 
   // Withdrawal form
   const [withdrawAmount, setWithdrawAmount] = useState(50000);
-  const [withdrawProvider, setWithdrawProvider] = useState<'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'BANK_TRANSFER'>(
-    managerDetails?.payoutProvider || 'WAVE'
+  const [withdrawProvider, setWithdrawProvider] = useState<'MOOV_MONEY' | 'ORANGE_MONEY'>(
+    managerDetails?.payoutProvider || 'ORANGE_MONEY'
   );
   const [withdrawAccount, setWithdrawAccount] = useState(managerDetails?.payoutAccount || manager.phone);
   const [withdrawSuccess, setWithdrawSuccess] = useState<string | null>(null);
@@ -268,7 +264,7 @@ export function ManagerDashboard({
         turnNumber: managerPreferredTurn || 1,
         hasPaidCurrentRound: true,
         isCurrentBeneficiary: (managerPreferredTurn || 1) === 1,
-        paymentMethod: managerDetails?.payoutProvider || 'WAVE',
+        paymentMethod: managerDetails?.payoutProvider || 'ORANGE_MONEY',
       });
     }
 
@@ -276,8 +272,8 @@ export function ManagerDashboard({
     if (seedDemoMembers) {
       const communityMembers = [
         { name: 'Kadiatou Diallo', phone: '+221 78 456 78 90', method: 'ORANGE_MONEY' },
-        { name: 'Ousmane Fall', phone: '+221 77 123 45 67', method: 'WAVE' },
-        { name: 'Aminata Sanogo', phone: '+223 76 54 32 10', method: 'MTN_MOMO' },
+        { name: 'Ousmane Fall', phone: '+221 77 123 45 67', method: 'MOOV_MONEY' },
+        { name: 'Aminata Sanogo', phone: '+223 76 54 32 10', method: 'ORANGE_MONEY' },
       ];
 
       communityMembers.forEach((cand, idx) => {
@@ -325,38 +321,6 @@ export function ManagerDashboard({
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Payment API Linked Quick Banner */}
-      <div className="p-3.5 sm:p-4 rounded-2xl bg-emerald-950/85 text-white border border-emerald-500/30 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
-            <Zap className="w-5 h-5 text-emerald-400" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs sm:text-sm font-bold text-white">
-                API de Paiement Liée (Wave, Orange Money, MTN MoMo, CinetPay)
-              </span>
-              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 font-mono">
-                ✓ Connectée
-              </span>
-            </div>
-            <p className="text-[11px] text-emerald-200/80">
-              Synchronisation instantanée des cotisations et décaissements via webhooks sécurisés.
-            </p>
-          </div>
-        </div>
-        {onOpenPaymentApi && (
-          <button
-            type="button"
-            onClick={onOpenPaymentApi}
-            className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto shrink-0 shadow-xs"
-          >
-            <Server className="w-3.5 h-3.5" />
-            <span>Passerelle & Webhooks</span>
-          </button>
-        )}
-      </div>
-
       {/* 4 Main KPI Cards - Compact & Fluid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Wallet Balance */}
@@ -364,7 +328,7 @@ export function ManagerDashboard({
           <div>
             <div className="flex items-center justify-between text-xs text-stone-400">
               <span className="font-medium">Solde Portefeuille</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <Wallet className="w-4 h-4 text-emerald-400" />
             </div>
             <div className="text-xl sm:text-2xl font-black text-emerald-400 mt-2 font-mono">
               {formatXOF(walletBalance)}
@@ -437,27 +401,27 @@ export function ManagerDashboard({
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
           <div className="flex items-center gap-2.5">
-            <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+            <h2 className="text-lg sm:text-xl font-bold text-stone-900 tracking-tight">
               Tontines gérées
             </h2>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/10 text-emerald-200 border border-white/10 font-mono">
-              {myTontines.length}
+            <span className="text-sm font-semibold text-emerald-700 font-mono">
+              ({myTontines.length})
             </span>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setShowExportModal(true)}
-              className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-2 transition-all backdrop-blur-sm border border-white/20 cursor-pointer shadow-xs"
-              title="Centre d'exportation PDF & CSV de l'historique complet"
+              className="px-3.5 py-2 rounded-xl bg-white hover:bg-stone-50 text-stone-800 font-bold text-xs flex items-center gap-2 transition-all border border-stone-200 cursor-pointer shadow-xs"
+              title="Exporter l'historique complet en PDF ou CSV"
             >
-              <Download className="w-4 h-4 text-emerald-300" />
+              <Download className="w-4 h-4 text-emerald-600" />
               <span>Exporter en PDF/CSV</span>
             </button>
             <button
               type="button"
               onClick={() => setShowCreateModal(true)}
-              className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Créer une Tontine</span>
@@ -508,38 +472,32 @@ export function ManagerDashboard({
                   {/* Card Header Summary */}
                   <div className="p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-b border-stone-100">
                     <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-base font-bold text-stone-900">{tontine.name}</h3>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          {tontine.status}
-                        </span>
-
-                        {/* Rôle du Manager dans cette Tontine */}
-                        {isManagerParticipating ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
-                            <Users className="w-3 h-3" />
-                            Gestionnaire & Cotisant (Tour #{managerTurn})
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1" title="Le manager est superviseur et perçoit sa commission sans obligation de cotiser">
-                            <ShieldCheck className="w-3 h-3 text-amber-600" />
-                            Superviseur uniquement (Non-cotisant)
-                          </span>
-                        )}
-
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-stone-100 text-stone-700 text-[11px] font-mono">
-                          <span>Code : {tontine.code}</span>
-                          <button
-                            onClick={() => handleCopyCode(tontine.code)}
-                            className="text-stone-400 hover:text-stone-800"
-                            title="Copier le code d'invitation"
-                          >
-                            <Copy className="w-3 h-3" />
-                          </button>
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="space-y-1">
+                          <h3 className="text-base font-bold text-stone-900">{tontine.name}</h3>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-stone-500">
+                            <span className="font-semibold text-emerald-700">{tontine.status === 'ACTIVE' ? 'Active' : tontine.status}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>
+                              {isManagerParticipating
+                                ? `Gestionnaire & Cotisant (Tour #${managerTurn})`
+                                : 'Superviseur'}
+                            </span>
+                            <span aria-hidden="true">·</span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyCode(tontine.code)}
+                              className="inline-flex items-center gap-1 font-mono text-stone-700 hover:text-emerald-700 cursor-pointer"
+                              title="Copier le code d'invitation"
+                            >
+                              <span>Code : {tontine.code}</span>
+                              <Copy className="w-3 h-3" />
+                            </button>
+                            {copiedCode === tontine.code && (
+                              <span className="text-[11px] text-emerald-600 font-semibold">Copié !</span>
+                            )}
+                          </div>
                         </div>
-                        {copiedCode === tontine.code && (
-                          <span className="text-[10px] text-emerald-600 font-semibold">Copié !</span>
-                        )}
 
                         {/* Bouton Exporter en PDF/CSV pour cette tontine */}
                         <div className="relative inline-block">
@@ -550,7 +508,7 @@ export function ManagerDashboard({
                                 activeDropdownTontineId === tontine.id ? null : tontine.id
                               )
                             }
-                            className="px-2.5 py-1 rounded-lg bg-emerald-700/10 hover:bg-emerald-700/20 text-emerald-900 border border-emerald-300 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                            className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                             title="Télécharger l'historique des transactions et paiements de cette tontine"
                           >
                             <Download className="w-3.5 h-3.5 text-emerald-700" />
@@ -559,7 +517,7 @@ export function ManagerDashboard({
                           </button>
 
                           {activeDropdownTontineId === tontine.id && (
-                            <div className="absolute left-0 sm:right-0 sm:left-auto mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-stone-200 py-1.5 z-30 animate-in fade-in zoom-in-95">
+                            <div className="absolute left-0 sm:right-0 sm:left-auto mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-stone-200 py-1.5 z-30">
                               <div className="px-3 py-1 border-b border-stone-100 text-[10px] font-bold text-stone-400 uppercase tracking-wider">
                                 Télécharger l'historique complet
                               </div>
@@ -600,20 +558,17 @@ export function ManagerDashboard({
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-stone-500">
-                        <span className="flex items-center gap-1 font-medium text-stone-700">
-                          <Calendar className="w-3.5 h-3.5 text-stone-400" />
-                          Périodicité : {tontine.periodicity === 'MONTHLY' ? 'Mensuelle' : 'Hebdomadaire'}
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-stone-500 pt-1">
+                        <span className="font-medium text-stone-700">
+                          {tontine.periodicity === 'MONTHLY' ? 'Mensuelle' : 'Hebdomadaire'}
                         </span>
-                        <span>•</span>
+                        <span aria-hidden="true">·</span>
                         <span>
-                          Prochaine échéance :{' '}
-                          <strong className="text-stone-800">{tontine.nextDueDate}</strong>
+                          Échéance : <strong className="text-stone-800">{tontine.nextDueDate}</strong>
                         </span>
-                        <span>•</span>
+                        <span aria-hidden="true">·</span>
                         <span>
-                          Membres :{' '}
-                          <strong className="text-stone-800">{tontine.members.length} participants</strong>
+                          <strong className="text-stone-800">{tontine.members.length}</strong> participants
                         </span>
                       </div>
                     </div>
@@ -668,28 +623,28 @@ export function ManagerDashboard({
                       </div>
                     </div>
 
-                    {/* Anti-Default & Risk Guard Strip */}
-                    <div className="mt-3 pt-3 border-t border-stone-200/80 flex flex-wrap items-center justify-between gap-3 text-xs bg-amber-500/10 p-3 rounded-xl border border-amber-500/20">
-                      <div className="flex items-center gap-4 flex-wrap">
-                        <div className="flex items-center gap-1.5 text-amber-950 font-bold">
-                          <ShieldAlert className="w-4 h-4 text-amber-600" />
-                          <span>Séquestre Cautions : <strong>{formatXOF(tontine.totalEscrowHeld || tontine.contributionAmount * tontine.members.length)}</strong></span>
-                        </div>
-                        <div className="text-stone-600">
-                          Garants Tours 1 & 2 : <strong className="text-indigo-700">{tontine.members.filter(m => m.turnNumber <= 2 && m.guarantorStatus === 'VERIFIED').length} / {tontine.members.filter(m => m.turnNumber <= 2).length} vérifiés</strong>
-                        </div>
-                        <div className="text-stone-600">
-                          Pénalités retard : <strong className="text-rose-700">{formatXOF(tontine.penaltyPerDay || 1000)} / jour</strong>
-                        </div>
+                    {/* Quiet Risk & Escrow Summary Row */}
+                    <div className="mt-2 pt-3 border-t border-stone-100 flex flex-wrap items-center justify-between gap-3 text-xs text-stone-600">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span>
+                          Séquestre cautions : <strong className="text-stone-900 font-mono">{formatXOF(tontine.totalEscrowHeld || tontine.contributionAmount * tontine.members.length)}</strong>
+                        </span>
+                        <span aria-hidden="true">·</span>
+                        <span>
+                          Garants T1-T2 : <strong className="text-stone-900">{tontine.members.filter(m => m.turnNumber <= 2 && m.guarantorStatus === 'VERIFIED').length}/{tontine.members.filter(m => m.turnNumber <= 2).length} vérifiés</strong>
+                        </span>
+                        <span aria-hidden="true">·</span>
+                        <span>
+                          Retard : <strong className="text-stone-900 font-mono">{formatXOF(tontine.penaltyPerDay || 1000)}/j</strong>
+                        </span>
                       </div>
                       {onNavigateToRisk && (
                         <button
                           type="button"
                           onClick={onNavigateToRisk}
-                          className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-[11px] flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                          className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 hover:underline cursor-pointer"
                         >
-                          <ShieldAlert className="w-3.5 h-3.5" />
-                          <span>Gérer les cautions & risques</span>
+                          Gérer les cautions & risques →
                         </button>
                       )}
                     </div>
@@ -776,15 +731,6 @@ export function ManagerDashboard({
                   {/* Expandable Member List */}
                   {isExpanded && (
                     <div className="p-5 sm:p-6 bg-white space-y-4">
-                      {!isManagerParticipating && (
-                        <div className="p-3.5 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs flex items-start gap-2.5 text-amber-950">
-                          <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                          <div className="leading-relaxed">
-                            <strong className="font-bold text-stone-900">Régime de Gestionnaire Non-Cotisant :</strong> En tant que manager, vous n'êtes <strong>pas tenu de participer aux cagnottes</strong>. Vous supervisez la discipline financière, approuvez les versements des membres listés ci-dessous et prélevez automatiquement votre commission réglementée de {formatPercent(tontine.commissionRate)} à chaque tour versé.
-                          </div>
-                        </div>
-                      )}
-
                       <div className="space-y-2">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2">
                           <div className="font-bold text-stone-800 flex items-center gap-2">
@@ -831,34 +777,6 @@ export function ManagerDashboard({
                               </button>
                             );
                           })}
-                        </div>
-                      </div>
-
-                      {/* Bar d'export direct pour cette tontine */}
-                      <div className="p-3 bg-stone-50 rounded-xl border border-stone-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                        <div className="flex items-center gap-2 text-stone-700">
-                          <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span>
-                            Historique des cotisations & relevé de <strong>{tontine.name}</strong>
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleExportTontinePDF(tontine)}
-                            className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                          >
-                            <FileText className="w-3.5 h-3.5" />
-                            <span>Exporter en PDF</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleExportTontineCSV(tontine)}
-                            className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-stone-100 text-stone-800 border border-stone-300 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                          >
-                            <FileSpreadsheet className="w-3.5 h-3.5 text-stone-600" />
-                            <span>Exporter en CSV</span>
-                          </button>
                         </div>
                       </div>
 
@@ -1208,20 +1126,14 @@ export function ManagerDashboard({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-stone-700">Opérateur de destination *</label>
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                      Saspay B2C Actif
-                    </span>
                   </div>
                   <select
                     value={withdrawProvider}
                     onChange={(e) => setWithdrawProvider(e.target.value as any)}
                     className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs font-bold text-stone-950 bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/25"
                   >
-                    <option value="SASPAY">Saspay B2C (Virement Mobile Money Panafricain Instantané)</option>
-                    <option value="WAVE">Wave Mobile Money (Frais 0%)</option>
                     <option value="ORANGE_MONEY">Orange Money</option>
-                    <option value="MTN_MOMO">MTN MoMo</option>
-                    <option value="BANK_TRANSFER">Virement Bancaire (RIB)</option>
+                    <option value="MOOV_MONEY">Moov Money</option>
                   </select>
                 </div>
 
@@ -1830,7 +1742,7 @@ export function ManagerDashboard({
                 </div>
                 <ul className="text-[11px] list-disc list-inside space-y-0.5 text-stone-500">
                   <li>Historique horodaté des versements et cotisations par tour</li>
-                  <li>Méthodes de paiement Mobile Money (Saspay, Wave, Orange, MTN, Moov)</li>
+                  <li>Méthodes de paiement Mobile Money (Moov Money, Orange Money)</li>
                   <li>Décomposition financière : Part brute, Commission manager, Net bénéficiaire</li>
                   <li>Registre nominatif des membres, contacts et statut des cautions séquestrées</li>
                 </ul>

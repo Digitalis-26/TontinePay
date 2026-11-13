@@ -905,7 +905,7 @@ export function RiskManagementCenter({
                             <button
                               type="button"
                               onClick={() => {
-                                const msg = `Bonjour ${member.name}, rappel amical TONTINE : votre cotisation pour le Tour ${currentTontine.currentRound} accuse un retard de ${daysLate} jours. Montant dû : ${formatXOF(currentTontine.contributionAmount)} + ${formatXOF(penaltyAmount)} de pénalités (${formatXOF(currentTontine.penaltyPerDay || 1000)}/j). Merci de régulariser par Wave ou Orange Money : https://tontine.monsite.africa/pay/${currentTontine.code}`;
+                                const msg = `Bonjour ${member.name}, rappel amical TONTINE : votre cotisation pour le Tour ${currentTontine.currentRound} accuse un retard de ${daysLate} jours. Montant dû : ${formatXOF(currentTontine.contributionAmount)} + ${formatXOF(penaltyAmount)} de pénalités (${formatXOF(currentTontine.penaltyPerDay || 1000)}/j). Merci de régulariser par Moov Money ou Orange Money : https://tontine.monsite.africa/pay/${currentTontine.code}`;
                                 window.open(`https://wa.me/${member.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
                               }}
                               className="px-3 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-xs cursor-pointer"

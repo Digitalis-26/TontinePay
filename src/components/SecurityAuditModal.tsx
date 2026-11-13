@@ -71,7 +71,7 @@ export function SecurityAuditModal({ isOpen, onClose, currentUser }: SecurityAud
       amount: 50000,
       initiator: 'Membre (+225 07 00 00 01)',
       target: 'Cagnotte Tontine Teranga',
-      description: 'Versement Tour 1 via Wave CI',
+      description: 'Versement Tour 1 via Orange Money',
     });
     const e2 = await createChainedLedgerEntry({
       id: 'tx_init_002',
@@ -97,7 +97,7 @@ export function SecurityAuditModal({ isOpen, onClose, currentUser }: SecurityAud
   // Test 1: Forged Webhook Attack
   const runTestWebhookForgery = async () => {
     setIsRunningTest(true);
-    const fakeSecret = 'live_secret_wave_ci_9837a2819';
+    const fakeSecret = 'live_secret_orange_money_ci_9837a2819';
     const fakePayload = JSON.stringify({
       event: 'payment.completed',
       transaction_id: 'fake_tx_9999',
@@ -130,7 +130,7 @@ export function SecurityAuditModal({ isOpen, onClose, currentUser }: SecurityAud
   // Test 2: Idempotency & Replay Attack
   const runTestReplayAttack = async () => {
     setIsRunningTest(true);
-    const duplicateTxId = 'wave_tx_replayed_10023';
+    const duplicateTxId = 'om_tx_replayed_10023';
 
     // First call
     const firstCheck = checkAndRecordIdempotency(duplicateTxId);
@@ -224,7 +224,7 @@ export function SecurityAuditModal({ isOpen, onClose, currentUser }: SecurityAud
         planCode: 'STARTER',
         commissionRate: 0.025,
         commissionEnabled: true,
-        payoutProvider: 'WAVE',
+        payoutProvider: 'ORANGE_MONEY',
         payoutAccount: '+225 07 00 00 99',
         activeTontinesCount: 2,
         walletBalance: 250000,
@@ -375,7 +375,7 @@ export function SecurityAuditModal({ isOpen, onClose, currentUser }: SecurityAud
                   </div>
                   <h4 className="text-xs font-bold text-stone-900">Validation Cryptographique des Webhooks (HMAC-SHA256)</h4>
                   <p className="text-[11px] text-stone-600 leading-snug">
-                    Toute notification de paiement provenant de Wave, Orange Money ou MTN MoMo doit comporter une signature HMAC valide calculée avec le secret d'API et un horodatage de moins de 5 minutes.
+                    Toute notification de paiement provenant de Moov Money ou Orange Money doit comporter une signature HMAC valide calculée avec le secret d'API et un horodatage de moins de 5 minutes.
                   </p>
                 </div>
 
@@ -492,7 +492,7 @@ export function SecurityAuditModal({ isOpen, onClose, currentUser }: SecurityAud
                 >
                   <span className="text-[10px] font-bold text-red-800 block uppercase">Test 1 • Attaque Forgery</span>
                   <strong className="text-xs font-bold text-stone-900 group-hover:text-red-950 block mt-0.5">
-                    Injecter un faux webhook Wave
+                    Injecter un faux webhook Orange Money
                   </strong>
                   <span className="text-[10px] text-stone-600 block mt-1">
                     Signature HMAC erronée simulée.

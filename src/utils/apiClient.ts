@@ -1,6 +1,144 @@
-import { TontineRecord, RegisteredUser, MemberContributionPayment, ManagerWalletTransaction } from '../types';
+import { TontineRecord, RegisteredUser } from '../types';
+
+const AUTH_TOKEN_KEY = 'tontine_auth_token';
+
+export function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem(AUTH_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setAuthToken(token: string | null): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (token) {
+      localStorage.setItem(AUTH_TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+    }
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+export function getAuthHeaders(extra?: Record<string, string>): Record<string, string> {
+  const token = getAuthToken();
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(extra || {}),
+  };
+}
+
+export function mapDbUserToRegisteredUser(u: any): RegisteredUser {
+  return {
+    id: u.uid,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    email: u.email,
+    phone: u.phone || '',
+    role: u.role === 'MANAGER' ? 'MANAGER' : 'MEMBER',
+    countryCode: 'SN',
+    countryName: 'Sénégal',
+    status: 'ACTIVE',
+    createdAt: u.createdAt || new Date().toISOString(),
+    kyc: {
+      status: u.kycStatus || 'UNVERIFIED',
+      level: u.kycStatus === 'VERIFIED' ? 2 : 1,
+      documentType: u.kycDocumentType,
+    },
+    managerDetails:
+      u.role === 'MANAGER'
+        ? {
+            businessName: `${u.firstName} ${u.lastName}`,
+            planCode: u.managerPlanCode || 'STARTER',
+            commissionRate: 0.025,
+            commissionEnabled: true,
+            payoutProvider: 'ORANGE_MONEY',
+            payoutAccount: u.phone || '',
+            activeTontinesCount: 0,
+            walletBalance: u.walletBalance || 0,
+          }
+        : undefined,
+    memberDetails:
+      u.role === 'MEMBER'
+        ? {
+            paymentMethod: u.memberPaymentMethod === 'MOOV_MONEY' ? 'MOOV_MONEY' : 'ORANGE_MONEY',
+            joinedTontinesCount: 0,
+          }
+        : undefined,
+  };
+}
 
 export const apiClient = {
+  clearSessionToken() {
+    setAuthToken(null);
+  },
+
+  async login(identifier: string, password: string): Promise<{ token: string; user: RegisteredUser }> {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier, password }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.error || 'Identifiant ou mot de passe incorrect.');
+    }
+    setAuthToken(data.token);
+    return {
+      token: data.token,
+      user: mapDbUserToRegisteredUser(data.user),
+    };
+  },
+
+  async register(payload: {
+    email?: string;
+    phone: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    role: 'MANAGER' | 'MEMBER';
+    managerPlanCode?: string;
+    memberPaymentMethod?: string;
+  }): Promise<{ token: string; user: RegisteredUser }> {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.error || 'Impossible de créer le compte.');
+    }
+    setAuthToken(data.token);
+    return {
+      token: data.token,
+      user: mapDbUserToRegisteredUser(data.user),
+    };
+  },
+
+  async getCurrentUser(): Promise<RegisteredUser | null> {
+    const token = getAuthToken();
+    if (!token) return null;
+    try {
+      const res = await fetch('/api/auth/me', {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) {
+        if (res.status === 401) setAuthToken(null);
+        return null;
+      }
+      const data = await res.json();
+      return data.user ? mapDbUserToRegisteredUser(data.user) : null;
+    } catch {
+      return null;
+    }
+  },
+
   async getHealth() {
     try {
       const res = await fetch('/api/health');
@@ -11,39 +149,25 @@ export const apiClient = {
   },
 
   async getUsers(): Promise<RegisteredUser[] | null> {
+    if (!getAuthToken()) return null;
     try {
-      const res = await fetch('/api/users');
+      const res = await fetch('/api/users', {
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) return null;
       const data = await res.json();
-      return data.map((u: any) => ({
-        id: u.uid,
-        firstName: u.firstName,
-        lastName: u.lastName,
-        email: u.email,
-        phone: u.phone,
-        role: u.role,
-        kyc: {
-          status: u.kycStatus,
-          documentType: u.kycDocumentType,
-        },
-        managerDetails: u.role === 'MANAGER' ? {
-          planCode: u.managerPlanCode || 'STARTER',
-          walletBalance: u.walletBalance || 0,
-        } : undefined,
-        memberDetails: u.role === 'MEMBER' ? {
-          paymentMethod: u.memberPaymentMethod || 'WAVE',
-        } : undefined,
-      }));
+      return data.map(mapDbUserToRegisteredUser);
     } catch {
       return null;
     }
   },
 
   async syncUser(user: RegisteredUser): Promise<void> {
+    if (!getAuthToken()) return;
     try {
       await fetch('/api/users/sync', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           uid: user.id,
           email: user.email,
@@ -62,8 +186,11 @@ export const apiClient = {
   },
 
   async getTontines(): Promise<TontineRecord[] | null> {
+    if (!getAuthToken()) return null;
     try {
-      const res = await fetch('/api/tontines');
+      const res = await fetch('/api/tontines', {
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) return null;
       const data = await res.json();
       return data.map((t: any) => ({
@@ -78,13 +205,15 @@ export const apiClient = {
         totalRounds: t.totalRounds,
         commissionRate: typeof t.commissionRate === 'string' ? parseFloat(t.commissionRate) : t.commissionRate,
         status: t.status,
+        startDate: t.createdAt || new Date().toISOString(),
+        nextDueDate: t.nextDueDate || new Date().toISOString(),
         escrowCautionEnabled: t.cautionRequired,
         cautionPerMember: t.cautionAmount || t.contributionAmount,
         totalEscrowHeld: t.totalEscrowAmount,
         guarantorRequiredForPriorityRounds: t.requireGuarantorForEarlyRounds,
         penaltyPerDay: t.latePenaltyPerDay,
         gracePeriodDays: t.lateGraceDays,
-        penaltyDestination: t.penaltyRecipient === 'MANAGER' ? 'COMMISSION_GESTIONNAIRE' : 'CAGNOTTE',
+        penaltyDestination: t.penaltyRecipient === 'MANAGER' ? 'MANAGER' : 'CAGNOTTE',
         members: (t.members || []).map((m: any) => ({
           id: m.id,
           userId: m.userId,
@@ -113,7 +242,7 @@ export const apiClient = {
     try {
       await fetch('/api/tontines', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           tontine: {
             id: tontine.id,
@@ -163,7 +292,7 @@ export const apiClient = {
     try {
       await fetch(`/api/tontines/${tontineId}/join`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(memberData),
       });
     } catch (e) {
@@ -175,7 +304,7 @@ export const apiClient = {
     try {
       await fetch(`/api/tontines/${tontineId}/pay`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ memberUserId, paymentData }),
       });
     } catch (e) {
@@ -187,7 +316,7 @@ export const apiClient = {
     try {
       await fetch(`/api/tontines/${tontineId}/payout`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ roundNumber, managerId, commissionAmount }),
       });
     } catch (e) {
@@ -199,7 +328,7 @@ export const apiClient = {
     try {
       await fetch(`/api/tontines/${tontineId}/turn`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ memberUserId, newTurnNumber }),
       });
     } catch (e) {
@@ -211,7 +340,7 @@ export const apiClient = {
     try {
       await fetch(`/api/tontines/${tontineId}/risk-config`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(updates),
       });
     } catch (e) {
@@ -223,7 +352,7 @@ export const apiClient = {
     try {
       await fetch(`/api/tontines/${tontineId}/members/${memberId}/risk`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(updates),
       });
     } catch (e) {
@@ -235,7 +364,7 @@ export const apiClient = {
     try {
       await fetch('/api/wallet/withdraw', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ managerId, amount, provider, destinationAccount }),
       });
     } catch (e) {
@@ -245,7 +374,10 @@ export const apiClient = {
 
   async triggerCron(): Promise<any> {
     try {
-      const res = await fetch('/api/cron/trigger', { method: 'POST' });
+      const res = await fetch('/api/cron/trigger', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
       return await res.json();
     } catch {
       return null;
@@ -254,7 +386,9 @@ export const apiClient = {
 
   async getCronLogs(): Promise<any[]> {
     try {
-      const res = await fetch('/api/cron/logs');
+      const res = await fetch('/api/cron/logs', {
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) return [];
       return await res.json();
     } catch {

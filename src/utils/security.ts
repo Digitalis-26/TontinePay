@@ -2,7 +2,7 @@
  * FinTech & SaaS Security Shield Module
  * 
  * Implementations for the 6 critical fintech security vectors:
- * 1. Webhook HMAC-SHA256 Cryptographic Verification (Wave, Orange Money, MTN MoMo)
+ * 1. Webhook HMAC-SHA256 Cryptographic Verification (Moov Money, Orange Money)
  * 2. Concurrency Control & Mutex (Anti-Double Spending on Withdrawals/Payouts)
  * 3. Idempotency Key Engine (Anti-Replay / Duplicate Processing)
  * 4. Strict Ownership & Anti-IDOR Authorization

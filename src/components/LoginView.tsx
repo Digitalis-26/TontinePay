@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { RegisteredUser } from '../types';
 import { SUPPORTED_COUNTRIES } from '../data/users';
+import { apiClient } from '../utils/apiClient';
 
 interface LoginViewProps {
   users: RegisteredUser[];
@@ -50,7 +51,7 @@ export function LoginView({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -59,55 +60,36 @@ export function LoginView({
       return;
     }
 
+    if (pinOrPassword.length < 4) {
+      setErrorMessage('Le mot de passe ou code secret doit comporter au moins 4 caractères.');
+      return;
+    }
+
+    const identifier =
+      loginMethod === 'EMAIL'
+        ? emailInput.trim()
+        : `${phoneCountryCode}${phoneNumber}`.replace(/[\s\-\.]/g, '');
+
+    if (!identifier) {
+      setErrorMessage(
+        loginMethod === 'EMAIL'
+          ? 'Veuillez saisir votre adresse email.'
+          : 'Veuillez saisir votre numéro Mobile Money.'
+      );
+      return;
+    }
+
     setIsSubmitting(true);
-
-    setTimeout(() => {
-      let matchedUser: RegisteredUser | undefined;
-
-      if (loginMethod === 'EMAIL') {
-        const cleanEmail = emailInput.trim().toLowerCase();
-        matchedUser = users.find(
-          (u) => u.email && u.email.trim().toLowerCase() === cleanEmail
-        );
-      } else {
-        const cleanedEnteredPhone = (phoneCountryCode + phoneNumber).replace(/[\s\-\.]/g, '');
-        matchedUser = users.find((u) => {
-          const cleanUPhone = u.phone.replace(/[\s\-\.]/g, '');
-          return cleanUPhone.endsWith(cleanedEnteredPhone.slice(-8)) || cleanUPhone === cleanedEnteredPhone;
-        });
-      }
-
+    try {
+      const { user } = await apiClient.login(identifier, pinOrPassword);
+      onLogin(user);
+    } catch (err: any) {
+      setErrorMessage(
+        err?.message || 'Identifiant ou mot de passe incorrect. Vérifiez vos accès ou inscrivez-vous.'
+      );
+    } finally {
       setIsSubmitting(false);
-
-      if (users.length === 0) {
-        setErrorMessage(
-          "Aucun compte n'a encore été créé sur cette instance. Veuillez vous inscrire pour créer votre premier profil."
-        );
-        return;
-      }
-
-      if (!matchedUser) {
-        setErrorMessage(
-          loginMethod === 'EMAIL'
-            ? `Aucun compte enregistré avec l'adresse "${emailInput}". Veuillez vérifier la saisie ou vous inscrire.`
-            : `Aucun compte enregistré avec le numéro ${phoneCountryCode} ${phoneNumber}. Veuillez vérifier la saisie ou vous inscrire.`
-        );
-        return;
-      }
-
-      if (pinOrPassword.length < 4) {
-        setErrorMessage('Le mot de passe ou code secret doit comporter au moins 4 caractères.');
-        return;
-      }
-
-      const expectedPin = matchedUser.pinCode || matchedUser.password;
-      if (expectedPin && pinOrPassword !== expectedPin) {
-        setErrorMessage('Mot de passe ou code secret incorrect.');
-        return;
-      }
-
-      onLogin(matchedUser);
-    }, 450);
+    }
   };
 
   const handlePlanCardClick = (plan: 'STARTER' | 'PREMIUM') => {

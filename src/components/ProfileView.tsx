@@ -480,7 +480,7 @@ export function ProfileView({
                 </div>
                 <div className="text-sm font-bold text-slate-900">Plafond Illimité (10M+ F)</div>
                 <div className="text-xs text-slate-600">
-                  Selfie biométrique et attestation Mobile Money Wave/Orange.
+                  Selfie biométrique et attestation Mobile Money Moov Money / Orange Money.
                 </div>
               </div>
             </div>
@@ -981,7 +981,7 @@ export function ProfileView({
                   <span className="text-[10px] bg-emerald-600 text-white px-1.5 py-0.5 rounded font-bold">Recommandé</span>
                 </div>
                 <div className="text-xs text-emerald-900 mt-1">
-                  Plafond mensuel : <strong>2 000 000 F CFA</strong> • Retraits prioritaires instantanés vers Wave, Orange Money et MTN.
+                  Plafond mensuel : <strong>2 000 000 F CFA</strong> • Retraits prioritaires instantanés vers Moov Money et Orange Money.
                 </div>
               </div>
               <span className="text-xs font-bold text-emerald-800 bg-white px-3 py-1.5 rounded-xl border border-emerald-200">

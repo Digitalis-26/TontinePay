@@ -6,14 +6,16 @@ import {
   integer,
   boolean,
   timestamp,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
-// 1. Users table (linked to Firebase Auth UID)
+// 1. Users table (linked to Firebase Auth UID or server session UID)
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   uid: text('uid').notNull().unique(), // Firebase Auth UID / local system id
   email: text('email').notNull(),
   phone: text('phone'),
+  passwordHash: text('password_hash'),
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
   role: text('role').notNull().default('MEMBER'), // 'MANAGER' | 'MEMBER'
@@ -21,7 +23,7 @@ export const users = pgTable('users', {
   kycDocumentType: text('kyc_document_type'),
   walletBalance: integer('wallet_balance').notNull().default(0),
   managerPlanCode: text('manager_plan_code').default('STARTER'),
-  memberPaymentMethod: text('member_payment_method').default('WAVE'),
+  memberPaymentMethod: text('member_payment_method').default('ORANGE_MONEY'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -54,44 +56,61 @@ export const tontines = pgTable('tontines', {
 });
 
 // 3. Tontine Member Participations table
-export const tontineMembers = pgTable('tontine_members', {
-  id: text('id').primaryKey(),
-  tontineId: text('tontine_id')
-    .references(() => tontines.id)
-    .notNull(),
-  userId: text('user_id').notNull(),
-  name: text('name').notNull(),
-  phone: text('phone'),
-  turnNumber: integer('turn_number').notNull(),
-  hasPaidCurrentRound: boolean('has_paid_current_round').notNull().default(false),
-  isCurrentBeneficiary: boolean('is_current_beneficiary').notNull().default(false),
-  paymentMethod: text('payment_method').notNull().default('WAVE'),
-  cautionStatus: text('caution_status').notNull().default('ESCROWED'),
-  cautionAmount: integer('caution_amount'),
-  guarantorName: text('guarantor_name'),
-  guarantorPhone: text('guarantor_phone'),
-  guarantorRelationship: text('guarantor_relationship'),
-  guarantorVerified: boolean('guarantor_verified').notNull().default(false),
-  tontineScore: integer('tontine_score').notNull().default(95),
-  joinedAt: timestamp('joined_at').defaultNow(),
-});
+export const tontineMembers = pgTable(
+  'tontine_members',
+  {
+    id: text('id').primaryKey(),
+    tontineId: text('tontine_id')
+      .references(() => tontines.id)
+      .notNull(),
+    userId: text('user_id').notNull(),
+    name: text('name').notNull(),
+    phone: text('phone'),
+    turnNumber: integer('turn_number').notNull(),
+    hasPaidCurrentRound: boolean('has_paid_current_round').notNull().default(false),
+    isCurrentBeneficiary: boolean('is_current_beneficiary').notNull().default(false),
+    paymentMethod: text('payment_method').notNull().default('ORANGE_MONEY'),
+    cautionStatus: text('caution_status').notNull().default('ESCROWED'),
+    cautionAmount: integer('caution_amount'),
+    guarantorName: text('guarantor_name'),
+    guarantorPhone: text('guarantor_phone'),
+    guarantorRelationship: text('guarantor_relationship'),
+    guarantorVerified: boolean('guarantor_verified').notNull().default(false),
+    tontineScore: integer('tontine_score').notNull().default(95),
+    joinedAt: timestamp('joined_at').defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('tontine_members_tontine_user_uidx').on(table.tontineId, table.userId),
+    uniqueIndex('tontine_members_tontine_turn_uidx').on(table.tontineId, table.turnNumber),
+  ]
+);
 
 // 4. Member Contribution Payments table
-export const contributionPayments = pgTable('contribution_payments', {
-  id: text('id').primaryKey(),
-  tontineId: text('tontine_id')
-    .references(() => tontines.id)
-    .notNull(),
-  memberUserId: text('member_user_id').notNull(),
-  memberName: text('member_name').notNull(),
-  roundNumber: integer('round_number').notNull(),
-  amount: integer('amount').notNull(),
-  date: text('date').notNull(),
-  paymentMethod: text('payment_method').notNull(),
-  transactionRef: text('transaction_ref').notNull().unique(),
-  status: text('status').notNull().default('SUCCESS'),
-  createdAt: timestamp('created_at').defaultNow(),
-});
+export const contributionPayments = pgTable(
+  'contribution_payments',
+  {
+    id: text('id').primaryKey(),
+    tontineId: text('tontine_id')
+      .references(() => tontines.id)
+      .notNull(),
+    memberUserId: text('member_user_id').notNull(),
+    memberName: text('member_name').notNull(),
+    roundNumber: integer('round_number').notNull(),
+    amount: integer('amount').notNull(),
+    date: text('date').notNull(),
+    paymentMethod: text('payment_method').notNull(),
+    transactionRef: text('transaction_ref').notNull().unique(),
+    status: text('status').notNull().default('SUCCESS'),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('contribution_payments_tontine_member_round_uidx').on(
+      table.tontineId,
+      table.memberUserId,
+      table.roundNumber
+    ),
+  ]
+);
 
 // 5. Manager Wallet Transactions table
 export const walletTransactions = pgTable('wallet_transactions', {
@@ -100,10 +119,12 @@ export const walletTransactions = pgTable('wallet_transactions', {
   tontineId: text('tontine_id'),
   type: text('type').notNull(), // 'COMMISSION' | 'WITHDRAWAL' | 'ESCROW_RELEASE'
   amount: integer('amount').notNull(),
+  balanceAfter: integer('balance_after'),
   date: text('date').notNull(),
   description: text('description').notNull(),
   provider: text('provider'),
   destinationAccount: text('destination_account'),
+  status: text('status').notNull().default('COMPLETED'),
   createdAt: timestamp('created_at').defaultNow(),
 });
 
